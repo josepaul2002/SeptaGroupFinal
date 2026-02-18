@@ -162,26 +162,58 @@ See /content-checklist page for full list. Key items:
 
 ---
 
-## Prioritized Backlog
+## Ecosystem Upgrade (Feb 2026)
 
-### P0 (Critical - do before going live)
-- Replace all placeholder content (see /content-checklist)
-- Change admin password from septa2024 to strong password in backend/.env
-- Add real phone number and WhatsApp number
+### New Architecture
+- Moved project + partner data to **static JSON files** in `src/content/` for easy editing without code changes
+- `src/content/partners.json` — 13 partner profiles with full bios, specialties, districts, relationship types
+- `src/content/projects.json` — 6 projects with extended schema (partnerStack, clientLens, story/design/delivery modules)
 
-### P1 (Important enhancements)
-- Email notification integration (Resend/SendGrid) for lead submissions
-- Real project photos (replace Unsplash placeholders)
-- Logo file (SVG/PNG) to replace text logo
+### New Pages
+- `/ecosystem` — Partner directory with category tabs, search, district filter, partner cards, solution packs
+- `/ecosystem/:slug` — Partner profile pages with bio, known-for, collaboration note, related projects, intro CTA
 
-### P2 (Nice-to-have)
-- Google Analytics integration
-- Google Maps embed on Contact page
-- Image gallery lightbox for project case studies
-- Admin: add new project form (currently read/delete only)
-- WhatsApp Business API integration
-- Multi-language support (English + Malayalam)
+### Upgraded Pages
+- **ProjectsPage** — Now imports from JSON; added Partner filter + Design Tag filter; shows architect name on cards
+- **ProjectCaseStudyPage** — Complete rewrite: Partner Stack module (dark bar with role/partner/contribution rows), 3 sections (The Story, The Design, The Delivery), clientLens-aware copy, Related Projects
+- **ServicesPage** — Rewritten with 6 ecosystem-aligned offerings (Design–Build, Bespoke Residences, Institutional, Commercial, PMC, Partnership Execution)
+- **HomePage** — Added Ecosystem teaser section with featured partner preview cards
+
+### Partner Directory (13 partners)
+- Architecture & Design: Aether Design Studio (Core), Axis Architects Collective (Core), Forma Studio (Project Partner)
+- Interiors: Woven Interiors (Core), Studio Pith (Project Partner)
+- Engineering: Meridian Structural (Core), Nexus MEP (Core), ProQS (Preferred Vendor)
+- Landscape: Greenseed Landscape Studio (Core)
+- Materials: Kerala Stone Collective (Preferred Vendor)
+- Technology: Hypha Systems (Group Company)
+- Branding/Signage: Signal Brand Studio (Project Partner)
+- Marketing: Narrative Digital (Project Partner)
+
+### Content Editing (no code required)
+- Update `src/content/partners.json` to add/edit/remove partners
+- Update `src/content/projects.json` to add/edit/remove projects with full partner stacks
+
+### Test Results (iteration_2)
+- Frontend: 100% (26/26 tests passed)
+- All ecosystem features verified working
 
 ---
 
-_Last updated: Feb 2026_
+## P0 Backlog (next)
+- Replace placeholder content — see /content-checklist
+- Change admin password in backend/.env
+- Add real WhatsApp number in WhatsAppButton.jsx
+
+## P1 Backlog
+- Email notification for lead submissions (Resend)
+- Real project photos (replace Unsplash)
+- Logo SVG file
+- Admin: Add new project form (currently read/delete only)
+- Partner logo upload support
+
+## P2 Backlog
+- Google Analytics
+- Google Maps on Contact page
+- Gallery lightbox for project photos
+- Multi-language (English + Malayalam)
+
