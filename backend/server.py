@@ -4,6 +4,7 @@ Full CMS with Admin Panel, Email Notifications, and Media Storage
 """
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -27,8 +28,8 @@ from models.schemas import (
     AuditLogEntry, ContentExport, PublishStatus,
     BilingualText, PartnerStackItem, StoryModule, DesignModule, DeliveryModule, ProjectMedia
 )
-from services.email_service import send_admin_notification, send_user_confirmation
-from services.storage_service import upload_file, delete_file, get_presigned_upload_url, validate_file
+from services.email_service import send_admin_notification, send_user_confirmation, set_email_logs_collection
+from services.storage_service import upload_file, delete_file, get_presigned_upload_url, validate_file, get_storage_status
 from utils.auth import (
     verify_password, get_password_hash, create_access_token,
     set_auth_cookie, clear_auth_cookie, get_current_admin, get_optional_admin
@@ -48,6 +49,10 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="Septa Group API", version="2.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Local uploads directory
+UPLOADS_DIR = Path("/app/uploads")
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 api_router = APIRouter(prefix="/api")
 
