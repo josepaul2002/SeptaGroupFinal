@@ -84,10 +84,10 @@ export default function SolutionPacksPage() {
                   <div className="p-8 border-b border-[#A7ADB5]/15">
                     <div className="w-8 h-px bg-[#C6A15B] mb-6" />
                     <h2 className="text-xl font-sora font-medium text-[#1F2328] mb-3 leading-snug">
-                      {getText(pack.name)}
+                      {t(pack.name)}
                     </h2>
                     <p className="text-sm font-inter font-light text-[#1F2328]/55 leading-relaxed">
-                      {getText(pack.tagline)}
+                      {t(pack.tagline)}
                     </p>
                   </div>
 
@@ -95,7 +95,7 @@ export default function SolutionPacksPage() {
                   <div className="p-8 border-b border-[#A7ADB5]/15">
                     <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-3">Who it's for</p>
                     <p className="text-sm font-inter text-[#1F2328]/65 leading-relaxed">
-                      {getText(pack.who_its_for)}
+                      {t(pack.who_its_for)}
                     </p>
                   </div>
 
@@ -127,7 +127,7 @@ export default function SolutionPacksPage() {
                   {/* Disclaimer */}
                   <div className="p-8 bg-[#F8F7F4]">
                     <p className="text-xs font-inter text-[#A7ADB5] leading-relaxed">
-                      {getText(pack.disclaimers)}
+                      {t(pack.disclaimers)}
                     </p>
                   </div>
 
