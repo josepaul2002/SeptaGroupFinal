@@ -267,5 +267,6 @@ export default function PartnerProfilePage() {
           </div>
         </section>
       )}
+    </div>
   );
 }
