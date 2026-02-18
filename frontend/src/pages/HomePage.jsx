@@ -321,23 +321,23 @@ export default function HomePage() {
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {testimonials.map((t, i) => (
+              {testimonials.map((tst, i) => (
                 <div
-                  key={t.id}
+                  key={tst.id}
                   className={`p-8 border border-[#F3F0E8]/10 hover:border-[#C6A15B]/30 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
                   data-testid={`testimonial-card-${i}`}
                 >
                   <div className="flex gap-0.5 mb-5">
-                    {Array.from({ length: t.rating }).map((_, j) => (
+                    {Array.from({ length: tst.rating }).map((_, j) => (
                       <div key={j} className="w-1.5 h-1.5 bg-[#C6A15B]" />
                     ))}
                   </div>
                   <p className="text-sm font-inter font-light text-[#F3F0E8]/80 leading-relaxed mb-6">
-                    "{getText(t.content)}"
+                    "{getText(tst.content)}"
                   </p>
                   <div className="border-t border-[#F3F0E8]/10 pt-4">
-                    <p className="text-sm font-sora font-medium text-[#F3F0E8]">{t.client_name}</p>
-                    <p className="text-xs font-inter text-[#A7ADB5] mt-0.5">{t.client_role}</p>
+                    <p className="text-sm font-sora font-medium text-[#F3F0E8]">{tst.client_name}</p>
+                    <p className="text-xs font-inter text-[#A7ADB5] mt-0.5">{tst.client_role}</p>
                   </div>
                 </div>
               ))}
