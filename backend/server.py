@@ -925,11 +925,93 @@ async def migrate_json_to_db():
         logger.info("Seeded testimonials")
 
 
+async def seed_solution_packs():
+    """Seed default solution packs if none exist"""
+    pack_count = await db.solution_packs.count_documents({})
+    if pack_count > 0:
+        return
+    
+    packs = [
+        {
+            "id": str(uuid.uuid4()),
+            "slug": "premium-home",
+            "name": {"en": "Premium Home Pack", "ml": None},
+            "tagline": {"en": "For clients building a home that is meant to last and feel entirely their own.", "ml": None},
+            "description": {"en": "A coordinated team of specialists for luxury residential projects, from concept to handover.", "ml": None},
+            "who_its_for": {"en": "Homeowners seeking a bespoke residence with premium finishes and integrated smart home systems.", "ml": None},
+            "partner_categories": [
+                "Architecture & Design",
+                "Interiors & Fit-out",
+                "Landscape & Outdoor",
+                "Smart Home / Security / Automation",
+                "Lighting Design"
+            ],
+            "typical_timeline": "18-24 months",
+            "disclaimers": {"en": "Septa coordinates introductions and project delivery. Each partner is contracted independently. No guaranteed outcomes on design or timeline.", "ml": None},
+            "featured": True,
+            "status": "published",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "slug": "retail-launch",
+            "name": {"en": "Retail Launch Pack", "ml": None},
+            "tagline": {"en": "For developers launching a commercial address that needs to attract tenants before completion.", "ml": None},
+            "description": {"en": "A coordinated team for commercial projects requiring leasing support, branding, and marketing.", "ml": None},
+            "who_its_for": {"en": "Developers of shopping centres, office complexes, and mixed-use buildings.", "ml": None},
+            "partner_categories": [
+                "Architecture & Design",
+                "MEP Engineering",
+                "Interiors & Fit-out",
+                "Branding, Signage & Wayfinding",
+                "Marketing & Digital",
+                "Leasing & Real Estate"
+            ],
+            "typical_timeline": "24-36 months",
+            "disclaimers": {"en": "Septa provides introductions and coordination support. No guaranteed occupancy or revenue outcomes.", "ml": None},
+            "featured": True,
+            "status": "published",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "slug": "institutional-excellence",
+            "name": {"en": "Institutional Excellence Pack", "ml": None},
+            "tagline": {"en": "For institutional clients delivering a campus or civic building with operational continuity requirements.", "ml": None},
+            "description": {"en": "A comprehensive team for schools, hospitals, and government buildings requiring phased delivery.", "ml": None},
+            "who_its_for": {"en": "Educational institutions, healthcare facilities, and public sector organizations.", "ml": None},
+            "partner_categories": [
+                "Architecture & Design",
+                "Structural Engineering",
+                "MEP Engineering",
+                "Quantity Surveying",
+                "Legal / Compliance / Approvals"
+            ],
+            "typical_timeline": "24-48 months",
+            "disclaimers": {"en": "Septa manages phased delivery coordination. Regulatory approvals and compliance are client responsibility with partner support.", "ml": None},
+            "featured": True,
+            "status": "published",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+    ]
+    
+    for pack in packs:
+        await db.solution_packs.insert_one(pack)
+    logger.info("Seeded solution packs")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize on startup"""
+    # Set email logs collection for email service
+    set_email_logs_collection(db.email_logs)
+    
     await bootstrap_admin()
     await migrate_json_to_db()
+    await seed_solution_packs()
     logger.info("Septa API started successfully")
 
 
