@@ -333,6 +333,59 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* ——— ECOSYSTEM TEASER ——— */}
+      <section className="py-20 md:py-32 bg-[#1F2328]" data-testid="ecosystem-teaser-section">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-5 reveal">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Partner Network</p>
+              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight mb-5">
+                The ecosystem behind every project
+              </h2>
+              <p className="text-base font-inter font-light text-[#F3F0E8]/50 leading-relaxed mb-8">
+                Septa is a delivery studio. Behind each build is a curated network of architects, engineers, interiors, landscape, technology, and marketing partners — each selected for execution quality, not price.
+              </p>
+              <Link
+                to="/ecosystem"
+                data-testid="ecosystem-teaser-btn"
+                className="inline-flex items-center gap-2 h-11 px-7 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors"
+              >
+                Explore Ecosystem <ArrowRight size={14} strokeWidth={1.5} />
+              </Link>
+            </div>
+            <div className="lg:col-span-7">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {featuredPartners.map((partner, i) => (
+                  <Link
+                    key={partner.id}
+                    to={`/ecosystem/${partner.slug}`}
+                    data-testid={`ecosystem-preview-${partner.slug}`}
+                    className={`group border border-[#F3F0E8]/10 p-4 hover:border-[#C6A15B]/40 transition-colors duration-300 reveal reveal-delay-${Math.min(i + 1, 4)}`}
+                  >
+                    <p className="text-xs font-inter text-[#C6A15B] uppercase tracking-wider mb-2">{partner.category.split(' ')[0]}</p>
+                    <p className="text-sm font-sora font-medium text-[#F3F0E8] group-hover:text-[#C6A15B] transition-colors leading-snug">
+                      {partner.name}
+                    </p>
+                    <p className="text-xs font-inter text-[#A7ADB5] mt-1">{partner.relationshipType}</p>
+                  </Link>
+                ))}
+                <Link
+                  to="/ecosystem"
+                  data-testid="see-all-partners-btn"
+                  className="border border-[#F3F0E8]/10 p-4 hover:border-[#C6A15B]/40 transition-colors duration-300 flex flex-col justify-between reveal"
+                >
+                  <p className="text-xs font-inter text-[#A7ADB5] mb-2">And more</p>
+                  <div className="flex items-center gap-1.5 mt-auto">
+                    <span className="text-xs font-inter font-medium text-[#0F5E5B] uppercase tracking-wider">View all</span>
+                    <ArrowRight size={11} className="text-[#0F5E5B]" strokeWidth={1.5} />
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ——— CTA + QUICK FORM ——— */}
       <section className="py-20 md:py-32 bg-[#F3F0E8]" data-testid="cta-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
