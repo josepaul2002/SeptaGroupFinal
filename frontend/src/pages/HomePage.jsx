@@ -122,14 +122,14 @@ export default function HomePage() {
                   data-testid="hero-request-quote-btn"
                   className="h-12 px-8 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center gap-2"
                 >
-                  {ui['cta.request_quote']} <ArrowRight size={14} strokeWidth={1.5} />
+                  Request a Quote <ArrowRight size={14} strokeWidth={1.5} />
                 </Link>
                 <Link
                   to="/projects"
                   data-testid="hero-view-projects-btn"
                   className="h-12 px-8 border border-[#1F2328]/20 text-[#1F2328] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#1F2328] hover:text-[#F3F0E8] transition-all flex items-center gap-2"
                 >
-                  {ui['cta.view_projects']}
+                  View Projects
                 </Link>
               </div>
               <a
@@ -177,9 +177,9 @@ export default function HomePage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
             <div className="reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.our_work']}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Our Work</p>
               <h2 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
-                {ui['section.selected_projects']}
+                Selected Projects
               </h2>
             </div>
             <Link
@@ -247,9 +247,9 @@ export default function HomePage() {
       <section className="py-20 md:py-32 bg-white" data-testid="septa-standard-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="mb-16 reveal">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.how_we_work']}</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">How Septa Works</p>
             <h2 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight max-w-xl">
-              {ui['section.septa_standard']}
+              The Septa Standard
             </h2>
             <p className="text-base font-inter font-light text-[#1F2328]/55 mt-4 max-w-lg leading-relaxed">
               Our delivery methodology is not aspirational copy. It is a working protocol applied on every site, every week.
@@ -277,7 +277,7 @@ export default function HomePage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-4 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.services']}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">What We Build</p>
               <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-5">
                 Services
               </h2>
@@ -314,7 +314,7 @@ export default function HomePage() {
         <section className="py-20 md:py-32 bg-[#1F2328]" data-testid="testimonials-section">
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
             <div className="mb-14 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.testimonials']}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Client Voices</p>
               <h2 className="text-3xl md:text-5xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight">
                 What Clients Say
               </h2>
@@ -350,7 +350,7 @@ export default function HomePage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.ecosystem']}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Partner Network</p>
               <h2 className="text-3xl md:text-4xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight mb-5">
                 The ecosystem behind every project
               </h2>
@@ -404,7 +404,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
             {/* Copy */}
             <div className="lg:col-span-5 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.contact']}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Start a Conversation</p>
               <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-5">
                 Compare contractors on risk, not just price.
               </h2>
