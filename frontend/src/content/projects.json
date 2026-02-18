@@ -1,0 +1,299 @@
+{
+  "projects": [
+    {
+      "slug": "st-thomas-school-thrissur",
+      "title": "St. Thomas School of Excellence",
+      "location": "Thrissur, Kerala",
+      "type": "Institutional",
+      "status": "Completed",
+      "sqft": "42,000",
+      "duration": "18 months",
+      "year": "2023",
+      "clientType": "Educational Institution",
+      "clientLens": "Institutional",
+      "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=900&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1562774053-701939374585?w=900&q=80",
+        "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=900&q=80",
+        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=900&q=80"
+      ],
+      "shortDescription": "A four-storey academic campus delivered in three active phases during an ongoing academic year — without a single day of learning disruption.",
+      "challenge": "Phased delivery during an active academic year with 1,200 enrolled students",
+      "challengeDetail": "Construction had to proceed in strict phases to avoid disrupting ongoing academic sessions. Site access, noise controls, and dust management required daily coordination with school administration.",
+      "approachDetail": "We mapped a three-phase schedule aligned to school holidays and weekend windows. Structural work was sequenced to completed wings first, while fit-out of the new block proceeded in parallel. A dedicated site foreman managed daily handoff between academic staff and construction teams.",
+      "outcomeDetail": "Campus delivered on schedule with zero disruption to the academic calendar. RCC quality audited externally at each floor level. The client cited Septa's communication protocols as the differentiating factor in the final tender decision.",
+      "partnerStack": [
+        { "partnerId": "axis-architects-collective", "roleLabel": "Architect", "contribution": "Campus masterplan and phased design documentation aligned to a 10-year academic expansion strategy." },
+        { "partnerId": "meridian-structural-consultants", "roleLabel": "Structural Engineering", "contribution": "Structural design with construction sequence notes prepared specifically for phased delivery during active school occupation." },
+        { "partnerId": "nexus-mep-solutions", "roleLabel": "MEP Engineering", "contribution": "Coordinated MEP drawings with clash detection to prevent service-structure conflicts across the three construction phases." }
+      ],
+      "story": {
+        "storyParagraphs": [
+          "A school campus is not merely infrastructure. For the 1,200 families who chose St. Thomas School of Excellence, the building is a long-term promise to a generation of students. When the school's management decided to expand, they needed a contractor who understood that construction could not come at the cost of learning.",
+          "Septa was appointed after a competitive tender that explicitly prioritised methodology over price. The proposal that won was not the lowest bid — it was the most structured plan, with a phased delivery schedule that aligned entirely with the academic calendar and included daily site protocols agreed with the school's operations team.",
+          "The result was a four-storey campus — library, science laboratories, multipurpose hall, and forty-two classrooms — built across eighteen months without a single day of institutional disruption. The school's management team described the delivery experience as unlike any construction project they had previously managed."
+        ],
+        "ownerQuote": "[Client quote placeholder — to be replaced with a quote from the school principal or management committee]"
+      },
+      "design": {
+        "designIntent": "The campus was designed to read as a coherent institutional building from the street while internally creating a sequence of outdoor courts that structure movement and provide natural ventilation to classrooms. The architecture uses local laterite stone at the base to connect the building to its Kerala context, transitioning to clean concrete and glass above.",
+        "designTags": ["Institutional", "Contextual", "Phased Design", "Natural Ventilation", "Contemporary"]
+      },
+      "delivery": {
+        "deliveryHighlights": [
+          "Three-phase delivery schedule aligned to school holidays and weekend construction windows",
+          "Daily site handoff protocol between construction crew and school operations team",
+          "Noise and dust containment zones updated weekly for each active construction area",
+          "Independent external RCC quality audit at each floor level"
+        ],
+        "septaStandardApplied": ["Phased site access plan", "Weekly principal briefings", "Noise compliance schedule", "Third-party RCC audit", "Snag-to-handover protocol"]
+      }
+    },
+    {
+      "slug": "lakeview-medical-centre-ernakulam",
+      "title": "Lakeview Medical Centre",
+      "location": "Ernakulam, Kerala",
+      "type": "Healthcare",
+      "status": "Completed",
+      "sqft": "28,500",
+      "duration": "14 months",
+      "year": "2022",
+      "clientType": "Private Healthcare Provider",
+      "clientLens": "Commercial",
+      "image": "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=900&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=900&q=80",
+        "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=900&q=80"
+      ],
+      "shortDescription": "A multi-speciality outpatient and diagnostic centre that passed Kerala Health Department inspection on first submission — the result of early MEP coordination and healthcare-grade execution.",
+      "challenge": "Healthcare-grade finishes with tight M&E trade coordination across six specialist contractors",
+      "challengeDetail": "Healthcare environments demand a higher-than-standard grade of waterproofing, wall finish precision, and HVAC integration. Six trade contractors required coordinated scheduling to avoid costly rework.",
+      "approachDetail": "Dedicated M&E coordination drawings were prepared before site commencement. Waterproofing and flooring subcontractors were briefed on healthcare standards. Weekly three-way coordination meetings were held with the client's medical equipment vendor.",
+      "outcomeDetail": "Facility passed Kerala Health Department inspection on first submission. HVAC commissioning completed two weeks ahead of handover, allowing full systems testing before fit-out completion.",
+      "partnerStack": [
+        { "partnerId": "aether-design-studio", "roleLabel": "Architect", "contribution": "Building design and space planning with patient flow logic and clinical zone separation from the first schematic." },
+        { "partnerId": "nexus-mep-solutions", "roleLabel": "MEP Coordination", "contribution": "HVAC design to infection control standards; medical gas piping layout; coordinated MEP drawings with clash detection before construction." },
+        { "partnerId": "meridian-structural-consultants", "roleLabel": "Structural Engineering", "contribution": "Structural design with provision for slab penetrations and service routes confirmed pre-pour." },
+        { "partnerId": "woven-interiors", "roleLabel": "Interiors", "contribution": "Healthcare-grade interior specification including clinical finishes, embedded service coordination, and material compliance review." }
+      ],
+      "story": {
+        "storyParagraphs": [
+          "Healthcare construction is not a conventional build. The finished building will be operating rooms, procedure suites, and diagnostic labs — each of which has clinical standards that a standard finish checklist will not address. The Lakeview team's primary selection criteria was a contractor with demonstrated M&E coordination experience in a medical environment.",
+          "Septa provided three comparable project references with documented M&E inspection records — a level of evidence that most contractors in the tender could not match. The appointment followed a detailed methodology review rather than a price-led decision.",
+          "Fourteen months later, Lakeview Medical Centre opened having passed Kerala Health Department inspection on its first submission — the single metric that most clearly validated the decision to invest in structured coordination rather than cost reduction."
+        ],
+        "ownerQuote": "[Client quote placeholder — to be replaced with a quote from the Managing Director or Facilities Head]"
+      },
+      "design": {
+        "designIntent": "The building was planned around patient flow — the sequence from arrival to triage, consultation, investigation, and discharge was mapped before a single space was dimensioned. The result is a building that operates efficiently at full capacity rather than one designed for aesthetics that staff and patients find frustrating to navigate.",
+        "designTags": ["Healthcare", "Functional Planning", "Clinical Standards", "MEP-intensive", "Controlled Environment"]
+      },
+      "delivery": {
+        "deliveryHighlights": [
+          "MEP coordination drawings produced by Nexus before construction tender was issued",
+          "Pre-pour slab penetration review checklist shared with Septa site team",
+          "Healthcare-grade waterproofing and floor finish specification enforced at sub-contractor briefing",
+          "HVAC commissioning completed 14 days ahead of handover — full systems testing before fit-out"
+        ],
+        "septaStandardApplied": ["M&E coordination pre-drawings", "Waterproofing checkpoint at slab level", "Healthcare finish schedule", "Pre-handover systems commissioning", "Defects liability protocol"]
+      }
+    },
+    {
+      "slug": "prestige-business-square-kochi",
+      "title": "Prestige Business Square",
+      "location": "Kochi, Kerala",
+      "type": "Commercial",
+      "status": "Completed",
+      "sqft": "55,000",
+      "duration": "22 months",
+      "year": "2023",
+      "clientType": "Commercial Developer",
+      "clientLens": "Commercial",
+      "image": "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=900&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=900&q=80",
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80"
+      ],
+      "shortDescription": "Six-storey commercial office building with basement parking, delivered 8 days ahead of contractual completion in a high water-table zone — with zero waterproofing failures.",
+      "challenge": "Basement waterproofing failure risk in a high water-table zone with a developer who had experienced failures on a previous adjacent project",
+      "challengeDetail": "The Kochi site presented a perched water table that made traditional basement construction high-risk. The developer had experienced waterproofing failures on an adjacent project built by another contractor.",
+      "approachDetail": "A tanked waterproofing system with secondary drainage layer was specified. Septa's procurement team sourced a CPWD-approved waterproofing contractor. Inspection protocols were set at formwork, pour, and curing stages with photographic records maintained per floor.",
+      "outcomeDetail": "Zero waterproofing failures post-completion. Basement passed structural integrity test at 3 months post-occupancy. Project delivered 8 days ahead of contractual completion date.",
+      "partnerStack": [
+        { "partnerId": "forma-studio", "roleLabel": "Architect", "contribution": "Building design and façade specification; lobby and common area finish design." },
+        { "partnerId": "nexus-mep-solutions", "roleLabel": "MEP Engineering", "contribution": "Full MEP engineering package including BMS-ready electrical distribution and HVAC zoning for commercial tenants." },
+        { "partnerId": "proqs-estimating", "roleLabel": "Quantity Surveying", "contribution": "Independent BOQ review and cost validation at tender stage; variation management during construction." },
+        { "partnerId": "signal-brand-studio", "roleLabel": "Signage & Wayfinding", "contribution": "Signage system design and wayfinding programme; substrates integrated into construction before fit-out." }
+      ],
+      "story": {
+        "storyParagraphs": [
+          "When an investment developer commits to a commercial project in Kochi's high-demand office corridor, the financial model depends entirely on delivery certainty. Delays do not only affect construction costs — they affect lease-start dates, tenant retention, and loan servicing schedules.",
+          "The developer's specific concern was basement waterproofing. Their previous project at an adjacent site had experienced post-construction water ingress that required expensive remediation and delayed occupancy by four months. The appointment of Septa was conditional on a written waterproofing methodology being submitted before contract was signed.",
+          "Septa delivered not only a waterproofing methodology but a procurement protocol: CPWD-approved contractor, staged inspection hold-points, and a 90-day post-occupancy inspection commitment. The building was delivered 8 days ahead of contractual completion. The basement has been dry since the day of handover."
+        ],
+        "ownerQuote": "[Client quote placeholder — to be replaced with a quote from the developer or project director]"
+      },
+      "design": {
+        "designIntent": "Prestige Business Square was designed as a contemporary commercial building with a strong street presence and maximum floor plate efficiency. The lobby was designed to communicate occupier quality to prospective tenants during the leasing period — a design brief that influenced material choices from the first design presentation.",
+        "designTags": ["Commercial", "Urban", "Floor Plate Efficiency", "Tenant-ready", "Contemporary"]
+      },
+      "delivery": {
+        "deliveryHighlights": [
+          "Tanked waterproofing protocol with secondary drainage layer — applied by CPWD-approved specialist contractor",
+          "Water-table monitoring log maintained throughout basement excavation and pour period",
+          "Independent variation management by ProQS — no variation accepted without cost and programme impact confirmation",
+          "Post-occupancy structural integrity test at 90 days — zero waterproofing failures"
+        ],
+        "septaStandardApplied": ["Tanked waterproofing protocol", "Water-table monitoring log", "Subcontractor performance review", "Milestone-aligned stage payments", "Post-occupancy inspection at 90 days"]
+      }
+    },
+    {
+      "slug": "malabar-residency-kozhikode",
+      "title": "Malabar Residency",
+      "location": "Kozhikode, Kerala",
+      "type": "Residential",
+      "status": "Completed",
+      "sqft": "34,200",
+      "duration": "20 months",
+      "year": "2022",
+      "clientType": "Private Developer",
+      "clientLens": "Residential",
+      "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=900&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=900&q=80",
+        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=900&q=80"
+      ],
+      "shortDescription": "Twelve premium apartments with a 94% buyer NPS score at handover — the result of finish consistency management and a two-round internal snagging protocol across all units.",
+      "challenge": "Delivering consistent premium finish quality across 12 independently-owned units with different buyer expectations",
+      "challengeDetail": "With twelve apartments and individual buyer expectations, finish consistency became the primary execution challenge. Tile-laying, plaster quality, and joinery had to be uniform across all units.",
+      "approachDetail": "A finish inspection matrix was created per unit type. A dedicated snagging team conducted two rounds of internal QC before external client walkthroughs. Unit-specific punch lists were tracked weekly in shared reports with the developer.",
+      "outcomeDetail": "Final snag list for all 12 units closed within 3 weeks of handover. Client NPS score of 94% based on post-handover survey. Multiple buyers referred subsequent projects through direct recommendation.",
+      "partnerStack": [
+        { "partnerId": "aether-design-studio", "roleLabel": "Architect", "contribution": "Apartment block design with landscape podium; material specification at premium residential standard." },
+        { "partnerId": "studio-pith", "roleLabel": "Interiors", "contribution": "Unit interior fit-out design; finish matrix per unit type; buyer-facing specification documentation." },
+        { "partnerId": "greenseed-landscape-studio", "roleLabel": "Landscape", "contribution": "Podium garden design and pool terrace landscaping coordinated with Septa's structural package." },
+        { "partnerId": "hypha-systems", "roleLabel": "Smart Home", "contribution": "Home automation infrastructure including conduit runs, network points, and control panel locations built into construction programme." }
+      ],
+      "story": {
+        "storyParagraphs": [
+          "For the buyers of Malabar Residency's twelve apartments, the decision to purchase was not purely financial. They chose this building for its proportions, material quality, and the developer's reputation for honest delivery. They were buying a promise — and Septa's responsibility was to protect that promise through construction.",
+          "Finish consistency across twelve independently-owned apartments is harder than it sounds. When each buyer has visited a model unit and formed a precise expectation of their finished home, any deviation — a slightly different tile layout, a plaster surface with a texture variation, a door that does not close flush — is noticed and reported.",
+          "The developer's post-handover buyer NPS score of 94% was the highest they had recorded across five residential projects. Several buyers directly attributed their satisfaction to the quality of the construction process, not just the design — a distinction that few contractors in Kerala enable their developer clients to make."
+        ],
+        "ownerQuote": "[Client quote placeholder — to be replaced with a quote from the developer or a buyer]"
+      },
+      "design": {
+        "designIntent": "Malabar Residency was designed as a quiet, residential building — no theatrical gestures, no over-expressed structure. The materiality is restrained: off-white plaster, dark grey aluminium frames, and a podium garden that brings the only softness to the composition. The design allows the interior specification and finish quality to be the primary differentiator for buyers.",
+        "designTags": ["Residential", "Minimalist", "Premium Finish", "Podium Garden", "Quiet Architecture"]
+      },
+      "delivery": {
+        "deliveryHighlights": [
+          "Finish inspection matrix per unit type — covering tile, plaster, joinery, and hardware across all 12 units",
+          "Two-round internal QC snag before buyer walkthroughs began",
+          "Unit-specific punch lists tracked weekly in shared reports with the developer",
+          "All 12 unit snag lists formally closed within 3 weeks of handover"
+        ],
+        "septaStandardApplied": ["Unit-level finish matrix", "Two-round internal snag protocol", "Buyer walkthrough checklist", "Developer punch list tracker", "60-day post-handover support"]
+      }
+    },
+    {
+      "slug": "green-hills-villa-trivandrum",
+      "title": "Green Hills Villa Complex",
+      "location": "Trivandrum, Kerala",
+      "type": "Residential",
+      "status": "Ongoing",
+      "sqft": "18,000",
+      "duration": "16 months",
+      "year": "2024",
+      "clientType": "Boutique Developer",
+      "clientLens": "Residential",
+      "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80"
+      ],
+      "shortDescription": "Six bespoke villas on hillside terrain — each with natural laterite facades, private pools, and smart home infrastructure built into the structure from day one.",
+      "challenge": "Natural stone precision detailing on challenging hillside terrain with specialist masonry requirements",
+      "challengeDetail": "Hillside terrain posed foundation challenges, and the use of natural laterite and granite required specialist masonry teams with prior villa-grade experience.",
+      "approachDetail": "Geotechnical assessment was commissioned before tender. Laterite sourced from Kannur was quality-graded on arrival at site. A specialist masonry team was engaged on a dedicated package with direct QC oversight by Septa's senior site engineer.",
+      "outcomeDetail": "Currently on track. First two villas reached weathertight stage at Week 28. Client reports highest confidence in communication and reporting quality compared to previous construction experience.",
+      "partnerStack": [
+        { "partnerId": "forma-studio", "roleLabel": "Architect", "contribution": "Villa design with hillside siting strategy; natural stone materiality specification and pool terrace design." },
+        { "partnerId": "woven-interiors", "roleLabel": "Interiors", "contribution": "Interior specification for all six villas; material palette coordination with Forma Studio's architectural specification." },
+        { "partnerId": "kerala-stone-collective", "roleLabel": "Stone & Materials", "contribution": "Laterite and granite supply with on-site quality grading — substandard stone rejected before laying." },
+        { "partnerId": "greenseed-landscape-studio", "roleLabel": "Landscape", "contribution": "Hillside landscape design including native planting, pool terrace garden, and slope retention planting strategy." },
+        { "partnerId": "hypha-systems", "roleLabel": "Smart Home & AV", "contribution": "Full smart home automation and AV integration for all six villas; infrastructure built into construction programme." }
+      ],
+      "story": {
+        "storyParagraphs": [
+          "Six families chose Green Hills Villa Complex not for the land value alone, but for the prospect of a home that felt genuinely made for their lives. Natural laterite facades, a hillside outlook, private pool terraces, and intelligent home systems were not optional features — they were the reason these families chose this address over alternatives that cost similar amounts.",
+          "For Septa and the team at Forma Studio, protecting that design intent through construction meant building a specialist execution plan before a single foundation was poured. The hillside terrain required a geotechnical assessment. The laterite facade required specialist masons with villa-grade experience. The smart home infrastructure required Hypha Systems to design conduit runs into the structural drawings before walls were framed.",
+          "The project is currently on schedule. The first two villas reached weathertight stage at week 28 — exactly as programmed. The developer reports that weekly video site reports provided by Septa have been instrumental in maintaining buyer confidence during the construction period."
+        ],
+        "ownerQuote": "[Client quote placeholder — to be replaced with a quote from the developer or a villa owner]"
+      },
+      "design": {
+        "designIntent": "Each villa was designed as an individual composition — sharing a material language of local laterite, teak, and glass, but varying in orientation and terrace configuration to respond to each plot's specific outlook and slope. The site is a hillside — the design works with the topography rather than fighting it, with split-level internal sections and tiered pool terraces that frame views.",
+        "designTags": ["Residential", "Bespoke", "Natural Materials", "Hillside", "Biophilic", "Modern Kerala"]
+      },
+      "delivery": {
+        "deliveryHighlights": [
+          "Geotechnical pre-assessment before foundation design was finalised",
+          "Laterite material quality grading on-site by Kerala Stone Collective before laying",
+          "Hypha Systems smart home infrastructure built into structural drawings before framing",
+          "Weekly video site report sent to all six villa owners throughout construction"
+        ],
+        "septaStandardApplied": ["Geotechnical pre-assessment", "Material quality grading on arrival", "Specialist masonry QC package", "Weekly video site report", "Client decision log"]
+      }
+    },
+    {
+      "slug": "harmony-business-centre-kottayam",
+      "title": "Harmony Business Centre",
+      "location": "Kottayam, Kerala",
+      "type": "Mixed-use",
+      "status": "Ongoing",
+      "sqft": "68,000",
+      "duration": "28 months",
+      "year": "2024",
+      "clientType": "Investment Developer",
+      "clientLens": "Commercial",
+      "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80"
+      ],
+      "shortDescription": "Eight-storey mixed-use development where the ground floor retail shell was handed to the first tenant ahead of schedule — while upper-floor construction continued above.",
+      "challenge": "Floor-by-floor shell-and-core handover to pre-committed tenants while upper-floor base construction continued",
+      "challengeDetail": "The developer committed floors to tenants before building completion. Coordinating shell-and-core handover floor-by-floor while base construction continued above was a complex programme management challenge.",
+      "approachDetail": "A floor-level completion schedule was developed in coordination with the developer's leasing timeline. Temporary hoarding and lift management protocols were established. Progress was tracked via a shared project dashboard updated weekly.",
+      "outcomeDetail": "Currently at structure completion for floors 1–5. Ground floor retail shell handed over to first tenant ahead of schedule. Programme confidence rated high by developer's PM team.",
+      "partnerStack": [
+        { "partnerId": "axis-architects-collective", "roleLabel": "Architect", "contribution": "Mixed-use building design with floor plate efficiency maximised for commercial and retail tenants; phased handover documentation." },
+        { "partnerId": "proqs-estimating", "roleLabel": "Quantity Surveying", "contribution": "Cost management across shell-and-core and tenant fit-out scopes; monthly cost reports to developer's PM team." },
+        { "partnerId": "nexus-mep-solutions", "roleLabel": "MEP Engineering", "contribution": "Tenant-ready MEP infrastructure design; BMS integration for building management across all floors." },
+        { "partnerId": "signal-brand-studio", "roleLabel": "Branding & Signage", "contribution": "Building identity and wayfinding system design; signage substrates integrated during construction for all common areas." },
+        { "partnerId": "narrative-digital", "roleLabel": "Marketing", "contribution": "Construction-period tenant acquisition content and investor progress reporting using Septa's weekly site data." },
+        { "partnerId": "hypha-systems", "roleLabel": "Building Technology", "contribution": "BMS architecture and integration design; smart access control and energy monitoring for the full building." }
+      ],
+      "story": {
+        "storyParagraphs": [
+          "Harmony Business Centre was conceived as a mixed-use address that would attract anchor tenants before structure completion. The developer's leasing strategy required the building to communicate credibility — through design quality, a visible construction tempo, and reliable floor-by-floor handover dates that tenants could plan fitouts around.",
+          "Septa's programme management capability — specifically its floor-by-floor shell-and-core handover methodology — aligned directly with the developer's pre-lease commitments. The ability to hand over the ground floor retail shell while upper-floor construction continued above was a capability that few contractors in the Kottayam region could demonstrate with credible evidence.",
+          "The ground floor was handed to the first retail tenant ahead of schedule at week 42. The developer's PM team rates programme confidence as the highest they have experienced across five comparable projects. Narrative Digital is currently producing construction-period content that is being used directly in the developer's tenant acquisition conversations."
+        ],
+        "ownerQuote": "[Client quote placeholder — to be replaced with a quote from the developer or investment director]"
+      },
+      "design": {
+        "designIntent": "Harmony Business Centre was designed as a long-term commercial address — a building that will look appropriate and functional in fifteen years, not one that is fashionable today and dated tomorrow. The architectural language is restrained: large floor-to-ceiling glazed facades on the commercial floors, a retail podium with a strong street relationship, and a rooftop that is usable, not decorative.",
+        "designTags": ["Commercial", "Mixed-use", "Urban", "Floor Plate Efficiency", "Tenant-ready", "Long-term Asset"]
+      },
+      "delivery": {
+        "deliveryHighlights": [
+          "Floor-level completion schedule aligned to the developer's tenant pre-commitment dates",
+          "Temporary hoarding and construction lift management protocols for simultaneous occupation and construction",
+          "Monthly cost reports by ProQS to developer's PM team — no cost surprises at stage billing",
+          "Ground floor retail shell handover to first tenant at week 42 — ahead of contractual programme"
+        ],
+        "septaStandardApplied": ["Floor-by-floor handover schedule", "Tenant coordination protocol", "Shared progress dashboard", "Temporary works safety plan", "Monthly cost report"]
+      }
+    }
+  ]
+}
