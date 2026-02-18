@@ -87,15 +87,19 @@ export default function ProjectCaseStudyPage() {
   const labels = lensLabels[project.client_lens] || lensLabels.Commercial;
   const relatedProjects = getRelatedProjects();
   const projectTitle = getText(project.title);
+  const showPreviewBanner = isPreview || project._preview_mode;
 
   return (
-    <div className="pt-16" data-testid="case-study-page">
+    <div className={showPreviewBanner ? "pt-28" : "pt-16"} data-testid="case-study-page">
+      {/* Preview Banner */}
+      {showPreviewBanner && <PreviewBanner type="project" slug={slug} />}
+      
       {/* Back nav */}
       <div className="bg-[#F3F0E8] border-b border-[#A7ADB5]/20 py-4">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <Link to="/projects" data-testid="back-to-projects-btn"
+          <Link to={showPreviewBanner ? "/admin" : "/projects"} data-testid="back-to-projects-btn"
             className="inline-flex items-center gap-2 text-xs font-inter text-[#A7ADB5] hover:text-[#0F5E5B] transition-colors uppercase tracking-widest">
-            <ArrowLeft size={13} strokeWidth={1.5} /> All Projects
+            <ArrowLeft size={13} strokeWidth={1.5} /> {showPreviewBanner ? "Back to Admin" : "All Projects"}
           </Link>
         </div>
       </div>
