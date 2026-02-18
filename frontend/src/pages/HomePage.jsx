@@ -66,7 +66,7 @@ export default function HomePage() {
 
   useEffect(() => {
     document.title = 'Septa Group — Built with Clarity. Construction Kerala';
-    axios.get(`${API}/projects`).then(r => setProjects(r.data.slice(0, 6))).catch(() => {});
+    // Still load testimonials from API for fresh data
     axios.get(`${API}/testimonials`).then(r => setTestimonials(r.data)).catch(() => {});
   }, []);
 
