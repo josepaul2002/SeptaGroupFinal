@@ -1,8 +1,5 @@
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { Box, Monitor, Smartphone, RotateCw, Loader2 } from 'lucide-react';
-
-// Lazy load the 3D viewer (heavy library)
-const ThreeCanvas = lazy(() => import('./ThreeCanvas'));
 
 export default function Model3DViewer({ 
   modelUrl, 
@@ -128,19 +125,12 @@ export default function Model3DViewer({
         </div>
       )}
 
-      {/* 3D Viewer (would need @react-three/fiber setup) */}
+      {/* 3D Viewer placeholder */}
       {viewerState === 'loaded' && (
         <div className="relative aspect-video bg-[#1F2328]">
-          <Suspense fallback={
-            <div className="w-full h-full flex items-center justify-center">
-              <Loader2 size={32} className="text-[#0F5E5B] animate-spin" />
-            </div>
-          }>
-            {/* ThreeCanvas component would go here */}
-            <div className="w-full h-full flex items-center justify-center text-white/50">
-              <p className="text-sm font-inter">3D Viewer - GLB/GLTF Renderer</p>
-            </div>
-          </Suspense>
+          <div className="w-full h-full flex items-center justify-center text-white/50">
+            <p className="text-sm font-inter">3D Viewer - GLB/GLTF Renderer</p>
+          </div>
           
           {/* Controls overlay */}
           <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
