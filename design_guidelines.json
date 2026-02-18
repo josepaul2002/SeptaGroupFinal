@@ -1,0 +1,146 @@
+{
+  "brand_identity": {
+    "name": "Septa Group",
+    "core_values": [
+      "Engineered Clarity",
+      "Quiet Premium",
+      "Institutional Trust",
+      "Kerala Modernism"
+    ],
+    "tone": "Professional, Grounded, Precise, Sophisticated, Minimal",
+    "target_audience": "Institutional clients, Commercial developers, Premium residential owners in Kerala"
+  },
+  "typography": {
+    "primary_font": "Sora",
+    "secondary_font": "Inter",
+    "import_instruction": "Import fonts via Google Fonts in index.css: @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap');",
+    "usage": {
+      "headings": {
+        "family": "Sora, sans-serif",
+        "weights": "400 (Regular) or 500 (Medium) - Avoid Bold unless critical",
+        "styles": {
+          "h1": "text-4xl md:text-6xl lg:text-7xl tracking-tight leading-[1.1] font-light text-primary",
+          "h2": "text-3xl md:text-5xl tracking-tight leading-tight font-light text-primary",
+          "h3": "text-2xl md:text-3xl font-normal text-primary",
+          "h4": "text-xl font-medium text-primary",
+          "overline": "text-xs md:text-sm uppercase tracking-[0.2em] font-semibold text-muted-foreground"
+        }
+      },
+      "body": {
+        "family": "Inter, sans-serif",
+        "weights": "300 (Light) for large paragraphs, 400 (Regular) for standard text",
+        "styles": {
+          "lead": "text-lg md:text-xl leading-relaxed font-light text-muted-foreground",
+          "p": "text-base leading-relaxed text-secondary-foreground/80",
+          "small": "text-sm text-muted-foreground"
+        }
+      }
+    }
+  },
+  "colors": {
+    "palette": {
+      "carbon_black": "#1F2328",
+      "soft_linen": "#F3F0E8",
+      "stormy_teal": "#0F5E5B",
+      "golden_bronze": "#C6A15B",
+      "pale_slate": "#A7ADB5",
+      "white": "#FFFFFF",
+      "error": "#ef4444"
+    },
+    "tailwind_config": {
+      "background": "240 14% 94%",
+      "foreground": "213 13% 14%",
+      "primary": "178 72% 21%",
+      "primary_foreground": "0 0% 100%",
+      "secondary": "213 13% 14%",
+      "secondary_foreground": "240 14% 94%",
+      "muted": "210 6% 68%",
+      "muted_foreground": "213 13% 40%",
+      "accent": "40 46% 57%",
+      "accent_foreground": "213 13% 14%",
+      "border": "210 6% 85%",
+      "input": "210 6% 85%"
+    },
+    "semantic_usage": {
+      "page_background": "bg-[#F3F0E8] (Soft Linen)",
+      "cards_surfaces": "bg-white/50 or bg-white (for contrast against Linen)",
+      "primary_text": "text-[#1F2328] (Carbon Black)",
+      "primary_buttons": "bg-[#0F5E5B] hover:bg-[#0D4E4C] text-white",
+      "secondary_buttons": "bg-transparent border border-[#1F2328] text-[#1F2328] hover:bg-[#1F2328] hover:text-white",
+      "accents": "text-[#C6A15B] (Golden Bronze) for lines, icons, active states",
+      "borders": "border-[#A7ADB5]/30 (Pale Slate)"
+    }
+  },
+  "layout_and_spacing": {
+    "container": "max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12",
+    "section_spacing": "py-20 md:py-32",
+    "grid_system": {
+      "projects_bento": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8",
+      "services_list": "grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12"
+    },
+    "whitespace_rule": "Use 2x standard padding. If you think p-4 is enough, use p-8.",
+    "border_radius": "rounded-none (Sharp edges) or rounded-sm (2px) for a technical feel. DO NOT use rounded-xl or rounded-2xl."
+  },
+  "visual_enhancers": {
+    "shadows": "No heavy shadows. Use subtle borders or 1px lines to define space.",
+    "gradients": "FORBIDDEN. Use solid colors and textures.",
+    "textures": "Add a subtle noise overlay to the #F3F0E8 background if possible to feel like paper/stone.",
+    "motion": {
+      "type": "Subtle Scroll Reveal",
+      "library": "framer-motion",
+      "defaults": {
+        "initial": { "opacity": 0, "y": 20 },
+        "animate": { "opacity": 1, "y": 0 },
+        "transition": { "duration": 0.6, "ease": [0.22, 1, 0.36, 1] }
+      }
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "h-12 px-8 bg-[#0F5E5B] text-white font-medium text-sm uppercase tracking-wider hover:bg-[#0F5E5B]/90 transition-colors rounded-none",
+      "outline": "h-12 px-8 border border-[#1F2328]/20 text-[#1F2328] font-medium text-sm uppercase tracking-wider hover:bg-[#1F2328] hover:text-white transition-all rounded-none",
+      "text": "text-[#0F5E5B] font-semibold hover:text-[#C6A15B] underline-offset-4 hover:underline transition-colors"
+    },
+    "cards": {
+      "project_card": "group relative overflow-hidden aspect-[4/5] bg-gray-200 cursor-pointer",
+      "service_card": "p-8 border border-[#1F2328]/10 bg-white hover:border-[#C6A15B] transition-colors duration-300"
+    },
+    "forms": {
+      "input": "h-12 bg-white border-0 border-b border-[#1F2328]/20 focus:border-[#0F5E5B] focus:ring-0 px-0 rounded-none transition-colors placeholder:text-muted-foreground/50",
+      "label": "text-xs uppercase tracking-widest text-[#1F2328]/60 mb-2"
+    },
+    "navigation": {
+      "nav_link": "text-sm font-medium text-[#1F2328]/80 hover:text-[#0F5E5B] transition-colors"
+    }
+  },
+  "assets": {
+    "icons": "Lucide React (Stroke width: 1.5px)",
+    "images": {
+      "hero_bg": "https://images.pexels.com/photos/5524237/pexels-photo-5524237.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "project_1": "https://images.unsplash.com/photo-1770816307078-f57783e3e24a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBtaW5pbWFsJTIwY29uY3JldGUlMjBhcmNoaXRlY3R1cmUlMjBkZXRhaWxzfGVufDB8fHx8MTc3MTM4MzEwOXww&ixlib=rb-4.1.0&q=85",
+      "project_2": "https://images.unsplash.com/photo-1752876056640-9f447dc187e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBtaW5pbWFsJTIwY29uY3JldGUlMjBhcmNoaXRlY3R1cmUlMjBkZXRhaWxzfGVufDB8fHx8MTc3MTM4MzEwOXww&ixlib=rb-4.1.0&q=85",
+      "construction_service": "https://images.unsplash.com/photo-1633143852511-b174eabd8761?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxjb25zdHJ1Y3Rpb24lMjBzaXRlJTIwZW5naW5lZXJpbmclMjBibHVlJTIwcHJpbnRzJTIwY2xlYW58ZW58MHx8fHwxNzcxMzgzMTE0fDA&ixlib=rb-4.1.0&q=85",
+      "engineering_service": "https://images.pexels.com/photos/8773912/pexels-photo-8773912.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "trust_bar_logos": "Use monochromatic/grayscale placeholders"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. THEME SETUP: Update tailwind.config.js with the exact colors provided. Note that 'background' is NOT white, it is #F3F0E8. This is the key to the premium feel.",
+    "2. TYPOGRAPHY: Ensure 'Sora' is used for all Headings (h1-h4) and 'Inter' for body. Use lighter weights (300/400) for large text to look elegant.",
+    "3. COMPONENT STYLE: Override default Shadcn rounded-md/lg with rounded-none or rounded-sm. Septa Group is about engineering precision, so sharp corners work best.",
+    "4. WHITESPACE: Do not clutter. If a section feels empty, it is correct. 'Negative space is a luxury'.",
+    "5. NAVIGATION: Make the navbar sticky with a glassmorphism effect (backdrop-blur-md bg-[#F3F0E8]/80) but keep it minimal.",
+    "6. IMAGES: Use object-cover for all images. Ensure aspect ratios are consistent in grids.",
+    "7. ADMIN PANEL: For the /admin routes, switch to a denser Mode B grid but keep the color palette consistent (Clean white backgrounds for data density).",
+    "8. FORBIDDEN: Do not use gradients, drop shadows (except very subtle ones), or rounded-full buttons (except icon buttons)."
+  ],
+  "UNIVERSAL_GUIDELINES": [
+    "You tend to converge toward generic outputs. Avoid this.",
+    "Don't make generic centered layouts.",
+    "Use glass-morphism effects with backdrop filters.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "All interactive elements MUST include data-testid attribute.",
+    "Components MUST use named exports.",
+    "Pages MUST use default exports."
+  ]
+}
