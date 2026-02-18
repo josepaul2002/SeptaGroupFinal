@@ -56,9 +56,10 @@ export function useProjects(filters = {}) {
   return useApiData(endpoint, []);
 }
 
-// Single project hook
-export function useProject(slug) {
-  const { data, loading, error } = useApiData(`/projects/${slug}`, null, [slug]);
+// Single project hook with preview support
+export function useProject(slug, preview = false) {
+  const endpoint = preview ? `/projects/${slug}?preview=true` : `/projects/${slug}`;
+  const { data, loading, error } = useApiData(endpoint, null);
   return { project: data, loading, error };
 }
 
@@ -72,9 +73,10 @@ export function usePartners(filters = {}) {
   return useApiData(endpoint, []);
 }
 
-// Single partner hook
-export function usePartner(slug) {
-  const { data, loading, error } = useApiData(`/partners/${slug}`, null, [slug]);
+// Single partner hook with preview support
+export function usePartner(slug, preview = false) {
+  const endpoint = preview ? `/partners/${slug}?preview=true` : `/partners/${slug}`;
+  const { data, loading, error } = useApiData(endpoint, null);
   return { partner: data, loading, error };
 }
 
