@@ -1,22 +1,28 @@
 """
 Storage service for media uploads
-Supports Cloudflare R2 and AWS S3
+Supports Cloudflare R2 / AWS S3 with local fallback
 """
 import os
 import io
 import uuid
+import shutil
 import logging
 from typing import Optional, Tuple
 from datetime import datetime, timezone
+from pathlib import Path
 
-import boto3
-from botocore.config import Config
-from botocore.exceptions import ClientError
+try:
+    import boto3
+    from botocore.config import Config
+    from botocore.exceptions import ClientError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 logger = logging.getLogger(__name__)
 
 # Configuration
-STORAGE_PROVIDER = os.environ.get("STORAGE_PROVIDER", "R2")
+STORAGE_PROVIDER = os.environ.get("STORAGE_PROVIDER", "LOCAL")  # R2, S3, or LOCAL
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "septa-media")
 PUBLIC_CDN_BASE_URL = os.environ.get("PUBLIC_CDN_BASE_URL", "")
 
@@ -24,6 +30,10 @@ PUBLIC_CDN_BASE_URL = os.environ.get("PUBLIC_CDN_BASE_URL", "")
 ACCESS_KEY = os.environ.get("R2_ACCESS_KEY") or os.environ.get("AWS_ACCESS_KEY_ID", "")
 SECRET_KEY = os.environ.get("R2_SECRET_KEY") or os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL") or os.environ.get("S3_ENDPOINT_URL", "")
+
+# Local storage config
+LOCAL_UPLOAD_DIR = Path(os.environ.get("LOCAL_UPLOAD_DIR", "/app/uploads"))
+LOCAL_UPLOAD_URL_PREFIX = "/uploads"
 
 # Allowed file types
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
@@ -41,10 +51,23 @@ ALLOWED_EXTENSIONS = {
 MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB for videos
 
 
+def is_cloud_storage_configured() -> bool:
+    """Check if cloud storage (R2/S3) is properly configured"""
+    if not HAS_BOTO3:
+        return False
+    if not ACCESS_KEY or ACCESS_KEY == "placeholder":
+        return False
+    if not SECRET_KEY or SECRET_KEY == "placeholder":
+        return False
+    if STORAGE_PROVIDER not in ["R2", "S3"]:
+        return False
+    return True
+
+
 def get_s3_client():
     """Get S3-compatible client"""
-    if not ACCESS_KEY or not SECRET_KEY:
-        logger.warning("Storage credentials not configured")
+    if not is_cloud_storage_configured():
+        logger.info("Cloud storage not configured, using local fallback")
         return None
     
     config = Config(
@@ -62,7 +85,11 @@ def get_s3_client():
     if ENDPOINT_URL:
         client_params['endpoint_url'] = ENDPOINT_URL
     
-    return boto3.client(**client_params)
+    try:
+        return boto3.client(**client_params)
+    except Exception as e:
+        logger.error(f"Failed to create S3 client: {e}")
+        return None
 
 
 def validate_file(filename: str, content_type: str, file_size: int) -> Tuple[bool, str]:
@@ -70,7 +97,7 @@ def validate_file(filename: str, content_type: str, file_size: int) -> Tuple[boo
     # Check extension
     ext = os.path.splitext(filename.lower())[1]
     if ext not in ALLOWED_EXTENSIONS:
-        return False, f"File type {ext} not allowed"
+        return False, f"File type {ext} not allowed. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
     
     # Check content type
     all_allowed = ALLOWED_IMAGE_TYPES | ALLOWED_VIDEO_TYPES | ALLOWED_DOCUMENT_TYPES | ALLOWED_MODEL_TYPES
@@ -115,32 +142,54 @@ def generate_storage_key(filename: str, category: str = None) -> str:
     return f"{category}/{date_prefix}/{unique_id}_{clean_name}"
 
 
-async def upload_file(
+async def upload_file_local(
     file_content: bytes,
     filename: str,
-    content_type: str,
-    custom_key: str = None
+    content_type: str
 ) -> Optional[dict]:
-    """
-    Upload file to storage
-    Returns dict with url and metadata
-    """
-    client = get_s3_client()
-    if not client:
-        logger.error("Storage client not available")
-        return None
+    """Upload file to local storage"""
+    storage_key = generate_storage_key(filename)
+    file_path = LOCAL_UPLOAD_DIR / storage_key
     
-    # Validate
-    is_valid, error = validate_file(filename, content_type, len(file_content))
-    if not is_valid:
-        logger.error(f"File validation failed: {error}")
-        return None
-    
-    # Generate key
-    storage_key = custom_key or generate_storage_key(filename)
+    # Create directories
+    file_path.parent.mkdir(parents=True, exist_ok=True)
     
     try:
-        # Upload to S3/R2
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        
+        file_url = f"{LOCAL_UPLOAD_URL_PREFIX}/{storage_key}"
+        
+        logger.info(f"File uploaded locally: {storage_key}")
+        
+        return {
+            "url": file_url,
+            "key": storage_key,
+            "filename": filename,
+            "content_type": content_type,
+            "size": len(file_content),
+            "category": get_file_category(filename),
+            "storage": "local",
+            "uploaded_at": datetime.now(timezone.utc).isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Local upload failed: {e}")
+        return None
+
+
+async def upload_file_cloud(
+    file_content: bytes,
+    filename: str,
+    content_type: str
+) -> Optional[dict]:
+    """Upload file to cloud storage (R2/S3)"""
+    client = get_s3_client()
+    if not client:
+        return None
+    
+    storage_key = generate_storage_key(filename)
+    
+    try:
         client.put_object(
             Bucket=BUCKET_NAME,
             Key=storage_key,
@@ -154,7 +203,7 @@ async def upload_file(
         else:
             file_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{storage_key}"
         
-        logger.info(f"File uploaded successfully: {storage_key}")
+        logger.info(f"File uploaded to cloud: {storage_key}")
         
         return {
             "url": file_url,
@@ -163,26 +212,67 @@ async def upload_file(
             "content_type": content_type,
             "size": len(file_content),
             "category": get_file_category(filename),
+            "storage": STORAGE_PROVIDER.lower(),
             "uploaded_at": datetime.now(timezone.utc).isoformat()
         }
         
     except ClientError as e:
-        logger.error(f"Upload failed: {str(e)}")
+        logger.error(f"Cloud upload failed: {e}")
         return None
 
 
-async def delete_file(storage_key: str) -> bool:
+async def upload_file(
+    file_content: bytes,
+    filename: str,
+    content_type: str,
+    custom_key: str = None
+) -> Optional[dict]:
+    """
+    Upload file to storage (cloud or local fallback)
+    Returns dict with url and metadata
+    """
+    # Validate
+    is_valid, error = validate_file(filename, content_type, len(file_content))
+    if not is_valid:
+        logger.error(f"File validation failed: {error}")
+        return None
+    
+    # Try cloud storage first
+    if is_cloud_storage_configured():
+        result = await upload_file_cloud(file_content, filename, content_type)
+        if result:
+            return result
+        logger.warning("Cloud upload failed, falling back to local")
+    
+    # Fallback to local storage
+    return await upload_file_local(file_content, filename, content_type)
+
+
+async def delete_file(storage_key: str, storage_type: str = None) -> bool:
     """Delete file from storage"""
+    if storage_type == "local" or not is_cloud_storage_configured():
+        # Delete from local
+        file_path = LOCAL_UPLOAD_DIR / storage_key
+        try:
+            if file_path.exists():
+                os.remove(file_path)
+                logger.info(f"Local file deleted: {storage_key}")
+                return True
+        except Exception as e:
+            logger.error(f"Local delete failed: {e}")
+        return False
+    
+    # Delete from cloud
     client = get_s3_client()
     if not client:
         return False
     
     try:
         client.delete_object(Bucket=BUCKET_NAME, Key=storage_key)
-        logger.info(f"File deleted: {storage_key}")
+        logger.info(f"Cloud file deleted: {storage_key}")
         return True
     except ClientError as e:
-        logger.error(f"Delete failed: {str(e)}")
+        logger.error(f"Cloud delete failed: {e}")
         return False
 
 
@@ -193,11 +283,11 @@ async def get_presigned_upload_url(
 ) -> Optional[dict]:
     """
     Generate presigned URL for direct client upload
-    Used for large files to avoid server memory issues
+    Only works with cloud storage
     """
     client = get_s3_client()
     if not client:
-        return None
+        return {"error": "Cloud storage not configured", "use_direct_upload": True}
     
     storage_key = generate_storage_key(filename)
     
@@ -225,5 +315,16 @@ async def get_presigned_upload_url(
             "expires_in": expires_in
         }
     except ClientError as e:
-        logger.error(f"Presigned URL generation failed: {str(e)}")
+        logger.error(f"Presigned URL generation failed: {e}")
         return None
+
+
+def get_storage_status() -> dict:
+    """Get current storage configuration status"""
+    return {
+        "provider": STORAGE_PROVIDER if is_cloud_storage_configured() else "LOCAL",
+        "cloud_configured": is_cloud_storage_configured(),
+        "local_path": str(LOCAL_UPLOAD_DIR),
+        "bucket": BUCKET_NAME if is_cloud_storage_configured() else None,
+        "cdn_url": PUBLIC_CDN_BASE_URL if is_cloud_storage_configured() else None
+    }
