@@ -145,7 +145,7 @@ async def create_lead(request: Request, lead: LeadCreate):
         
         # User confirmation
         if lead.email:
-            user_result = await send_user_confirmation(lead.email, lead.name)
+            user_result = await send_user_confirmation(lead.email, lead.name, lead_id=doc["id"])
             if user_result.get("success"):
                 await db.leads.update_one(
                     {"id": doc["id"]},
