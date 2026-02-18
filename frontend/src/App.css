@@ -1,34 +1,16 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Septa Group — Reset & Base */
+* {
+  box-sizing: border-box;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+img {
+  max-width: 100%;
+  display: block;
 }
-
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+a {
+  text-decoration: none;
+  color: inherit;
 }
-
-.App-link {
-    color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+button {
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
 }
