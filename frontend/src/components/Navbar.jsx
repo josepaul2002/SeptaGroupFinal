@@ -1,23 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import LanguageToggle, { useLanguage, uiTranslations } from './LanguageToggle';
+import LanguageToggle from './LanguageToggle';
 
 const navLinks = [
-  { to: '/', key: 'nav.home' },
-  { to: '/about', key: 'nav.about' },
-  { to: '/services', key: 'nav.services' },
-  { to: '/projects', key: 'nav.projects' },
-  { to: '/ecosystem', key: 'nav.ecosystem' },
-  { to: '/contact', key: 'nav.contact' },
+  { to: '/', label: 'Home' },
+  { to: '/about', label: 'About' },
+  { to: '/services', label: 'Services' },
+  { to: '/projects', label: 'Projects' },
+  { to: '/ecosystem', label: 'Ecosystem' },
+  { to: '/contact', label: 'Contact' },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { lang } = useLanguage();
-  const ui = uiTranslations[lang] || uiTranslations.en;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -37,7 +35,6 @@ export default function Navbar() {
       data-testid="navbar"
     >
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 h-16 md:h-18 flex items-center justify-between">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-1" data-testid="navbar-logo">
           <span className="font-sora font-semibold text-xl text-[#0F5E5B] tracking-tight">SEPTA</span>
           <span className="font-sora font-light text-xl text-[#1F2328] tracking-tight">GROUP</span>
@@ -45,25 +42,23 @@ export default function Navbar() {
           <span className="ml-2 text-xs text-[#A7ADB5] font-inter hidden md:block tracking-widest uppercase">Kerala</span>
         </Link>
 
-        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8" data-testid="navbar-desktop-nav">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              data-testid={`nav-link-${(ui[link.key] || link.key).toLowerCase()}`}
+              data-testid={`nav-link-${link.label.toLowerCase()}`}
               className={`text-sm font-inter transition-colors duration-200 ${
                 location.pathname === link.to
                   ? 'text-[#0F5E5B] font-medium'
                   : 'text-[#1F2328]/70 hover:text-[#0F5E5B]'
               }`}
             >
-              {ui[link.key]}
+              {link.label}
             </Link>
           ))}
         </nav>
 
-        {/* Desktop CTA + Language Toggle */}
         <div className="hidden md:flex items-center gap-4">
           <LanguageToggle className="text-[#1F2328]/60 hover:text-[#0F5E5B]" />
           <div className="w-px h-4 bg-[#A7ADB5]/30" />
@@ -76,7 +71,6 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Mobile Hamburger */}
         <button
           className="md:hidden p-2 text-[#1F2328]"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -87,22 +81,18 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {mobileOpen && (
-        <div
-          className="md:hidden bg-[#F3F0E8] border-t border-[#A7ADB5]/20 px-6 py-6 flex flex-col gap-5"
-          data-testid="navbar-mobile-menu"
-        >
+        <div className="md:hidden bg-[#F3F0E8] border-t border-[#A7ADB5]/20 px-6 py-6 flex flex-col gap-5" data-testid="navbar-mobile-menu">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              data-testid={`mobile-nav-link-${(ui[link.key] || link.key).toLowerCase()}`}
+              data-testid={`mobile-nav-link-${link.label.toLowerCase()}`}
               className={`text-base font-inter ${
                 location.pathname === link.to ? 'text-[#0F5E5B] font-medium' : 'text-[#1F2328]/80'
               }`}
             >
-              {ui[link.key]}
+              {link.label}
             </Link>
           ))}
           <div className="border-t border-[#A7ADB5]/20 pt-4 mt-2">
