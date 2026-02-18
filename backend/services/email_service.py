@@ -370,20 +370,24 @@ async def send_admin_notification(lead_data: dict, max_retries: int = 3) -> dict
     return {"success": False, "error": "Max retries exceeded"}
 
 
-async def send_user_confirmation(email: str, name: str, max_retries: int = 3) -> dict:
+async def send_user_confirmation(email: str, name: str, lead_id: str = "", max_retries: int = 3) -> dict:
     """
     Send confirmation email to user
     Returns dict with success status and details
     """
+    subject = "Septa Group - We received your enquiry"
+    
     if not email:
         logger.info("No user email provided - skipping confirmation")
         return {"success": False, "error": "No email provided", "skipped": True}
     
     if not resend.api_key or resend.api_key.startswith("re_placeholder"):
         logger.warning("Resend API key not configured - skipping user confirmation")
+        await log_email_attempt(
+            "user_confirmation", email, subject,
+            success=False, error="Email not configured (placeholder key)", lead_id=lead_id
+        )
         return {"success": False, "error": "Email not configured", "skipped": True}
-    
-    subject = "Septa Group - We received your enquiry"
     
     params = {
         "from": FROM_EMAIL,
@@ -393,14 +397,25 @@ async def send_user_confirmation(email: str, name: str, max_retries: int = 3) ->
         "text": get_user_confirmation_text(name),
     }
     
+    last_error = None
     for attempt in range(max_retries):
         try:
             email_result = await asyncio.to_thread(resend.Emails.send, params)
             logger.info(f"User confirmation sent successfully to {email}: {email_result.get('id')}")
+            await log_email_attempt(
+                "user_confirmation", email, subject,
+                success=True, email_id=email_result.get("id"), lead_id=lead_id
+            )
             return {"success": True, "email_id": email_result.get("id")}
         except Exception as e:
-            logger.error(f"User confirmation attempt {attempt + 1} failed: {str(e)}")
+            last_error = str(e)
+            logger.error(f"User confirmation attempt {attempt + 1} failed: {last_error}")
             if attempt < max_retries - 1:
                 await asyncio.sleep(2 ** attempt)
     
+    # Log final failure
+    await log_email_attempt(
+        "user_confirmation", email, subject,
+        success=False, error=f"Max retries exceeded: {last_error}", lead_id=lead_id
+    )
     return {"success": False, "error": "Max retries exceeded"}
