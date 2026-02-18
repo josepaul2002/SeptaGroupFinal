@@ -1,12 +1,8 @@
 import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, MapPin, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, MapPin, ExternalLink, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import partnersData from '../content/partners.json';
-import projectsData from '../content/projects.json';
-
-const { partners } = partnersData;
-const { projects } = projectsData;
+import { usePartner, useProjects, getText } from '../hooks/useApi';
 
 const RELATIONSHIP_STYLES = {
   'Core Partner': 'bg-[#E8F0EF] text-[#0F5E5B]',
@@ -27,18 +23,27 @@ const typeColors = {
 export default function PartnerProfilePage() {
   useScrollReveal();
   const { slug } = useParams();
-  const partner = partners.find(p => p.slug === slug);
+  const { partner, loading: partnerLoading } = usePartner(slug);
+  const { data: projects, loading: projectsLoading } = useProjects();
 
   const relatedProjects = projects.filter(p =>
-    p.partnerStack && p.partnerStack.some(ps => ps.partnerId === slug)
+    p.partner_stack && p.partner_stack.some(ps => ps.partner_id === slug)
   );
 
   useEffect(() => {
     window.scrollTo(0, 0);
     if (partner) {
-      document.title = `${partner.name} — Septa Ecosystem`;
+      document.title = `${getText(partner.name)} — Septa Ecosystem`;
     }
   }, [partner]);
+
+  if (partnerLoading || projectsLoading) {
+    return (
+      <div className="pt-16 min-h-screen bg-[#F3F0E8] flex items-center justify-center">
+        <Loader2 className="animate-spin text-[#0F5E5B]" size={32} />
+      </div>
+    );
+  }
 
   if (!partner) {
     return (
@@ -52,6 +57,10 @@ export default function PartnerProfilePage() {
       </div>
     );
   }
+
+  const partnerName = getText(partner.name);
+  const bioLong = getText(partner.bio_long);
+  const septaCollab = getText(partner.septa_collaboration);
 
   return (
     <div className="pt-16" data-testid="partner-profile-page">
@@ -69,11 +78,11 @@ export default function PartnerProfilePage() {
       </div>
 
       {/* Cover image hero */}
-      {partner.coverImage && (
+      {partner.cover_image && (
         <div className="relative h-[40vh] md:h-[50vh] overflow-hidden bg-[#E8E6E0]">
           <img
-            src={partner.coverImage}
-            alt={partner.name}
+            src={partner.cover_image}
+            alt={partnerName}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-[#1F2328]/45" />
@@ -89,23 +98,23 @@ export default function PartnerProfilePage() {
                 {partner.category}
               </p>
               <h1 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-4 reveal reveal-delay-1">
-                {partner.name}
-                {partner.relationshipType === 'Group Company' && (
+                {partnerName}
+                {partner.relationship_type === 'Group Company' && (
                   <span className="ml-3 text-lg font-inter font-light text-[#C6A15B]">Group Company</span>
                 )}
               </h1>
               <div className="flex flex-wrap items-center gap-3 mb-6 reveal reveal-delay-2">
-                <span className={`text-xs font-inter px-2.5 py-1 ${RELATIONSHIP_STYLES[partner.relationshipType]}`}>
-                  {partner.relationshipType}
+                <span className={`text-xs font-inter px-2.5 py-1 ${RELATIONSHIP_STYLES[partner.relationship_type]}`}>
+                  {partner.relationship_type}
                 </span>
-                {partner.districts.map(d => (
+                {partner.districts?.map(d => (
                   <span key={d} className="flex items-center gap-1 text-xs font-inter text-[#A7ADB5]">
                     <MapPin size={10} strokeWidth={1.5} />{d}
                   </span>
                 ))}
               </div>
               <div className="flex flex-wrap gap-2 reveal reveal-delay-2">
-                {partner.specialties.map(s => (
+                {partner.specialties?.map(s => (
                   <span key={s} className="text-xs font-inter px-2.5 py-1 bg-white border border-[#A7ADB5]/25 text-[#1F2328]/65">
                     {s}
                   </span>
@@ -147,31 +156,31 @@ export default function PartnerProfilePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
             <div className="lg:col-span-7 space-y-6 reveal">
               <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-1">About</p>
-              {partner.bioLong.split('\n\n').map((para, i) => (
+              {bioLong.split('\n\n').map((para, i) => (
                 <p key={i} className="text-base font-inter font-light text-[#1F2328]/65 leading-relaxed">
                   {para}
                 </p>
               ))}
             </div>
             <div className="lg:col-span-5 space-y-8">
-              {partner.knownFor && (
+              {partner.known_for && partner.known_for.length > 0 && (
                 <div className="reveal reveal-delay-1">
                   <p className="text-xs uppercase tracking-[0.25em] text-[#0F5E5B] font-inter mb-5">What they're known for</p>
                   <ul className="space-y-4" data-testid="partner-known-for">
-                    {partner.knownFor.map((item, i) => (
+                    {partner.known_for.map((item, i) => (
                       <li key={i} className="flex items-start gap-3">
                         <Check size={13} className="text-[#0F5E5B] mt-0.5 flex-shrink-0" strokeWidth={2} />
-                        <span className="text-sm font-inter text-[#1F2328]/70 leading-relaxed">{item}</span>
+                        <span className="text-sm font-inter text-[#1F2328]/70 leading-relaxed">{getText(item)}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-              {partner.septaCollaboration && (
+              {septaCollab && (
                 <div className="border-t border-[#A7ADB5]/20 pt-7 reveal reveal-delay-2">
                   <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-4">How we collaborate</p>
                   <p className="text-sm font-inter font-light text-[#1F2328]/65 leading-relaxed italic">
-                    "{partner.septaCollaboration}"
+                    "{septaCollab}"
                   </p>
                 </div>
               )}
@@ -192,7 +201,7 @@ export default function PartnerProfilePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {relatedProjects.map((project, i) => {
-                const myRole = project.partnerStack.find(ps => ps.partnerId === slug);
+                const myRole = project.partner_stack.find(ps => ps.partner_id === slug);
                 return (
                   <Link
                     key={project.slug}
@@ -203,14 +212,14 @@ export default function PartnerProfilePage() {
                     <div className="h-44 overflow-hidden bg-[#E8E6E0]">
                       <img
                         src={project.image}
-                        alt={project.title}
+                        alt={getText(project.title)}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-3 mb-1">
-                        <h3 className="text-sm font-sora font-medium text-[#1F2328] leading-snug">{project.title}</h3>
+                        <h3 className="text-sm font-sora font-medium text-[#1F2328] leading-snug">{getText(project.title)}</h3>
                         <span className={`text-xs font-inter px-1.5 py-0.5 flex-shrink-0 ${typeColors[project.type] || ''}`}>
                           {project.type}
                         </span>
@@ -220,8 +229,8 @@ export default function PartnerProfilePage() {
                         <div className="flex items-start gap-2 mt-2">
                           <div className="w-1 h-1 bg-[#C6A15B] mt-1.5 flex-shrink-0" />
                           <p className="text-xs font-inter text-[#1F2328]/55">
-                            <span className="text-[#0F5E5B] font-medium">{myRole.roleLabel}: </span>
-                            {myRole.contribution}
+                            <span className="text-[#0F5E5B] font-medium">{myRole.role_label}: </span>
+                            {getText(myRole.contribution)}
                           </p>
                         </div>
                       )}
@@ -243,14 +252,14 @@ export default function PartnerProfilePage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <p className="text-2xl font-sora font-light text-white tracking-tight">
-              Interested in working with {partner.name}?
+              Interested in working with {partnerName}?
             </p>
             <p className="text-sm font-inter text-white/55 mt-1">
               Request an introduction via Septa — we will facilitate based on your project requirements.
             </p>
           </div>
           <Link
-            to={`/contact?partner=${encodeURIComponent(partner.name)}`}
+            to={`/contact?partner=${encodeURIComponent(partnerName)}`}
             data-testid="partner-introduction-btn"
             className="flex-shrink-0 h-12 px-8 bg-white text-[#0F5E5B] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#F3F0E8] transition-colors flex items-center gap-2"
           >
