@@ -1,219 +1,183 @@
-# Septa Group Website — PRD
+# Septa Group Website - Product Requirements Document
 
 ## Project Overview
-Production-ready marketing website for Septa Group, a Kerala-based construction company. Goal: win trust fast and convert visitors into leads (calls + WhatsApp + enquiry form).
+A premium construction company website for Septa Group, Kerala. The platform positions Septa as a "Delivery Studio + Ecosystem Integrator" rather than just a builder.
 
-**Live URL:** https://construct-hub-210.preview.emergentagent.com  
-**Admin Panel:** /admin (password: septa2024)  
-**Content Checklist:** /content-checklist  
+## Core Features
 
----
+### Completed Features (Phase 1)
 
-## Architecture
+#### 1. Public Website
+- **Home Page**: Hero section, trust metrics, featured projects, services, testimonials, ecosystem teaser, contact form
+- **Projects Page**: Filterable gallery by type, status, partner, design tags
+- **Project Case Study Pages**: Three-part narrative (Story, Design, Delivery) + Partner Stack display
+- **Ecosystem Page**: Partner directory with 10 categories including filtering
+- **Partner Profile Pages**: Full profile with related projects and "Request Introduction" CTA
+- **Services Page**: Service offerings aligned with ecosystem model
+- **Contact Page**: Lead capture form with validation
 
-### Stack
-- **Frontend:** React 19, Tailwind CSS, framer-motion, lucide-react, react-router-dom
-- **Backend:** FastAPI (Python), MongoDB via Motor
-- **Database:** MongoDB (septa_db)
-- **Fonts:** Sora (headings) + Inter (body) via Google Fonts
+#### 2. Admin Panel (NEW - Phase 1)
+- **JWT Authentication**: Secure login with bcrypt password hashing
+- **Leads Management**: View, filter, update status, delete leads
+- **Projects CRUD**: Create, edit, delete projects with draft/published status
+- **Partners CRUD**: Create, edit, delete partners with all categories
+- **Testimonials Management**: View and delete testimonials
+- **Settings**: Change password, export content as JSON backup
+- **Audit Logging**: Track all admin actions with timestamps
 
-### Brand Colors
-| Name | Hex | Usage |
-|------|-----|-------|
-| Carbon Black | #1F2328 | Primary text, logo |
-| Soft Linen | #F3F0E8 | Page background |
-| Stormy Teal | #0F5E5B | Buttons, accents, CTAs |
-| Golden Bronze | #C6A15B | Micro-accents, dividers |
-| Pale Slate | #A7ADB5 | Secondary text, borders |
+#### 3. Email Notifications (NEW - Phase 1)
+- **Admin Notification**: Rich HTML email with all lead details and triage subject line
+- **User Confirmation**: Professional thank you email with next steps
+- **Graceful Failure**: Leads saved to DB even if email fails
+- **Retry Logic**: 3 attempts with exponential backoff
 
-### File Structure
+#### 4. API Endpoints
 ```
-/app/frontend/src/
-├── App.js (router)
-├── hooks/useScrollReveal.js
-├── components/
-│   ├── Navbar.jsx
-│   ├── Footer.jsx
-│   └── WhatsAppButton.jsx
-└── pages/
-    ├── HomePage.jsx
-    ├── AboutPage.jsx
-    ├── ServicesPage.jsx
-    ├── ProjectsPage.jsx
-    ├── ProjectCaseStudyPage.jsx
-    ├── ContactPage.jsx
-    ├── AdminPage.jsx
-    └── ContentChecklist.jsx
+GET  /api/projects              - List all published projects
+GET  /api/projects/{slug}       - Get single project
+POST /api/projects              - Create project (admin)
+PUT  /api/projects/{slug}       - Update project (admin)
+DELETE /api/projects/{slug}     - Delete project (admin)
+
+GET  /api/partners              - List all published partners
+GET  /api/partners/{slug}       - Get single partner
+POST /api/partners              - Create partner (admin)
+PUT  /api/partners/{slug}       - Update partner (admin)
+DELETE /api/partners/{slug}     - Delete partner (admin)
+
+GET  /api/testimonials          - List testimonials
+POST /api/testimonials          - Create testimonial (admin)
+DELETE /api/testimonials/{id}   - Delete testimonial (admin)
+
+POST /api/leads                 - Submit lead (with email notifications)
+GET  /api/leads                 - List leads (admin)
+PATCH /api/leads/{id}           - Update lead status (admin)
+DELETE /api/leads/{id}          - Delete lead (admin)
+
+POST /api/admin/login           - Admin login
+POST /api/admin/logout          - Admin logout
+GET  /api/admin/me              - Get current admin info
+POST /api/admin/change-password - Change admin password
+
+GET  /api/export/content        - Export all content as JSON (admin)
+GET  /api/audit-logs            - View audit logs (admin)
+GET  /api/categories/partners   - List partner categories
+GET  /api/categories/projects   - List project categories
 ```
 
----
+### Partner Categories (10 total)
+1. Architecture & Design
+2. Interiors & Fit-out
+3. Engineering (MEP/Structural/QS)
+4. Landscape & Outdoor
+5. Materials & Vendors
+6. Smart Home / Technology
+7. Branding, Signage & Wayfinding
+8. Marketing & Digital
+9. Leasing & Real Estate (NEW)
+10. Legal / Finance (NEW)
 
-## Pages Implemented
+### Data Models
 
-### A) Home (conversion-focused)
-- Hero: "Built with Clarity." + CTA (Request Quote, View Projects, WhatsApp)
-- Trust proof bar: 4 metrics
-- Featured Projects grid: 6 cards from API
-- How Septa Works: 4-step process
-- Services snapshot: 5 tiles
-- Testimonials: loaded from API
-- CTA section + quick enquiry form (4 fields)
+#### Bilingual Support Structure
+```javascript
+{
+  title: { en: "English text", ml: "മലയാളം text" },
+  description: { en: "...", ml: "..." }
+}
+// Fallback: If ml is null, display en
+```
 
-### B) About
-- Company story (legacy + modern studio positioning)
-- Values (3 cards)
-- Why Different (3 proof-based differentiators with evidence)
-- Team section (role placeholders, no fake names)
+#### Project Schema
+- slug, title (bilingual), location, type, project_status
+- sqft, duration, year, client_type, client_lens
+- image, gallery[], short_description (bilingual)
+- challenge, challenge_detail, approach_detail, outcome_detail (bilingual)
+- partner_stack: [{ partner_id, role_label, contribution }]
+- story: { paragraphs[], owner_quote }
+- design: { intent, tags[] }
+- delivery: { highlights[], septa_standards[] }
+- media: { hero_video, gallery, plan_drawings, model_3d_url, plans_public }
+- status: draft | published
+- created_at, updated_at
 
-### C) Services
-- 5 expandable service categories with What's Included / Not Included / Timeline Variables
-- Per-service CTA (Request Quote)
+#### Partner Schema
+- slug, name (bilingual), category, relationship_type
+- specialties[], districts[], bio_short, bio_long (bilingual)
+- website, instagram, email, logo_url, cover_image
+- featured, known_for[], septa_collaboration (bilingual)
+- status: draft | published
+- created_at, updated_at
 
-### D) Projects (filterable)
-- Filter by type (Institutional/Healthcare/Commercial/Residential/Mixed-use)
-- Filter by status (Completed/Ongoing)
-- 6 realistic Kerala placeholder projects
+## Technical Architecture
 
-### E) Project Case Study (dynamic /projects/:slug)
-- Overview, challenge, approach, outcome
-- Gallery (3 images per project)
-- Septa Standard checklist
-- CTA: "Build Something Similar"
+### Frontend
+- React 18 with React Router
+- Tailwind CSS with custom theme
+- Framer Motion for animations
+- Axios for API calls
+- Custom hooks: useProjects, usePartners, useAdminAuth, etc.
 
-### F) Contact
-- Full form (8 fields: name, phone, email, location, project type, budget, timeline, message)
-- Phone + WhatsApp direct links
-- FAQ accordion (5 questions)
-- Honeypot spam protection
+### Backend
+- FastAPI with async support
+- MongoDB via Motor (async driver)
+- JWT authentication with HTTPOnly cookies
+- Bcrypt password hashing
+- SlowAPI rate limiting
+- Resend for email (placeholder key)
+- S3-compatible storage ready (Cloudflare R2)
 
-### G) Admin (/admin, password: septa2024)
-- Login gate with localStorage persistence
-- Dashboard: stats (leads, projects, testimonials counts)
-- Leads tab: view, change status (new/contacted/closed), delete
-- Projects tab: view, delete
-- Testimonials tab: view, delete
+### Environment Variables
+```
+# Backend
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=septa_db
+SECRET_KEY=<secure-key>
+RESEND_API_KEY=<resend-key>
+FROM_EMAIL=noreply@septa.group
+ADMIN_NOTIFY_EMAIL=leads@septa.group
+BOOTSTRAP_ADMIN_EMAIL=admin@septa.group
+BOOTSTRAP_ADMIN_PASSWORD=<password>
+STORAGE_PROVIDER=R2
+BUCKET_NAME=septa-media
+R2_ACCESS_KEY=<key>
+R2_SECRET_KEY=<secret>
+R2_ENDPOINT_URL=<endpoint>
+PUBLIC_CDN_BASE_URL=<cdn-url>
+```
 
-### H) Content Checklist (/content-checklist)
-- 7 categories, 37 items listing all placeholder content to replace
+## Upcoming Features (Phase 2)
 
----
+### P2: Immersive Project Media System
+- Hero video with drone walkthrough
+- Owner testimonial video (optional)
+- Image gallery with lazy loading
+- Plan drawings (permission-based with watermark)
+- 3D model viewer (GLB/GLTF)
+- Interactive 3D from drone capture
 
-## API Endpoints
+### P3: Solution Packs
+- Pre-configured partner stacks for common project types
+- Premium Home Pack, Retail Launch Pack, Institutional Excellence Pack
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | /api/leads | Submit enquiry (honeypot protected) |
-| GET | /api/leads | Get all leads (admin) |
-| PATCH | /api/leads/{id} | Update lead status |
-| DELETE | /api/leads/{id} | Delete lead |
-| GET | /api/projects | Get all projects (filter: type, status) |
-| GET | /api/projects/{slug} | Get single project |
-| POST | /api/projects | Create project (admin) |
-| PUT | /api/projects/{slug} | Update project (admin) |
-| DELETE | /api/projects/{slug} | Delete project (admin) |
-| GET | /api/testimonials | Get all testimonials |
-| POST | /api/testimonials | Create testimonial |
-| PUT | /api/testimonials/{id} | Update testimonial |
-| DELETE | /api/testimonials/{id} | Delete testimonial |
-| POST | /api/admin/auth | Admin authentication |
+### P4: Bilingual Support (EN + Malayalam)
+- Language toggle in navbar
+- Content fields already support bilingual structure
+- Malayalam font support needed
 
----
+## Credentials
+- Admin Panel: /admin
+- Email: admin@septa.group
+- Password: septa2024admin
 
-## Seed Data (auto-seeded on first start)
+## Testing
+- Backend: 35 pytest tests covering all endpoints
+- Test file: /app/backend/tests/test_septa_api.py
+- Test reports: /app/test_reports/
 
-### Projects (6)
-1. St. Thomas School of Excellence — Thrissur (Institutional, Completed)
-2. Lakeview Medical Centre — Ernakulam (Healthcare, Completed)
-3. Prestige Business Square — Kochi (Commercial, Completed)
-4. Malabar Residency — Kozhikode (Residential, Completed)
-5. Green Hills Villa Complex — Trivandrum (Residential, Ongoing)
-6. Harmony Business Centre — Kottayam (Mixed-use, Ongoing)
+## MOCKED Integrations
+- **Resend Email**: Using placeholder API key (re_placeholder_key) - emails not sent
+- **Cloudflare R2**: Using placeholder keys - file uploads will fail
 
-### Testimonials (3)
-- P. Rajan (Thrissur school)
-- Dr. S. Nair (Ernakulam healthcare)
-- A. Menon (Kozhikode residential)
-
----
-
-## SEO Setup
-- Per-page document.title
-- OpenGraph meta tags (index.html)
-- /robots.txt
-- /sitemap.xml (12 URLs)
-
----
-
-## Placeholder Content (needs replacement)
-See /content-checklist page for full list. Key items:
-- Phone number: +91 XXXXX XXXXX
-- Email: info@septagroup.in
-- Office address: [Office Address]
-- Team photos and names
-- Real project photos and names
-- WhatsApp number: 919876543210 in WhatsAppButton.jsx
-
----
-
-## Test Results (iteration_1)
-- Backend: 100% (13/13 tests passed)
-- Frontend: 95% (all pages load, forms work, admin works)
-- All core flows verified working
-
----
-
-## Ecosystem Upgrade (Feb 2026)
-
-### New Architecture
-- Moved project + partner data to **static JSON files** in `src/content/` for easy editing without code changes
-- `src/content/partners.json` — 13 partner profiles with full bios, specialties, districts, relationship types
-- `src/content/projects.json` — 6 projects with extended schema (partnerStack, clientLens, story/design/delivery modules)
-
-### New Pages
-- `/ecosystem` — Partner directory with category tabs, search, district filter, partner cards, solution packs
-- `/ecosystem/:slug` — Partner profile pages with bio, known-for, collaboration note, related projects, intro CTA
-
-### Upgraded Pages
-- **ProjectsPage** — Now imports from JSON; added Partner filter + Design Tag filter; shows architect name on cards
-- **ProjectCaseStudyPage** — Complete rewrite: Partner Stack module (dark bar with role/partner/contribution rows), 3 sections (The Story, The Design, The Delivery), clientLens-aware copy, Related Projects
-- **ServicesPage** — Rewritten with 6 ecosystem-aligned offerings (Design–Build, Bespoke Residences, Institutional, Commercial, PMC, Partnership Execution)
-- **HomePage** — Added Ecosystem teaser section with featured partner preview cards
-
-### Partner Directory (13 partners)
-- Architecture & Design: Aether Design Studio (Core), Axis Architects Collective (Core), Forma Studio (Project Partner)
-- Interiors: Woven Interiors (Core), Studio Pith (Project Partner)
-- Engineering: Meridian Structural (Core), Nexus MEP (Core), ProQS (Preferred Vendor)
-- Landscape: Greenseed Landscape Studio (Core)
-- Materials: Kerala Stone Collective (Preferred Vendor)
-- Technology: Hypha Systems (Group Company)
-- Branding/Signage: Signal Brand Studio (Project Partner)
-- Marketing: Narrative Digital (Project Partner)
-
-### Content Editing (no code required)
-- Update `src/content/partners.json` to add/edit/remove partners
-- Update `src/content/projects.json` to add/edit/remove projects with full partner stacks
-
-### Test Results (iteration_2)
-- Frontend: 100% (26/26 tests passed)
-- All ecosystem features verified working
-
----
-
-## P0 Backlog (next)
-- Replace placeholder content — see /content-checklist
-- Change admin password in backend/.env
-- Add real WhatsApp number in WhatsAppButton.jsx
-
-## P1 Backlog
-- Email notification for lead submissions (Resend)
-- Real project photos (replace Unsplash)
-- Logo SVG file
-- Admin: Add new project form (currently read/delete only)
-- Partner logo upload support
-
-## P2 Backlog
-- Google Analytics
-- Google Maps on Contact page
-- Gallery lightbox for project photos
-- Multi-language (English + Malayalam)
-
+## Last Updated
+December 2025 - Phase 1 Complete (Admin Panel + Email Notifications)
