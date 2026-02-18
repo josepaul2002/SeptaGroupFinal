@@ -6,6 +6,7 @@ const footerPages = [
   { to: '/about', label: 'About Us' },
   { to: '/services', label: 'Services' },
   { to: '/projects', label: 'Projects' },
+  { to: '/ecosystem', label: 'Ecosystem' },
   { to: '/contact', label: 'Contact' },
 ];
 
