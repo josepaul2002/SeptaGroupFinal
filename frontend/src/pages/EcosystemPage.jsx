@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, ArrowRight, Info, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { usePartners, useSolutionPacks, getText } from '../hooks/useApi';
+import { useLanguage } from '../components/LanguageToggle';
 
 const CATEGORIES = [
   'All',
@@ -60,6 +61,7 @@ const solutionPacks = [
 export default function EcosystemPage() {
   useScrollReveal();
   const { data: partners, loading } = usePartners();
+  const { t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('All');
