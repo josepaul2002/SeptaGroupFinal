@@ -1,10 +1,9 @@
 """
 Enhanced Pydantic models for Septa Group CMS
-Includes bilingual support structure and media system fields
+Includes bilingual support, partner media, site settings, page content
 """
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-from datetime import datetime
 from enum import Enum
 
 
@@ -13,19 +12,6 @@ from enum import Enum
 class PublishStatus(str, Enum):
     draft = "draft"
     published = "published"
-
-
-class PartnerCategory(str, Enum):
-    architecture_design = "Architecture & Design"
-    interiors_fitout = "Interiors & Fit-out"
-    engineering = "Engineering (MEP/Structural/QS)"
-    landscape_outdoor = "Landscape & Outdoor"
-    materials_vendors = "Materials & Vendors"
-    smart_home_tech = "Smart Home / Technology"
-    branding_signage = "Branding, Signage & Wayfinding"
-    marketing_digital = "Marketing & Digital"
-    leasing_realestate = "Leasing & Real Estate"
-    legal_finance = "Legal / Finance"
 
 
 class RelationshipType(str, Enum):
@@ -39,17 +25,17 @@ class RelationshipType(str, Enum):
 
 class BilingualText(BaseModel):
     en: str = ""
-    ml: Optional[str] = None  # Malayalam - fallback to English if None
+    ml: Optional[str] = None
 
 
-# --- Media Models (P2 ready) ---
+# --- Media Models ---
 
 class MediaItem(BaseModel):
     id: Optional[str] = None
     url: str
     thumbnail_url: Optional[str] = None
     poster_url: Optional[str] = None
-    type: str = "image"  # image, video, pdf, model_3d
+    type: str = "image"
     caption: Optional[BilingualText] = None
     order: int = 0
 
@@ -61,7 +47,7 @@ class ProjectMedia(BaseModel):
     gallery: List[MediaItem] = []
     plan_drawings: List[MediaItem] = []
     renders_3d: List[MediaItem] = []
-    model_3d_url: Optional[str] = None  # GLB/GLTF URL
+    model_3d_url: Optional[str] = None
     plans_public: bool = False
 
 
@@ -103,10 +89,13 @@ class LeadCreate(BaseModel):
     message: Optional[str] = ""
     honeypot: Optional[str] = ""
     page_source: Optional[str] = ""
+    partner_ref: Optional[str] = ""
+    service_ref: Optional[str] = ""
 
 
 class LeadStatusUpdate(BaseModel):
     status: str
+    notes: Optional[str] = None
 
 
 class LeadResponse(BaseModel):
@@ -125,7 +114,14 @@ class LeadResponse(BaseModel):
     admin_notified: bool = False
 
 
-# --- Partner Model ---
+# --- Partner Model (upgraded) ---
+
+class PartnerMedia(BaseModel):
+    card_image: Optional[str] = None
+    logo_image: Optional[str] = None
+    hero_image: Optional[str] = None
+    gallery_images: List[str] = []
+
 
 class PartnerBase(BaseModel):
     slug: str
@@ -133,15 +129,16 @@ class PartnerBase(BaseModel):
     category: str
     specialties: List[str] = []
     districts: List[str] = []
-    bio_short: BilingualText
-    bio_long: BilingualText
+    bio_short: BilingualText = BilingualText()
+    bio_long: BilingualText = BilingualText()
     relationship_type: str = "Project Partner"
-    website: Optional[str] = None
-    instagram: Optional[str] = None
-    email: Optional[str] = None
-    logo_url: Optional[str] = None
-    cover_image: Optional[str] = None
-    featured: bool = False
+    website_url: Optional[str] = None
+    instagram_url: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    sort_order: int = 0
+    is_featured: bool = False
+    media: PartnerMedia = PartnerMedia()
     known_for: List[BilingualText] = []
     septa_collaboration: Optional[BilingualText] = None
 
@@ -158,12 +155,13 @@ class PartnerUpdate(BaseModel):
     bio_short: Optional[BilingualText] = None
     bio_long: Optional[BilingualText] = None
     relationship_type: Optional[str] = None
-    website: Optional[str] = None
-    instagram: Optional[str] = None
-    email: Optional[str] = None
-    logo_url: Optional[str] = None
-    cover_image: Optional[str] = None
-    featured: Optional[bool] = None
+    website_url: Optional[str] = None
+    instagram_url: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_featured: Optional[bool] = None
+    media: Optional[PartnerMedia] = None
     known_for: Optional[List[BilingualText]] = None
     septa_collaboration: Optional[BilingualText] = None
     status: Optional[PublishStatus] = None
@@ -183,12 +181,12 @@ class ProjectBase(BaseModel):
     title: BilingualText
     location: str
     type: str
-    project_status: str  # Completed, Ongoing
+    project_status: str
     sqft: str
     duration: str
     year: str
     client_type: str
-    client_lens: str  # Residential, Commercial, Institutional
+    client_lens: str
     image: str
     gallery: List[str] = []
     short_description: BilingualText
@@ -290,8 +288,8 @@ class AuditLogEntry(BaseModel):
     id: str
     admin_id: str
     admin_email: str
-    action: str  # create, update, delete
-    resource_type: str  # project, partner, lead
+    action: str
+    resource_type: str
     resource_id: str
     changes: Optional[Dict[str, Any]] = None
     timestamp: str
@@ -304,3 +302,53 @@ class ContentExport(BaseModel):
     partners: List[Dict[str, Any]]
     exported_at: str
     exported_by: str
+
+
+# --- Site Settings Model ---
+
+class SiteContactSettings(BaseModel):
+    phone_display: str = ""
+    phone_link: str = ""
+    whatsapp_number: str = ""
+    whatsapp_link: str = ""
+    email: str = ""
+    office_address: str = ""
+    office_address_short: str = ""
+    map_link: str = ""
+    operating_districts: List[str] = []
+
+
+class EnquiryFormSettings(BaseModel):
+    project_types: List[str] = []
+    budget_ranges: List[str] = []
+    timeline_ranges: List[str] = []
+    lead_notification_email: str = ""
+
+
+class SiteSettings(BaseModel):
+    contact: SiteContactSettings = SiteContactSettings()
+    enquiry: EnquiryFormSettings = EnquiryFormSettings()
+    content_language_mode: str = "english_only"
+    footer_tagline: str = "Built with Clarity. Delivered with Discipline."
+
+
+# --- Page Content Model (CMS-driven About/Services) ---
+
+class ContentBlock(BaseModel):
+    id: Optional[str] = None
+    block_type: str  # hero, metrics, timeline_step, team_member, proof_callout, comparison_row
+    order: int = 0
+    title: BilingualText = BilingualText()
+    subtitle: BilingualText = BilingualText()
+    body: BilingualText = BilingualText()
+    image_url: Optional[str] = None
+    icon: Optional[str] = None
+    link_url: Optional[str] = None
+    link_label: Optional[str] = None
+    metadata: Dict[str, Any] = {}
+
+
+class PageContent(BaseModel):
+    page_id: str  # about, services
+    blocks: List[ContentBlock] = []
+    updated_at: Optional[str] = None
