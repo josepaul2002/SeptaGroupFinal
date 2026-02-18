@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ArrowRight, Phone, MessageCircle, CheckCircle2, Building2, Stethoscope, Home, Layers, ClipboardList, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useProjects, usePartners, useTestimonials, getText } from '../hooks/useApi';
-import { useLanguage, uiTranslations } from '../components/LanguageToggle';
+import { useLanguage } from '../components/LanguageToggle';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
