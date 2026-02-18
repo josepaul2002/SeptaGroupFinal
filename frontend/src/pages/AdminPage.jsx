@@ -1,17 +1,21 @@
 import { useState } from 'react';
-import { LogOut, Lock, AlertCircle, Loader2, MessageSquare, Folder, Users, FileText, Settings } from 'lucide-react';
+import { LogOut, Lock, AlertCircle, Loader2, MessageSquare, Folder, Users, FileText, Settings, History, LayoutDashboard } from 'lucide-react';
 import { useAdminAuth } from '../hooks/useApi';
 import LeadsTab from '../components/admin/LeadsTab';
 import ProjectsTab from '../components/admin/ProjectsTab';
 import PartnersTab from '../components/admin/PartnersTab';
 import TestimonialsTab from '../components/admin/TestimonialsTab';
 import SettingsTab from '../components/admin/SettingsTab';
+import AuditLogTab from '../components/admin/AuditLogTab';
+import PageContentTab from '../components/admin/PageContentTab';
 
 const TABS = [
   { id: 'leads', label: 'Leads', icon: MessageSquare },
   { id: 'projects', label: 'Projects', icon: Folder },
   { id: 'partners', label: 'Partners', icon: Users },
+  { id: 'pages', label: 'Pages', icon: LayoutDashboard },
   { id: 'testimonials', label: 'Testimonials', icon: FileText },
+  { id: 'audit', label: 'Audit Log', icon: History },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -109,7 +113,9 @@ export default function AdminPage() {
             {activeTab === 'leads' && <LeadsTab token={token} />}
             {activeTab === 'projects' && <ProjectsTab token={token} />}
             {activeTab === 'partners' && <PartnersTab token={token} />}
+            {activeTab === 'pages' && <PageContentTab token={token} />}
             {activeTab === 'testimonials' && <TestimonialsTab token={token} />}
+            {activeTab === 'audit' && <AuditLogTab token={token} />}
             {activeTab === 'settings' && <SettingsTab token={token} />}
           </main>
         </div>
