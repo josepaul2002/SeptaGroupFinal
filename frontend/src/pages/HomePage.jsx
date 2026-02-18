@@ -248,9 +248,9 @@ export default function HomePage() {
       <section className="py-20 md:py-32 bg-white" data-testid="septa-standard-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="mb-16 reveal">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">How Septa Works</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.how_we_work']}</p>
             <h2 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight max-w-xl">
-              The Septa Standard
+              {ui['section.septa_standard']}
             </h2>
             <p className="text-base font-inter font-light text-[#1F2328]/55 mt-4 max-w-lg leading-relaxed">
               Our delivery methodology is not aspirational copy. It is a working protocol applied on every site, every week.
