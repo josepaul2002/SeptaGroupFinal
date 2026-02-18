@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, MapPin, Calendar, Maximize2, Building2, Users, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useProject, useProjects, usePartners, getText } from '../hooks/useApi';
+import PreviewBanner from '../components/PreviewBanner';
 
 const typeColors = {
   Institutional: 'bg-[#E8F0EF] text-[#0F5E5B]',
