@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import LanguageToggle from './LanguageToggle';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -60,8 +61,10 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Desktop CTA */}
+        {/* Desktop CTA + Language Toggle */}
         <div className="hidden md:flex items-center gap-4">
+          <LanguageToggle className="text-[#1F2328]/60 hover:text-[#0F5E5B]" />
+          <div className="w-px h-4 bg-[#A7ADB5]/30" />
           <Link
             to="/contact"
             data-testid="navbar-cta-btn"
@@ -100,6 +103,9 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <div className="border-t border-[#A7ADB5]/20 pt-4 mt-2">
+            <LanguageToggle className="text-[#1F2328]/60 hover:text-[#0F5E5B]" />
+          </div>
           <Link
             to="/contact"
             data-testid="navbar-mobile-cta-btn"
