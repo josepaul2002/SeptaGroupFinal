@@ -85,6 +85,11 @@ export function useTestimonials() {
   return useApiData('/testimonials', []);
 }
 
+// Solution Packs hook
+export function useSolutionPacks() {
+  return useApiData('/solution-packs', []);
+}
+
 // Categories hook
 export function usePartnerCategories() {
   return useApiData('/categories/partners', []);
