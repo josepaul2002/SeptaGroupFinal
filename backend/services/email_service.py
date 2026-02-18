@@ -15,7 +15,46 @@ logger = logging.getLogger(__name__)
 resend.api_key = os.environ.get("RESEND_API_KEY", "")
 
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "noreply@septa.group")
-ADMIN_NOTIFY_EMAILS = os.environ.get("ADMIN_NOTIFY_EMAIL", "leads@septa.group").split(",")
+ADMIN_NOTIFY_EMAILS = os.environ.get("ADMIN_NOTIFY_EMAIL", "jose@septa.group,info@septa.group").split(",")
+
+# Database reference (will be set from server.py)
+email_logs_collection = None
+
+def set_email_logs_collection(collection):
+    """Set the MongoDB collection for email logs"""
+    global email_logs_collection
+    email_logs_collection = collection
+
+
+async def log_email_attempt(
+    email_type: str,
+    recipient: str,
+    subject: str,
+    success: bool,
+    error: Optional[str] = None,
+    email_id: Optional[str] = None,
+    lead_id: Optional[str] = None
+):
+    """Log email send attempt to database for debugging"""
+    if email_logs_collection is None:
+        logger.warning("Email logs collection not configured")
+        return
+    
+    log_entry = {
+        "type": email_type,  # admin_notification, user_confirmation
+        "recipient": recipient,
+        "subject": subject,
+        "success": success,
+        "error": error,
+        "email_id": email_id,
+        "lead_id": lead_id,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    
+    try:
+        await email_logs_collection.insert_one(log_entry)
+    except Exception as e:
+        logger.error(f"Failed to log email attempt: {str(e)}")
 
 
 def get_admin_notification_html(lead_data: dict) -> str:
