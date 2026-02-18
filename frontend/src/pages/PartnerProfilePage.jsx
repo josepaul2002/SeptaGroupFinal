@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, MapPin, ExternalLink, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { usePartner, useProjects, getText } from '../hooks/useApi';
+import PreviewBanner from '../components/PreviewBanner';
 
 const RELATIONSHIP_STYLES = {
   'Core Partner': 'bg-[#E8F0EF] text-[#0F5E5B]',
@@ -23,7 +24,9 @@ const typeColors = {
 export default function PartnerProfilePage() {
   useScrollReveal();
   const { slug } = useParams();
-  const { partner, loading: partnerLoading } = usePartner(slug);
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
+  const { partner, loading: partnerLoading } = usePartner(slug, isPreview);
   const { data: projects, loading: projectsLoading } = useProjects();
 
   const relatedProjects = projects.filter(p =>
