@@ -323,17 +323,26 @@ async def get_partners(
 @api_router.get("/partners/{slug}")
 async def get_partner(
     slug: str,
+    preview: Optional[str] = None,
     admin: Optional[dict] = Depends(get_optional_admin)
 ):
     """Get single partner by slug"""
     query = {"slug": slug}
     
-    if not admin:
+    # Preview mode: allow viewing draft with valid preview token
+    is_preview = preview and admin
+    
+    if not admin and not is_preview:
         query["status"] = "published"
     
     partner = await db.partners.find_one(query, {"_id": 0})
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
+    
+    # Add preview flag to response
+    if is_preview and partner.get("status") == "draft":
+        partner["_preview_mode"] = True
+    
     return partner
 
 
