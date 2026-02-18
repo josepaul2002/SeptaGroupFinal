@@ -11,7 +11,7 @@ export function getText(bilingual, lang = 'en') {
 }
 
 // Generic fetch hook
-function useApiData(endpoint, defaultValue = [], deps = []) {
+function useApiData(endpoint, defaultValue = []) {
   const [data, setData] = useState(defaultValue);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,7 +19,7 @@ function useApiData(endpoint, defaultValue = [], deps = []) {
   useEffect(() => {
     let cancelled = false;
     
-    async function fetch() {
+    async function fetchData() {
       setLoading(true);
       try {
         const res = await axios.get(`${API}${endpoint}`);
@@ -39,9 +39,9 @@ function useApiData(endpoint, defaultValue = [], deps = []) {
       }
     }
     
-    fetch();
+    fetchData();
     return () => { cancelled = true; };
-  }, deps);
+  }, [endpoint]);
 
   return { data, loading, error, setData };
 }
