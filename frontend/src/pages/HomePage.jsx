@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ArrowRight, Phone, MessageCircle, CheckCircle2, Building2, Stethoscope, Home, Layers, ClipboardList, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useProjects, usePartners, useTestimonials, getText } from '../hooks/useApi';
+import { useLanguage, uiTranslations } from '../components/LanguageToggle';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -58,6 +59,8 @@ export default function HomePage() {
   const { data: projects, loading: projectsLoading } = useProjects();
   const { data: partners, loading: partnersLoading } = usePartners();
   const { data: testimonials } = useTestimonials();
+  const { t, lang } = useLanguage();
+  const ui = uiTranslations[lang] || uiTranslations.en;
   
   const [form, setForm] = useState({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
   const [formStatus, setFormStatus] = useState(null);
