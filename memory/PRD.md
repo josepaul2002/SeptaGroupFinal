@@ -24,6 +24,7 @@ A premium construction company website for Septa Group, Kerala. The platform pos
 - **Testimonials Management**: View and delete testimonials
 - **Settings**: Change password, export content as JSON backup
 - **Audit Logging**: Track all admin actions with timestamps
+- **Preview Mode**: View draft content before publishing with gold banner indicator
 
 #### 3. Email Notifications (NEW - Phase 1)
 - **Admin Notification**: Rich HTML email with all lead details and triage subject line
