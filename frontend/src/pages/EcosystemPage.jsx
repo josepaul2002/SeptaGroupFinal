@@ -1,10 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ArrowRight, Info } from 'lucide-react';
+import { Search, ArrowRight, Info, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import partnersData from '../content/partners.json';
-
-const { partners } = partnersData;
+import { usePartners, getText } from '../hooks/useApi';
 
 const CATEGORIES = [
   'All',
@@ -16,6 +14,8 @@ const CATEGORIES = [
   'Smart Home / Technology',
   'Branding, Signage & Wayfinding',
   'Marketing & Digital',
+  'Leasing & Real Estate',
+  'Legal / Finance',
 ];
 
 const RELATIONSHIP_COLORS = {
@@ -55,6 +55,7 @@ const solutionPacks = [
 
 export default function EcosystemPage() {
   useScrollReveal();
+  const { data: partners, loading } = usePartners();
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('All');
@@ -65,20 +66,21 @@ export default function EcosystemPage() {
 
   const allDistricts = useMemo(() => {
     const d = new Set(['All']);
-    partners.forEach(p => p.districts.forEach(dist => d.add(dist)));
+    partners.forEach(p => p.districts?.forEach(dist => d.add(dist)));
     return [...d].sort((a, b) => a === 'All' ? -1 : a.localeCompare(b));
-  }, []);
+  }, [partners]);
 
   const filtered = useMemo(() => {
     return partners.filter(p => {
+      const name = getText(p.name);
       const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
       const matchesSearch = search === '' ||
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.specialties.some(s => s.toLowerCase().includes(search.toLowerCase()));
-      const matchesDistrict = selectedDistrict === 'All' || p.districts.includes(selectedDistrict);
+        name.toLowerCase().includes(search.toLowerCase()) ||
+        p.specialties?.some(s => s.toLowerCase().includes(search.toLowerCase()));
+      const matchesDistrict = selectedDistrict === 'All' || p.districts?.includes(selectedDistrict);
       return matchesCategory && matchesSearch && matchesDistrict;
     });
-  }, [activeCategory, search, selectedDistrict]);
+  }, [partners, activeCategory, search, selectedDistrict]);
 
   return (
     <div className="pt-16">
@@ -164,7 +166,11 @@ export default function EcosystemPage() {
       {/* Partners Grid */}
       <section className="py-14 md:py-20 bg-[#F3F0E8]" data-testid="ecosystem-partners-grid">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="py-20 flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#0F5E5B]" size={32} />
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="py-20 text-center">
               <p className="text-[#A7ADB5] font-inter text-sm">No partners match the current filters.</p>
               <button
@@ -183,16 +189,16 @@ export default function EcosystemPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filtered.map((partner, i) => (
                   <Link
-                    key={partner.id}
+                    key={partner.slug}
                     to={`/ecosystem/${partner.slug}`}
                     data-testid={`partner-card-${partner.slug}`}
                     className={`group block bg-white border border-[#1F2328]/8 hover:border-[#C6A15B]/50 transition-all duration-300 reveal reveal-delay-${Math.min(i % 3 + 1, 4)}`}
                   >
-                    {partner.coverImage && (
+                    {partner.cover_image && (
                       <div className="h-40 overflow-hidden bg-[#E8E6E0]">
                         <img
-                          src={partner.coverImage}
-                          alt={partner.name}
+                          src={partner.cover_image}
+                          alt={getText(partner.name)}
                           loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
@@ -201,8 +207,8 @@ export default function EcosystemPage() {
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <h3 className="text-base font-sora font-medium text-[#1F2328] leading-snug group-hover:text-[#0F5E5B] transition-colors">
-                          {partner.name}
-                          {partner.relationshipType === 'Group Company' && (
+                          {getText(partner.name)}
+                          {partner.relationship_type === 'Group Company' && (
                             <span className="ml-2 text-xs font-inter text-[#C6A15B] normal-case font-normal">Group Co.</span>
                           )}
                         </h3>
@@ -212,15 +218,15 @@ export default function EcosystemPage() {
                       </div>
                       <p className="text-xs font-inter text-[#A7ADB5] mb-3">{partner.category}</p>
                       <div className="flex flex-wrap gap-1.5 mb-4">
-                        {partner.specialties.slice(0, 2).map(s => (
+                        {partner.specialties?.slice(0, 2).map(s => (
                           <span key={s} className="text-xs font-inter px-2 py-0.5 bg-[#F3F0E8] text-[#1F2328]/60 border border-[#A7ADB5]/20">
                             {s}
                           </span>
                         ))}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-inter px-2 py-0.5 border ${RELATIONSHIP_COLORS[partner.relationshipType] || 'bg-gray-100 text-gray-600'}`}>
-                          {partner.relationshipType}
+                        <span className={`text-xs font-inter px-2 py-0.5 border ${RELATIONSHIP_COLORS[partner.relationship_type] || 'bg-gray-100 text-gray-600'}`}>
+                          {partner.relationship_type}
                         </span>
                         <ArrowRight size={13} className="text-[#A7ADB5] group-hover:text-[#0F5E5B] transition-colors" strokeWidth={1.5} />
                       </div>
