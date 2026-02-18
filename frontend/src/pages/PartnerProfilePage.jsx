@@ -1,24 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, MapPin, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Instagram, Mail, Phone, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import { usePartner, useProjects, getText } from '../hooks/useApi';
+import { getText } from '../hooks/useApi';
+import { useLanguage } from '../components/LanguageToggle';
 import PreviewBanner from '../components/PreviewBanner';
+import axios from 'axios';
 
-const RELATIONSHIP_STYLES = {
-  'Core Partner': 'bg-[#E8F0EF] text-[#0F5E5B]',
-  'Project Partner': 'bg-[#F0EBE5] text-[#7A4E2D]',
-  'Preferred Vendor': 'bg-[#F0F0EA] text-[#5C5C35]',
-  'Technology Partner': 'bg-[#EEF0F7] text-[#3B4A8A]',
-  'Group Company': 'bg-[#1F2328]/10 text-[#1F2328]',
-};
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const typeColors = {
-  Institutional: 'bg-[#E8F0EF] text-[#0F5E5B]',
-  Healthcare: 'bg-[#EEF0F7] text-[#3B4A8A]',
-  Commercial: 'bg-[#F0EBE5] text-[#7A4E2D]',
-  Residential: 'bg-[#EFF0E8] text-[#4A5C1F]',
-  'Mixed-use': 'bg-[#F0EAF4] text-[#6A3A7A]',
+const relationshipLabels = {
+  'Group Company': { color: 'bg-[#0F5E5B] text-white', desc: 'Part of the Septa Group family' },
+  'Core Partner': { color: 'bg-[#C6A15B] text-white', desc: 'Long-term collaboration across multiple projects' },
+  'Project Partner': { color: 'bg-[#E8F0EF] text-[#0F5E5B]', desc: 'Engaged for specific project requirements' },
+  'Preferred Vendor': { color: 'bg-[#F3F0E8] text-[#1F2328]', desc: 'Trusted supplier in our material network' },
 };
 
 export default function PartnerProfilePage() {
@@ -26,21 +21,21 @@ export default function PartnerProfilePage() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
-  const { partner, loading: partnerLoading } = usePartner(slug, isPreview);
-  const { data: projects, loading: projectsLoading } = useProjects();
-
-  const relatedProjects = projects.filter(p =>
-    p.partner_stack && p.partner_stack.some(ps => ps.partner_id === slug)
-  );
+  const [partner, setPartner] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [galleryIdx, setGalleryIdx] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (partner) {
-      document.title = `${getText(partner.name)} — Septa Ecosystem`;
-    }
-  }, [partner]);
+    setLoading(true);
+    axios.get(`${API}/partners/${slug}${isPreview ? '?preview=true' : ''}`)
+      .then(res => { setPartner(res.data); document.title = `${getText(res.data.name)} — Septa Ecosystem`; })
+      .catch(() => setPartner(null))
+      .finally(() => setLoading(false));
+  }, [slug, isPreview]);
 
-  if (partnerLoading || projectsLoading) {
+  if (loading) {
     return (
       <div className="pt-16 min-h-screen bg-[#F3F0E8] flex items-center justify-center">
         <Loader2 className="animate-spin text-[#0F5E5B]" size={32} />
@@ -61,217 +56,180 @@ export default function PartnerProfilePage() {
     );
   }
 
-  const partnerName = getText(partner.name);
-  const bioLong = getText(partner.bio_long);
-  const septaCollab = getText(partner.septa_collaboration);
-  const showPreviewBanner = isPreview || partner._preview_mode;
+  const media = partner.media || {};
+  const heroImage = media.hero_image || media.card_image || partner.cover_image;
+  const logoImage = media.logo_image || partner.logo_url;
+  const gallery = media.gallery_images || [];
+  const relInfo = relationshipLabels[partner.relationship_type] || relationshipLabels['Project Partner'];
+  const showPreview = isPreview || partner._preview_mode;
 
   return (
-    <div className={showPreviewBanner ? "pt-28" : "pt-16"} data-testid="partner-profile-page">
-      {/* Preview Banner */}
-      {showPreviewBanner && <PreviewBanner type="partner" slug={slug} />}
-      
-      {/* Back */}
+    <div className={showPreview ? 'pt-28' : 'pt-16'} data-testid="partner-profile-page">
+      {showPreview && <PreviewBanner type="partner" slug={slug} />}
+
+      {/* Back nav */}
       <div className="bg-[#F3F0E8] border-b border-[#A7ADB5]/20 py-4">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <Link
-            to={showPreviewBanner ? "/admin" : "/ecosystem"}
-            data-testid="back-to-ecosystem-btn"
-            className="inline-flex items-center gap-2 text-xs font-inter text-[#A7ADB5] hover:text-[#0F5E5B] transition-colors uppercase tracking-widest"
-          >
-            <ArrowLeft size={13} strokeWidth={1.5} /> {showPreviewBanner ? "Back to Admin" : "Ecosystem"}
+          <Link to={showPreview ? '/admin' : '/ecosystem'} data-testid="back-to-ecosystem-btn"
+            className="inline-flex items-center gap-2 text-xs font-inter text-[#A7ADB5] hover:text-[#0F5E5B] transition-colors uppercase tracking-widest">
+            <ArrowLeft size={13} strokeWidth={1.5} /> {showPreview ? 'Back to Admin' : 'Ecosystem'}
           </Link>
         </div>
       </div>
 
-      {/* Cover image hero */}
-      {partner.cover_image && (
-        <div className="relative h-[40vh] md:h-[50vh] overflow-hidden bg-[#E8E6E0]">
-          <img
-            src={partner.cover_image}
-            alt={partnerName}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-[#1F2328]/45" />
-        </div>
-      )}
-
-      {/* Profile header */}
-      <section className="py-14 md:py-20 bg-[#F3F0E8]" data-testid="partner-header">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div className="lg:col-span-8">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3 reveal">
-                {partner.category}
-              </p>
-              <h1 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-4 reveal reveal-delay-1">
-                {partnerName}
-                {partner.relationship_type === 'Group Company' && (
-                  <span className="ml-3 text-lg font-inter font-light text-[#C6A15B]">Group Company</span>
-                )}
+      {/* Hero */}
+      <div className="relative h-[35vh] md:h-[50vh] overflow-hidden bg-[#1F2328]">
+        {heroImage ? (
+          <img src={heroImage} alt={t(partner.name)} className="w-full h-full object-cover opacity-60" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#0F5E5B]/30 to-[#1F2328]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1F2328] via-[#1F2328]/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 lg:p-16">
+          <div className="max-w-[1400px] mx-auto flex items-end gap-6">
+            {logoImage && (
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-white p-2 flex-shrink-0">
+                <img src={logoImage} alt="" className="w-full h-full object-contain" />
+              </div>
+            )}
+            <div>
+              <span className={`inline-block text-xs font-inter uppercase tracking-wider px-2.5 py-1 mb-3 ${relInfo.color}`}>
+                {partner.relationship_type}
+              </span>
+              <h1 className="text-3xl md:text-5xl font-sora font-light text-white tracking-tight" data-testid="partner-name">
+                {t(partner.name)}
               </h1>
-              <div className="flex flex-wrap items-center gap-3 mb-6 reveal reveal-delay-2">
-                <span className={`text-xs font-inter px-2.5 py-1 ${RELATIONSHIP_STYLES[partner.relationship_type]}`}>
-                  {partner.relationship_type}
-                </span>
-                {partner.districts?.map(d => (
-                  <span key={d} className="flex items-center gap-1 text-xs font-inter text-[#A7ADB5]">
-                    <MapPin size={10} strokeWidth={1.5} />{d}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-2 reveal reveal-delay-2">
-                {partner.specialties?.map(s => (
-                  <span key={s} className="text-xs font-inter px-2.5 py-1 bg-white border border-[#A7ADB5]/25 text-[#1F2328]/65">
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="lg:col-span-4 reveal reveal-delay-3">
-              {(partner.website || partner.instagram || partner.email) && (
-                <div className="bg-white border border-[#A7ADB5]/20 p-6 space-y-3">
-                  <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-4">Contact</p>
-                  {partner.website && (
-                    <div className="flex items-center gap-2">
-                      <ExternalLink size={12} className="text-[#C6A15B]" strokeWidth={1.5} />
-                      <span className="text-xs font-inter text-[#1F2328]/60">{partner.website}</span>
-                    </div>
-                  )}
-                  {partner.instagram && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-[#C6A15B] font-inter">IG</span>
-                      <span className="text-xs font-inter text-[#1F2328]/60">{partner.instagram}</span>
-                    </div>
-                  )}
-                  {partner.email && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-[#C6A15B] font-inter">@</span>
-                      <span className="text-xs font-inter text-[#1F2328]/60">{partner.email}</span>
-                    </div>
-                  )}
-                </div>
-              )}
+              <p className="text-sm font-inter text-[#C6A15B] mt-1">{partner.category}</p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Bio + Known For + Collaboration */}
-      <section className="py-14 md:py-20 bg-white" data-testid="partner-bio">
+      {/* Content */}
+      <section className="py-12 md:py-20 bg-[#F3F0E8]">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-            <div className="lg:col-span-7 space-y-6 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-1">About</p>
-              {bioLong.split('\n\n').map((para, i) => (
-                <p key={i} className="text-base font-inter font-light text-[#1F2328]/65 leading-relaxed">
-                  {para}
-                </p>
-              ))}
-            </div>
-            <div className="lg:col-span-5 space-y-8">
-              {partner.known_for && partner.known_for.length > 0 && (
-                <div className="reveal reveal-delay-1">
-                  <p className="text-xs uppercase tracking-[0.25em] text-[#0F5E5B] font-inter mb-5">What they're known for</p>
-                  <ul className="space-y-4" data-testid="partner-known-for">
-                    {partner.known_for.map((item, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <Check size={13} className="text-[#0F5E5B] mt-0.5 flex-shrink-0" strokeWidth={2} />
-                        <span className="text-sm font-inter text-[#1F2328]/70 leading-relaxed">{getText(item)}</span>
-                      </li>
-                    ))}
-                  </ul>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Main content */}
+            <div className="lg:col-span-8 space-y-12">
+              {/* Bio */}
+              {t(partner.bio_short) && (
+                <div className="reveal" data-testid="partner-short-bio">
+                  <p className="text-lg font-inter font-light text-[#1F2328]/75 leading-relaxed">
+                    {t(partner.bio_short)}
+                  </p>
                 </div>
               )}
-              {septaCollab && (
-                <div className="border-t border-[#A7ADB5]/20 pt-7 reveal reveal-delay-2">
-                  <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-4">How we collaborate</p>
-                  <p className="text-sm font-inter font-light text-[#1F2328]/65 leading-relaxed italic">
-                    "{septaCollab}"
+              {t(partner.bio_long) && (
+                <div className="reveal reveal-delay-1" data-testid="partner-full-bio">
+                  <div className="prose prose-sm max-w-none text-[#1F2328]/60 font-inter font-light leading-relaxed whitespace-pre-line">
+                    {t(partner.bio_long)}
+                  </div>
+                </div>
+              )}
+
+              {/* Gallery */}
+              {gallery.length > 0 && (
+                <div className="reveal" data-testid="partner-gallery">
+                  <p className="text-xs uppercase tracking-widest text-[#C6A15B] font-inter mb-4">Gallery</p>
+                  <div className="relative aspect-[16/9] bg-[#E8E6E0] overflow-hidden">
+                    <img src={gallery[galleryIdx]} alt={`Gallery ${galleryIdx + 1}`}
+                      className="w-full h-full object-cover transition-opacity duration-300" />
+                    {gallery.length > 1 && (
+                      <>
+                        <button onClick={() => setGalleryIdx((galleryIdx - 1 + gallery.length) % gallery.length)}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                          data-testid="gallery-prev">
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button onClick={() => setGalleryIdx((galleryIdx + 1) % gallery.length)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                          data-testid="gallery-next">
+                          <ChevronRight size={16} />
+                        </button>
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                          {gallery.map((_, i) => (
+                            <button key={i} onClick={() => setGalleryIdx(i)}
+                              className={`w-2 h-2 transition-colors ${i === galleryIdx ? 'bg-white' : 'bg-white/40'}`} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Septa collaboration */}
+              {t(partner.septa_collaboration) && (
+                <div className="reveal p-6 bg-white border border-[#A7ADB5]/20" data-testid="partner-collaboration">
+                  <p className="text-xs uppercase tracking-widest text-[#0F5E5B] font-inter mb-3">Collaboration with Septa</p>
+                  <p className="text-sm font-inter font-light text-[#1F2328]/65 leading-relaxed">
+                    {t(partner.septa_collaboration)}
                   </p>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Related Projects */}
-      {relatedProjects.length > 0 && (
-        <section className="py-14 md:py-20 bg-[#F3F0E8]" data-testid="partner-related-projects">
-          <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-            <div className="mb-10 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Joint Work</p>
-              <h2 className="text-2xl md:text-3xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
-                Projects delivered with Septa
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {relatedProjects.map((project, i) => {
-                const myRole = project.partner_stack.find(ps => ps.partner_id === slug);
-                return (
-                  <Link
-                    key={project.slug}
-                    to={`/projects/${project.slug}`}
-                    data-testid={`related-project-${project.slug}`}
-                    className={`group block bg-white border border-[#1F2328]/8 hover:border-[#C6A15B]/50 transition-colors duration-300 reveal reveal-delay-${Math.min(i + 1, 3)}`}
-                  >
-                    <div className="h-44 overflow-hidden bg-[#E8E6E0]">
-                      <img
-                        src={project.image}
-                        alt={getText(project.title)}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-3 mb-1">
-                        <h3 className="text-sm font-sora font-medium text-[#1F2328] leading-snug">{getText(project.title)}</h3>
-                        <span className={`text-xs font-inter px-1.5 py-0.5 flex-shrink-0 ${typeColors[project.type] || ''}`}>
-                          {project.type}
-                        </span>
-                      </div>
-                      <p className="text-xs font-inter text-[#A7ADB5] mb-2">{project.location}</p>
-                      {myRole && (
-                        <div className="flex items-start gap-2 mt-2">
-                          <div className="w-1 h-1 bg-[#C6A15B] mt-1.5 flex-shrink-0" />
-                          <p className="text-xs font-inter text-[#1F2328]/55">
-                            <span className="text-[#0F5E5B] font-medium">{myRole.role_label}: </span>
-                            {getText(myRole.contribution)}
-                          </p>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1.5 mt-3">
-                        <span className="text-xs font-inter font-medium text-[#0F5E5B] uppercase tracking-wider group-hover:text-[#C6A15B] transition-colors">View case study</span>
-                        <ArrowRight size={11} className="text-[#0F5E5B] group-hover:text-[#C6A15B] transition-colors" strokeWidth={1.5} />
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+            {/* Sidebar */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Relationship */}
+              <div className="p-5 bg-white border border-[#A7ADB5]/20 reveal" data-testid="partner-info-card">
+                <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-3">Relationship</p>
+                <span className={`inline-block text-xs font-inter font-medium px-2.5 py-1 ${relInfo.color}`}>
+                  {partner.relationship_type}
+                </span>
+                <p className="text-xs font-inter text-[#1F2328]/50 mt-2">{relInfo.desc}</p>
+              </div>
 
-      {/* Request Introduction CTA */}
-      <section className="py-14 md:py-16 bg-[#0F5E5B]" data-testid="partner-cta">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <p className="text-2xl font-sora font-light text-white tracking-tight">
-              Interested in working with {partnerName}?
-            </p>
-            <p className="text-sm font-inter text-white/55 mt-1">
-              Request an introduction via Septa — we will facilitate based on your project requirements.
-            </p>
+              {/* Specialties */}
+              {partner.specialties?.length > 0 && (
+                <div className="p-5 bg-white border border-[#A7ADB5]/20 reveal" data-testid="partner-specialties">
+                  <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-3">Specialties</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {partner.specialties.map(s => (
+                      <span key={s} className="text-xs font-inter px-2 py-0.5 bg-[#F3F0E8] text-[#1F2328]/60 border border-[#A7ADB5]/15">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Links */}
+              <div className="p-5 bg-white border border-[#A7ADB5]/20 space-y-3 reveal" data-testid="partner-links">
+                <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-2">Links</p>
+                {(partner.website_url || partner.website) && (
+                  <a href={partner.website_url || partner.website} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm font-inter text-[#0F5E5B] hover:text-[#C6A15B] transition-colors">
+                    <Globe size={14} strokeWidth={1.5} /> Website
+                  </a>
+                )}
+                {(partner.instagram_url || partner.instagram) && (
+                  <a href={partner.instagram_url || partner.instagram} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm font-inter text-[#0F5E5B] hover:text-[#C6A15B] transition-colors">
+                    <Instagram size={14} strokeWidth={1.5} /> Instagram
+                  </a>
+                )}
+                {partner.contact_email && (
+                  <a href={`mailto:${partner.contact_email}`}
+                    className="flex items-center gap-2 text-sm font-inter text-[#0F5E5B] hover:text-[#C6A15B] transition-colors">
+                    <Mail size={14} strokeWidth={1.5} /> {partner.contact_email}
+                  </a>
+                )}
+                {partner.contact_phone && (
+                  <a href={`tel:${partner.contact_phone}`}
+                    className="flex items-center gap-2 text-sm font-inter text-[#0F5E5B] hover:text-[#C6A15B] transition-colors">
+                    <Phone size={14} strokeWidth={1.5} /> {partner.contact_phone}
+                  </a>
+                )}
+              </div>
+
+              {/* CTA */}
+              <Link to={`/contact?partner=${partner.slug}`} data-testid="partner-intro-cta"
+                className="block w-full h-12 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center justify-center gap-2">
+                Request an Introduction <ArrowRight size={14} strokeWidth={1.5} />
+              </Link>
+            </div>
           </div>
-          <Link
-            to={`/contact?partner=${encodeURIComponent(partnerName)}`}
-            data-testid="partner-introduction-btn"
-            className="flex-shrink-0 h-12 px-8 bg-white text-[#0F5E5B] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#F3F0E8] transition-colors flex items-center gap-2"
-          >
-            Request Introduction <ArrowRight size={14} strokeWidth={1.5} />
-          </Link>
         </div>
       </section>
     </div>
