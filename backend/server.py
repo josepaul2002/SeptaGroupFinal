@@ -1021,6 +1021,9 @@ async def startup_event():
 
 app.include_router(api_router)
 
+# Mount static files for local uploads
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
