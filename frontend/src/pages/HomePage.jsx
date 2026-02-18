@@ -60,7 +60,6 @@ export default function HomePage() {
   const { data: partners, loading: partnersLoading } = usePartners();
   const { data: testimonials } = useTestimonials();
   const { t, lang } = useLanguage();
-  const ui = uiTranslations[lang] || uiTranslations.en;
   
   const [form, setForm] = useState({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
   const [formStatus, setFormStatus] = useState(null);
