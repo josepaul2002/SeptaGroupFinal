@@ -339,17 +339,28 @@ function ProjectsTab({ token }) {
                   }`}>
                     {project.status}
                   </span>
+                  <a
+                    href={`/projects/${project.slug}?preview=true`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#C6A15B] hover:text-[#0F5E5B] p-1"
+                    title="Preview"
+                  >
+                    <Eye size={14} />
+                  </a>
                   <button
                     onClick={() => setEditing(project)}
                     className="text-[#0F5E5B] hover:text-[#C6A15B] p-1"
+                    title="Edit"
                   >
-                    <Eye size={14} />
+                    <Settings size={14} />
                   </button>
                   <button
                     onClick={() => {
                       if (window.confirm('Delete this project?')) deleteProject(project.slug);
                     }}
                     className="text-red-400 hover:text-red-600 p-1"
+                    title="Delete"
                   >
                     <Trash2 size={14} />
                   </button>
