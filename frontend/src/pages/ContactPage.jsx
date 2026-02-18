@@ -1,306 +1,218 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Phone, MessageCircle, ArrowRight, CheckCircle2, MapPin, Mail, ChevronDown } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Phone, Mail, MapPin, MessageCircle, ArrowRight, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { useSiteSettings } from '../hooks/useApi';
+import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const faqs = [
-  {
-    q: 'How do you provide a quote?',
-    a: 'We prepare a scope document first — listing every assumption, inclusion, and exclusion. The quotation is built on this scope, so you can compare it accurately against other contractors who may be quoting different scope. We do not quote per sqft for complex projects — that metric misses too much.',
-  },
-  {
-    q: 'Do you do turnkey construction?',
-    a: 'Yes. Turnkey delivery — from foundation to finishing, including M&E, waterproofing, and final paint — is our standard offering. We can also work to a shell-and-core specification if you have tenant fit-out requirements to coordinate separately.',
-  },
-  {
-    q: 'How do you handle changes during construction?',
-    a: 'Every change is documented in a Change Order before work proceeds. The Change Order defines the scope change, the cost impact, and the programme impact. No variation is absorbed silently and no variation is charged without client approval in writing.',
-  },
-  {
-    q: 'What districts in Kerala do you operate in?',
-    a: 'We primarily operate across Ernakulam, Thrissur, Kozhikode, Trivandrum, and Kottayam. For larger institutional or commercial projects, we are available to operate statewide. Please mention your location in the enquiry form.',
-  },
-  {
-    q: 'What is your minimum project size?',
-    a: 'We typically work on projects with a construction value of ₹80 lakhs and above. For Project Management Consulting engagements, the threshold is lower. If your project is smaller, write to us — we can advise appropriately.',
-  },
-];
-
-function FaqItem({ faq, index }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b border-[#A7ADB5]/20" data-testid={`faq-item-${index}`}>
-      <button
-        onClick={() => setOpen(!open)}
-        data-testid={`faq-toggle-${index}`}
-        className="w-full flex items-center justify-between py-5 text-left"
-      >
-        <span className="text-sm md:text-base font-inter font-medium text-[#1F2328] pr-4">{faq.q}</span>
-        <ChevronDown
-          size={16}
-          strokeWidth={1.5}
-          className={`flex-shrink-0 text-[#A7ADB5] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      {open && (
-        <p className="text-sm font-inter font-light text-[#1F2328]/65 leading-relaxed pb-5">
-          {faq.a}
-        </p>
-      )}
-    </div>
-  );
-}
-
 export default function ContactPage() {
   useScrollReveal();
+  const { settings, loading: settingsLoading } = useSiteSettings();
+  const [searchParams] = useSearchParams();
+  const partnerRef = searchParams.get('partner') || '';
+  const serviceRef = searchParams.get('ref') || '';
+
   const [form, setForm] = useState({
-    name: '', phone: '', email: '', project_location: '', project_type: '',
+    name: '', phone: '', email: '', project_type: '', project_location: '',
     budget_range: '', timeline: '', message: '', honeypot: '',
+    partner_ref: partnerRef, service_ref: serviceRef, page_source: 'contact'
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [formStatus, setFormStatus] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    document.title = 'Contact Septa Group — Start a Construction Enquiry';
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); document.title = 'Contact — Septa Group'; }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const contact = settings?.contact || {};
+  const enquiry = settings?.enquiry || {};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.honeypot) return;
-    setSubmitting(true);
+    if (form.honeypot) return; // spam trap
+    setSending(true); setError('');
     try {
       await axios.post(`${API}/leads`, form);
-      setFormStatus('success');
-      setForm({ name: '', phone: '', email: '', project_location: '', project_type: '', budget_range: '', timeline: '', message: '', honeypot: '' });
-    } catch {
-      setFormStatus('error');
-    } finally {
-      setSubmitting(false);
+      setSent(true);
+    } catch (err) {
+      setError(err.response?.status === 429 ? 'Too many requests. Please wait a moment.' : 'Something went wrong. Please try again.');
     }
+    setSending(false);
   };
 
-  return (
-    <div className="pt-16">
-      {/* Hero */}
-      <section className="py-20 md:py-28 bg-[#1F2328]" data-testid="contact-hero">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-[0.28em] text-[#C6A15B] font-inter mb-4 reveal">Contact</p>
-            <h1 className="text-4xl md:text-6xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight mb-6 reveal reveal-delay-1">
-              Start a<br />Conversation
-            </h1>
-            <p className="text-base md:text-lg font-inter font-light text-[#F3F0E8]/50 leading-relaxed reveal reveal-delay-2">
-              Fill in the form below and we will respond within 24 hours. Or reach us directly by phone or WhatsApp.
-            </p>
+  if (sent) {
+    return (
+      <div className="pt-16 min-h-screen bg-[#F3F0E8] flex items-center justify-center" data-testid="contact-success">
+        <div className="text-center max-w-md px-6">
+          <div className="w-14 h-14 bg-[#E8F0EF] flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 size={28} className="text-[#0F5E5B]" strokeWidth={1.5} />
           </div>
+          <h1 className="text-2xl font-sora font-light text-[#1F2328] mb-3">Enquiry Received</h1>
+          <p className="text-sm font-inter font-light text-[#1F2328]/55 leading-relaxed mb-6">
+            Thank you, {form.name}. Our team will review your enquiry and get back to you within 24 hours.
+          </p>
+          <a href="/" className="text-sm font-inter text-[#0F5E5B] hover:underline">Back to Home</a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-16" data-testid="contact-page">
+      {/* Hero */}
+      <section className="bg-[#F3F0E8] py-14 md:py-20">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3 reveal">Contact</p>
+          <h1 className="text-4xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight reveal reveal-delay-1">
+            Start a Conversation
+          </h1>
+          <p className="text-base font-inter font-light text-[#1F2328]/55 leading-relaxed max-w-xl mt-5 reveal reveal-delay-2">
+            Tell us about your project. We'll respond with an honest assessment of fit, scope, and next steps.
+          </p>
         </div>
       </section>
 
-      {/* Contact + Form */}
-      <section className="py-16 md:py-24 bg-[#F3F0E8]" data-testid="contact-main">
+      {/* Contact Info + Form */}
+      <section className="py-12 md:py-20 bg-white">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
-            {/* Contact Info */}
-            <div className="lg:col-span-4 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-6">Reach Us</p>
-
-              <div className="space-y-6 mb-10">
-                <a
-                  href="tel:+919876543210"
-                  data-testid="contact-phone-link"
-                  className="flex items-center gap-4 group"
-                >
-                  <div className="w-11 h-11 bg-[#0F5E5B] flex items-center justify-center flex-shrink-0">
-                    <Phone size={16} className="text-white" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-0.5">Phone</p>
-                    <p className="text-sm font-inter font-medium text-[#1F2328] group-hover:text-[#0F5E5B] transition-colors">
-                      +91 XXXXX XXXXX — Placeholder
-                    </p>
-                  </div>
-                </a>
-
-                <a
-                  href={`https://wa.me/919876543210?text=${encodeURIComponent('Hello Septa Group, I would like to discuss a project.')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid="contact-whatsapp-link"
-                  className="flex items-center gap-4 group"
-                >
-                  <div className="w-11 h-11 bg-[#25D366] flex items-center justify-center flex-shrink-0">
-                    <MessageCircle size={16} className="text-white" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-0.5">WhatsApp</p>
-                    <p className="text-sm font-inter font-medium text-[#1F2328] group-hover:text-[#25D366] transition-colors">
-                      Message Us Directly
-                    </p>
-                  </div>
-                </a>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 bg-[#E8E6E0] flex items-center justify-center flex-shrink-0">
-                    <Mail size={16} className="text-[#1F2328]/40" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-0.5">Email</p>
-                    <p className="text-sm font-inter font-medium text-[#1F2328]">info@septagroup.in — Placeholder</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-11 h-11 bg-[#E8E6E0] flex items-center justify-center flex-shrink-0">
-                    <MapPin size={16} className="text-[#1F2328]/40" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-0.5">Office</p>
-                    <p className="text-sm font-inter font-medium text-[#1F2328]">[Office Address]</p>
-                    <p className="text-xs font-inter text-[#A7ADB5] mt-0.5">Kerala, India — Placeholder</p>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Sidebar */}
+            <div className="lg:col-span-4 space-y-8 reveal">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-[#C6A15B] font-inter mb-5">Get in Touch</p>
+                <div className="space-y-5">
+                  <ContactItem icon={<Phone size={16} strokeWidth={1.5} />} label="Phone"
+                    value={contact.phone_display || '+91 XXXXX XXXXX'}
+                    href={contact.phone_link} tid="contact-phone" />
+                  <ContactItem icon={<Mail size={16} strokeWidth={1.5} />} label="Email"
+                    value={contact.email || 'info@septagroup.in'}
+                    href={`mailto:${contact.email || 'info@septagroup.in'}`} tid="contact-email" />
+                  <ContactItem icon={<MapPin size={16} strokeWidth={1.5} />} label="Office"
+                    value={contact.office_address || 'Kerala, India'} tid="contact-address" />
+                  {contact.whatsapp_link && (
+                    <ContactItem icon={<MessageCircle size={16} strokeWidth={1.5} />} label="WhatsApp"
+                      value="Chat with us"
+                      href={contact.whatsapp_link} tid="contact-whatsapp" external />
+                  )}
                 </div>
               </div>
 
-              <div className="border-t border-[#A7ADB5]/20 pt-6">
-                <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-2">Operating Districts</p>
-                <p className="text-sm font-inter text-[#1F2328]/60 leading-relaxed">
-                  Ernakulam, Thrissur, Kozhikode, Trivandrum, Kottayam — and statewide for larger projects.
-                </p>
-                <p className="text-xs font-inter text-[#A7ADB5] mt-1">[Districts to be confirmed — placeholder]</p>
-              </div>
+              {contact.operating_districts?.length > 0 && (
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-3">Operating Districts</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {contact.operating_districts.map(d => (
+                      <span key={d} className="text-xs font-inter px-2 py-0.5 bg-[#F3F0E8] text-[#1F2328]/60 border border-[#A7ADB5]/15">
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Full Form */}
+            {/* Form */}
             <div className="lg:col-span-8 reveal reveal-delay-1">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-8">Project Enquiry Form</p>
-
-              <form onSubmit={handleSubmit} className="space-y-7" data-testid="contact-form">
+              <form onSubmit={handleSubmit} className="space-y-5" data-testid="enquiry-form">
                 {/* Honeypot */}
-                <input type="text" name="honeypot" className="hidden" tabIndex="-1" autoComplete="off"
-                  value={form.honeypot} onChange={handleChange} />
+                <div className="absolute -left-[9999px]" aria-hidden="true">
+                  <input type="text" name="website" tabIndex={-1} autoComplete="off"
+                    value={form.honeypot} onChange={e => setForm({ ...form, honeypot: e.target.value })} />
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Full Name *</label>
-                    <input type="text" name="name" required className="input-underline" placeholder="Your full name"
-                      data-testid="contact-name" value={form.name} onChange={handleChange} />
+                    <input type="text" required className="form-input" value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })} data-testid="input-name" />
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Phone Number *</label>
-                    <input type="tel" name="phone" required className="input-underline" placeholder="+91 XXXXX XXXXX"
-                      data-testid="contact-phone" value={form.phone} onChange={handleChange} />
+                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Phone *</label>
+                    <input type="tel" required className="form-input" value={form.phone}
+                      onChange={e => setForm({ ...form, phone: e.target.value })} data-testid="input-phone" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Email Address</label>
-                  <input type="email" name="email" className="input-underline" placeholder="your@email.com"
-                    data-testid="contact-email" value={form.email} onChange={handleChange} />
+                  <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Email</label>
+                  <input type="email" className="form-input" value={form.email}
+                    onChange={e => setForm({ ...form, email: e.target.value })} data-testid="input-email" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-                  <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Project Location</label>
-                    <input type="text" name="project_location" className="input-underline" placeholder="District / City"
-                      data-testid="contact-location" value={form.project_location} onChange={handleChange} />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Project Type</label>
-                    <select name="project_type" className="input-underline"
-                      data-testid="contact-project-type" value={form.project_type} onChange={handleChange}>
-                      <option value="">Select type</option>
-                      <option>Institutional / Educational</option>
-                      <option>Healthcare / Wellness</option>
-                      <option>Commercial</option>
-                      <option>Residential Apartment</option>
-                      <option>Villa / Bungalow</option>
-                      <option>Mixed-use</option>
-                      <option>Project Management Consulting</option>
+                    <select className="form-input" value={form.project_type}
+                      onChange={e => setForm({ ...form, project_type: e.target.value })} data-testid="input-project-type">
+                      <option value="">Select...</option>
+                      {(enquiry.project_types || []).map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Project Location</label>
+                    <input type="text" className="form-input" placeholder="City / District"
+                      value={form.project_location}
+                      onChange={e => setForm({ ...form, project_location: e.target.value })} data-testid="input-location" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Approximate Budget</label>
-                    <select name="budget_range" className="input-underline"
-                      data-testid="contact-budget" value={form.budget_range} onChange={handleChange}>
-                      <option value="">Select range</option>
-                      <option>Under ₹50 Lakhs</option>
-                      <option>₹50L – ₹1 Crore</option>
-                      <option>₹1Cr – ₹3 Crore</option>
-                      <option>₹3Cr – ₹10 Crore</option>
-                      <option>Above ₹10 Crore</option>
+                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Budget Range</label>
+                    <select className="form-input" value={form.budget_range}
+                      onChange={e => setForm({ ...form, budget_range: e.target.value })} data-testid="input-budget">
+                      <option value="">Select...</option>
+                      {(enquiry.budget_ranges || []).map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Timeline Expectation</label>
-                    <select name="timeline" className="input-underline"
-                      data-testid="contact-timeline" value={form.timeline} onChange={handleChange}>
-                      <option value="">Select timeline</option>
-                      <option>Within 3 months</option>
-                      <option>3–6 months</option>
-                      <option>6 months – 1 year</option>
-                      <option>1–2 years</option>
-                      <option>2+ years</option>
+                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Expected Timeline</label>
+                    <select className="form-input" value={form.timeline}
+                      onChange={e => setForm({ ...form, timeline: e.target.value })} data-testid="input-timeline">
+                      <option value="">Select...</option>
+                      {(enquiry.timeline_ranges || []).map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Message</label>
-                  <textarea name="message" rows={4} className="input-underline resize-none"
-                    placeholder="Tell us about your project — scope, site location, specific requirements..."
-                    data-testid="contact-message" value={form.message} onChange={handleChange} />
+                  <textarea rows={4} className="form-input resize-none" placeholder="Tell us about your project..."
+                    value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} data-testid="input-message" />
                 </div>
 
-                {formStatus === 'success' && (
-                  <div className="flex items-center gap-2.5 text-[#0F5E5B] text-sm font-inter" data-testid="contact-success-msg">
-                    <CheckCircle2 size={16} strokeWidth={1.5} />
-                    Enquiry received. We will be in touch within 24 hours.
-                  </div>
-                )}
-                {formStatus === 'error' && (
-                  <p className="text-red-500 text-sm font-inter" data-testid="contact-error-msg">
-                    Something went wrong. Please try again or contact us by phone.
+                {partnerRef && (
+                  <p className="text-xs font-inter text-[#0F5E5B] bg-[#E8F0EF] px-3 py-2">
+                    Referred from partner: <strong>{partnerRef}</strong>
                   </p>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  data-testid="contact-submit-btn"
-                  className="h-12 px-10 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors disabled:opacity-60 flex items-center gap-2"
-                >
-                  {submitting ? 'Sending...' : 'Send Enquiry'}
-                  {!submitting && <ArrowRight size={14} strokeWidth={1.5} />}
+                {error && <p className="text-sm text-red-500 font-inter" data-testid="form-error">{error}</p>}
+
+                <button type="submit" disabled={sending} data-testid="submit-enquiry-btn"
+                  className="h-12 px-8 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center gap-2 disabled:opacity-60">
+                  {sending ? <Loader2 className="animate-spin" size={16} /> : <><Send size={14} /> Submit Enquiry</>}
                 </button>
               </form>
             </div>
           </div>
         </div>
       </section>
-
-      {/* FAQ */}
-      <section className="py-16 md:py-24 bg-white" data-testid="faq-section">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="max-w-3xl">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-4 reveal">Common Questions</p>
-            <h2 className="text-3xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-10 reveal reveal-delay-1">
-              FAQ
-            </h2>
-            <div data-testid="faq-list">
-              {faqs.map((faq, i) => (
-                <FaqItem key={i} faq={faq} index={i} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
+  );
+}
+
+function ContactItem({ icon, label, value, href, tid, external }) {
+  const Tag = href ? 'a' : 'div';
+  const linkProps = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
+  return (
+    <Tag {...linkProps} className="flex items-start gap-3 group" data-testid={tid}>
+      <div className="w-8 h-8 bg-[#E8F0EF] flex items-center justify-center flex-shrink-0 text-[#0F5E5B]">{icon}</div>
+      <div>
+        <p className="text-xs font-inter text-[#A7ADB5] uppercase tracking-wider">{label}</p>
+        <p className={`text-sm font-inter text-[#1F2328] mt-0.5 ${href ? 'group-hover:text-[#0F5E5B] transition-colors' : ''}`}>{value}</p>
+      </div>
+    </Tag>
   );
 }
