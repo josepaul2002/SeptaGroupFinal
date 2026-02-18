@@ -2,21 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, Info, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { useLanguage } from '../components/LanguageToggle';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
-// Helper to get text from bilingual
-const getText = (obj) => {
-  if (!obj) return '';
-  if (typeof obj === 'string') return obj;
-  return obj.en || '';
-};
 
 export default function SolutionPacksPage() {
   useScrollReveal();
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     document.title = 'Solution Packs — Septa Group';
