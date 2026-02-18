@@ -323,7 +323,7 @@ async def get_partners(
     if published_only and not admin:
         query["status"] = "published"
     
-    partners = await db.partners.find(query, {"_id": 0}).to_list(1000)
+    partners = await db.partners.find(query, {"_id": 0}).sort("sort_order", 1).to_list(1000)
     return partners
 
 
