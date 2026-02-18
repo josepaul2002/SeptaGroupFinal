@@ -2,20 +2,24 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ArrowRight, Info, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import { usePartners, getText } from '../hooks/useApi';
+import { usePartners, useSolutionPacks, getText } from '../hooks/useApi';
 
 const CATEGORIES = [
   'All',
   'Architecture & Design',
+  'Structural Engineering',
+  'MEP Engineering',
+  'Quantity Surveying',
   'Interiors & Fit-out',
-  'Engineering (MEP/Structural/QS)',
   'Landscape & Outdoor',
+  'Lighting Design',
   'Materials & Vendors',
-  'Smart Home / Technology',
+  'Smart Home / Security / Automation',
   'Branding, Signage & Wayfinding',
   'Marketing & Digital',
   'Leasing & Real Estate',
-  'Legal / Finance',
+  'Photo / Video / 3D Documentation',
+  'Legal / Compliance / Approvals',
 ];
 
 const RELATIONSHIP_COLORS = {
