@@ -58,7 +58,6 @@ const typeColors = {
 
 export default function HomePage() {
   useScrollReveal();
-  const [projects, setProjects] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [form, setForm] = useState({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
   const [formStatus, setFormStatus] = useState(null);
