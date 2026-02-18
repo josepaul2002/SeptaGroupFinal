@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import LanguageToggle from './LanguageToggle';
+import LanguageToggle, { useLanguage, uiTranslations } from './LanguageToggle';
 
 const navLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
-  { to: '/services', label: 'Services' },
-  { to: '/projects', label: 'Projects' },
-  { to: '/ecosystem', label: 'Ecosystem' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/', key: 'nav.home' },
+  { to: '/about', key: 'nav.about' },
+  { to: '/services', key: 'nav.services' },
+  { to: '/projects', key: 'nav.projects' },
+  { to: '/ecosystem', key: 'nav.ecosystem' },
+  { to: '/contact', key: 'nav.contact' },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { lang } = useLanguage();
+  const ui = uiTranslations[lang] || uiTranslations.en;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -49,14 +51,14 @@ export default function Navbar() {
             <Link
               key={link.to}
               to={link.to}
-              data-testid={`nav-link-${link.label.toLowerCase()}`}
+              data-testid={`nav-link-${(ui[link.key] || link.key).toLowerCase()}`}
               className={`text-sm font-inter transition-colors duration-200 ${
                 location.pathname === link.to
                   ? 'text-[#0F5E5B] font-medium'
                   : 'text-[#1F2328]/70 hover:text-[#0F5E5B]'
               }`}
             >
-              {link.label}
+              {ui[link.key]}
             </Link>
           ))}
         </nav>
@@ -95,12 +97,12 @@ export default function Navbar() {
             <Link
               key={link.to}
               to={link.to}
-              data-testid={`mobile-nav-link-${link.label.toLowerCase()}`}
+              data-testid={`mobile-nav-link-${(ui[link.key] || link.key).toLowerCase()}`}
               className={`text-base font-inter ${
                 location.pathname === link.to ? 'text-[#0F5E5B] font-medium' : 'text-[#1F2328]/80'
               }`}
             >
-              {link.label}
+              {ui[link.key]}
             </Link>
           ))}
           <div className="border-t border-[#A7ADB5]/20 pt-4 mt-2">
