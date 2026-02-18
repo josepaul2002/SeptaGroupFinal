@@ -46,6 +46,18 @@ function useApiData(endpoint, defaultValue = []) {
   return { data, loading, error, setData };
 }
 
+// Site settings hook
+export function useSiteSettings() {
+  const { data, loading } = useApiData('/settings', null);
+  return { settings: data, loading };
+}
+
+// Page content hook
+export function usePageContent(pageId) {
+  const { data, loading } = useApiData(`/pages/${pageId}`, { blocks: [] });
+  return { page: data, blocks: data?.blocks || [], loading };
+}
+
 // Projects hook
 export function useProjects(filters = {}) {
   const params = new URLSearchParams();
