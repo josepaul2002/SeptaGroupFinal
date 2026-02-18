@@ -238,6 +238,34 @@ export default function PartnerProfilePage() {
           </div>
         </div>
       </section>
-    </div>
+
+      {/* Partner Projects */}
+      {partnerProjects.length > 0 && (
+        <section className="py-12 md:py-16 bg-white" data-testid="partner-projects">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Delivered Together</p>
+            <h2 className="text-2xl font-sora font-light text-[#1F2328] mb-8">
+              Projects with {t(partner.name)}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {partnerProjects.map((proj, i) => (
+                <Link key={proj.slug} to={`/projects/${proj.slug}`}
+                  className="group block" data-testid={`partner-project-${proj.slug}`}>
+                  <div className="aspect-[4/3] overflow-hidden bg-[#E8E6E0] mb-3">
+                    {proj.image && (
+                      <img src={proj.image} alt={getText(proj.title)} loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    )}
+                  </div>
+                  <h3 className="text-sm font-sora font-medium text-[#1F2328] group-hover:text-[#0F5E5B] transition-colors">
+                    {getText(proj.title)}
+                  </h3>
+                  <p className="text-xs font-inter text-[#A7ADB5] mt-0.5">{proj.type} · {proj.location}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
   );
 }
