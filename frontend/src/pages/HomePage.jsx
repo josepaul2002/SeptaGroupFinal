@@ -118,19 +118,19 @@ export default function HomePage() {
                 Bespoke construction and disciplined delivery for institutional, commercial, and premium residential projects in Kerala.
               </p>
               <div className="flex flex-wrap gap-4 mb-6 reveal reveal-delay-3">
-                <Link
+                  <Link
                   to="/contact"
                   data-testid="hero-request-quote-btn"
                   className="h-12 px-8 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center gap-2"
                 >
-                  Request a Quote <ArrowRight size={14} strokeWidth={1.5} />
+                  {ui['cta.request_quote']} <ArrowRight size={14} strokeWidth={1.5} />
                 </Link>
                 <Link
                   to="/projects"
                   data-testid="hero-view-projects-btn"
                   className="h-12 px-8 border border-[#1F2328]/20 text-[#1F2328] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#1F2328] hover:text-[#F3F0E8] transition-all flex items-center gap-2"
                 >
-                  View Projects
+                  {ui['cta.view_projects']}
                 </Link>
               </div>
               <a
