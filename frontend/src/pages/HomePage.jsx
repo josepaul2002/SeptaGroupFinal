@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowRight, Phone, MessageCircle, CheckCircle2, Building2, Stethoscope, Home, Layers, ClipboardList } from 'lucide-react';
+import { ArrowRight, Phone, MessageCircle, CheckCircle2, Building2, Stethoscope, Home, Layers, ClipboardList, Cpu } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import projectsData from '../content/projects.json';
+import partnersData from '../content/partners.json';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const featuredProjects = projectsData.projects.slice(0, 6);
+const featuredPartners = partnersData.partners.filter(p => p.featured);
 
 const trustMetrics = [
   { value: '20+', label: 'Years Legacy', sub: 'Est. 2004, Kerala' },
