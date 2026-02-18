@@ -186,7 +186,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="projects-grid">
-            {projects.map((project, i) => (
+            {featuredProjects.map((project, i) => (
               <Link
                 key={project.slug}
                 to={`/projects/${project.slug}`}
