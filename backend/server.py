@@ -643,12 +643,44 @@ async def export_content(admin: dict = Depends(get_current_admin)):
 
 @api_router.get("/audit-logs")
 async def get_audit_logs(
-    limit: int = Query(100, le=500),
+    limit: int = Query(50, le=500),
+    skip: int = Query(0),
+    resource_type: Optional[str] = None,
     admin: dict = Depends(get_current_admin)
 ):
-    """Get audit logs"""
-    logs = await db.audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(limit)
-    return logs
+    """Get audit logs with pagination and filtering"""
+    query = {}
+    if resource_type:
+        query["resource_type"] = resource_type
+    total = await db.audit_logs.count_documents(query)
+    logs = await db.audit_logs.find(query, {"_id": 0}).sort("timestamp", -1).skip(skip).limit(limit).to_list(limit)
+    return {"logs": logs, "total": total, "skip": skip, "limit": limit}
+
+
+@api_router.get("/partners/{slug}/projects")
+async def get_partner_projects(slug: str):
+    """Get projects where this partner is in the partner_stack"""
+    projects = await db.projects.find(
+        {"partner_stack.partner_id": slug, "status": "published"},
+        {"_id": 0, "slug": 1, "title": 1, "type": 1, "location": 1, "image": 1, "sqft": 1, "year": 1}
+    ).to_list(50)
+    return projects
+
+
+@api_router.get("/partners-featured")
+async def get_featured_partners():
+    """Get featured partners for homepage spotlight"""
+    featured = await db.partners.find(
+        {"status": "published", "is_featured": True},
+        {"_id": 0}
+    ).sort("sort_order", 1).to_list(10)
+    if len(featured) < 3:
+        extras = await db.partners.find(
+            {"status": "published", "slug": {"$nin": [p["slug"] for p in featured]}},
+            {"_id": 0}
+        ).sort("sort_order", 1).to_list(6 - len(featured))
+        featured.extend(extras)
+    return featured
 
 
 # ============================================================================
