@@ -1140,15 +1140,102 @@ async def seed_solution_packs():
     logger.info("Seeded solution packs")
 
 
+async def migrate_partners_schema():
+    """Migrate existing partners to new schema with media fields"""
+    partners = await db.partners.find({}).to_list(1000)
+    migrated = 0
+    for p in partners:
+        updates = {}
+        # Add media object if missing
+        if "media" not in p:
+            updates["media"] = {
+                "card_image": p.get("cover_image") or p.get("logo_url"),
+                "logo_image": p.get("logo_url"),
+                "hero_image": p.get("cover_image"),
+                "gallery_images": []
+            }
+        # Migrate old field names
+        if "website" in p and "website_url" not in p:
+            updates["website_url"] = p.get("website")
+        if "instagram" in p and "instagram_url" not in p:
+            updates["instagram_url"] = p.get("instagram")
+        if "email" in p and "contact_email" not in p and p.get("email") and "@" in str(p.get("email", "")):
+            updates["contact_email"] = p.get("email")
+        if "featured" in p and "is_featured" not in p:
+            updates["is_featured"] = p.get("featured", False)
+        if "sort_order" not in p:
+            updates["sort_order"] = 0
+        if "contact_phone" not in p:
+            updates["contact_phone"] = None
+        
+        if updates:
+            await db.partners.update_one({"_id": p["_id"]}, {"$set": updates})
+            migrated += 1
+    
+    if migrated:
+        logger.info(f"Migrated {migrated} partners to new schema")
+
+
+async def seed_site_settings():
+    """Seed default site settings if not present"""
+    existing = await db.site_settings.find_one({"id": "site_settings"})
+    if not existing:
+        await db.site_settings.insert_one({**DEFAULT_SETTINGS, "created_at": datetime.now(timezone.utc).isoformat()})
+        logger.info("Seeded default site settings")
+
+
+async def seed_page_content():
+    """Seed initial page content for About and Services if not present"""
+    for page_id in ["about", "services"]:
+        existing = await db.page_content.find_one({"page_id": page_id})
+        if existing:
+            continue
+        
+        if page_id == "about":
+            blocks = [
+                {"id": str(uuid.uuid4()), "block_type": "metrics", "order": 0, "title": {"en": "20+", "ml": None}, "subtitle": {"en": "Years of Construction Delivery", "ml": None}, "body": {"en": "", "ml": None}, "metadata": {"key": "years"}},
+                {"id": str(uuid.uuid4()), "block_type": "metrics", "order": 1, "title": {"en": "5", "ml": None}, "subtitle": {"en": "Districts Served Across Kerala", "ml": None}, "body": {"en": "", "ml": None}, "metadata": {"key": "districts"}},
+                {"id": str(uuid.uuid4()), "block_type": "metrics", "order": 2, "title": {"en": "150+", "ml": None}, "subtitle": {"en": "Projects Delivered", "ml": None}, "body": {"en": "", "ml": None}, "metadata": {"key": "projects"}},
+                {"id": str(uuid.uuid4()), "block_type": "metrics", "order": 3, "title": {"en": "Weekly", "ml": None}, "subtitle": {"en": "Client Reporting Cadence", "ml": None}, "body": {"en": "", "ml": None}, "metadata": {"key": "reporting"}},
+                {"id": str(uuid.uuid4()), "block_type": "timeline_step", "order": 0, "title": {"en": "Scope Clarity", "ml": None}, "body": {"en": "Every project starts with detailed scope documentation — materials, specifications, timelines — before work begins.", "ml": None}, "icon": "clipboard-list", "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "timeline_step", "order": 1, "title": {"en": "Weekly Reporting", "ml": None}, "body": {"en": "Clients receive weekly progress updates with photos, spend tracking, and next-week previews.", "ml": None}, "icon": "bar-chart-2", "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "timeline_step", "order": 2, "title": {"en": "Quality Checkpoints", "ml": None}, "body": {"en": "Structured quality gates at foundation, structure, MEP rough-in, finishing, and handover.", "ml": None}, "icon": "check-circle", "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "timeline_step", "order": 3, "title": {"en": "Change Control", "ml": None}, "body": {"en": "All scope changes are documented, priced, and approved before execution. No surprise costs.", "ml": None}, "icon": "file-text", "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "timeline_step", "order": 4, "title": {"en": "Snag Handover", "ml": None}, "body": {"en": "Systematic snag list resolution with photo documentation before final handover.", "ml": None}, "icon": "search", "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "timeline_step", "order": 5, "title": {"en": "Post-Handover Support", "ml": None}, "body": {"en": "12-month defect liability period with responsive support for any issues.", "ml": None}, "icon": "shield", "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "team_member", "order": 0, "title": {"en": "Founding Team", "ml": None}, "body": {"en": "Two decades of construction delivery experience across institutional, healthcare, and commercial sectors in Kerala.", "ml": None}, "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "proof_callout", "order": 0, "title": {"en": "Phased delivery during active academic year", "ml": None}, "body": {"en": "St. Thomas School — new academic block built while 2,000+ students continued classes with zero disruption.", "ml": None}, "link_url": "/projects/st-thomas-school-thrissur", "link_label": "View project", "metadata": {}},
+                {"id": str(uuid.uuid4()), "block_type": "proof_callout", "order": 1, "title": {"en": "Healthcare facility first-submission approval", "ml": None}, "body": {"en": "Lakeview Medical Centre passed the Health Department inspection on first submission.", "ml": None}, "link_url": "/projects/lakeview-medical-centre-ernakulam", "link_label": "View project", "metadata": {}},
+            ]
+        else:
+            blocks = [
+                {"id": str(uuid.uuid4()), "block_type": "comparison_row", "order": 0, "title": {"en": "Scope Documentation", "ml": None}, "body": {"en": "Detailed BOQ, specs, and material schedule before work starts", "ml": None}, "metadata": {"traditional": "Verbal agreements, scope changes on-site"}},
+                {"id": str(uuid.uuid4()), "block_type": "comparison_row", "order": 1, "title": {"en": "Progress Reporting", "ml": None}, "body": {"en": "Weekly photo reports with spend tracking and forecasts", "ml": None}, "metadata": {"traditional": "Updates only when you visit the site"}},
+                {"id": str(uuid.uuid4()), "block_type": "comparison_row", "order": 2, "title": {"en": "Quality Assurance", "ml": None}, "body": {"en": "Structured QA gates at each construction phase", "ml": None}, "metadata": {"traditional": "Quality depends on supervisor presence"}},
+                {"id": str(uuid.uuid4()), "block_type": "comparison_row", "order": 3, "title": {"en": "Change Management", "ml": None}, "body": {"en": "Documented change orders with cost impact before execution", "ml": None}, "metadata": {"traditional": "Surprise bills and scope creep"}},
+                {"id": str(uuid.uuid4()), "block_type": "comparison_row", "order": 4, "title": {"en": "Handover Process", "ml": None}, "body": {"en": "Systematic snag list, documentation package, warranty period", "ml": None}, "metadata": {"traditional": "Informal handover, unresolved issues"}},
+            ]
+        
+        doc = {
+            "page_id": page_id,
+            "blocks": blocks,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.page_content.insert_one(doc)
+        logger.info(f"Seeded page content: {page_id}")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize on startup"""
-    # Set email logs collection for email service
     set_email_logs_collection(db.email_logs)
     
     await bootstrap_admin()
     await migrate_json_to_db()
     await seed_solution_packs()
+    await migrate_partners_schema()
+    await seed_site_settings()
+    await seed_page_content()
     logger.info("Septa API started successfully")
 
 
