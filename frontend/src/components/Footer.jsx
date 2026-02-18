@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, ArrowUpRight } from 'lucide-react';
+import { useLanguage, uiTranslations } from './LanguageToggle';
 
 const footerPages = [
   { to: '/', label: 'Home' },
@@ -19,6 +20,9 @@ const footerServices = [
 ];
 
 export default function Footer() {
+  const { lang } = useLanguage();
+  const ui = uiTranslations[lang] || uiTranslations.en;
+
   return (
     <footer className="bg-[#1F2328] text-[#F3F0E8]" data-testid="footer">
       {/* Top border accent */}
@@ -34,7 +38,7 @@ export default function Footer() {
               <span className="font-sora font-light text-2xl text-[#F3F0E8]">GROUP</span>
             </div>
             <p className="text-sm font-inter font-light text-[#A7ADB5] leading-relaxed max-w-xs mb-6">
-              Bespoke construction and disciplined delivery for institutional, commercial, and premium residential projects in Kerala.
+              {ui['footer.tagline']}
             </p>
             <p className="text-xs uppercase tracking-widest text-[#C6A15B] font-inter">Est. 2004 · Kerala</p>
           </div>
@@ -99,7 +103,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-14 pt-6 border-t border-[#F3F0E8]/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-xs font-inter text-[#A7ADB5]">
-            &copy; {new Date().getFullYear()} Septa Group. All rights reserved.
+            {ui['footer.copyright']}
           </p>
           <p className="text-xs font-inter text-[#A7ADB5]">Built with care in Kerala.</p>
         </div>
