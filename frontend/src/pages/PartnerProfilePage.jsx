@@ -24,13 +24,19 @@ export default function PartnerProfilePage() {
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [galleryIdx, setGalleryIdx] = useState(0);
+  const [partnerProjects, setPartnerProjects] = useState([]);
   const { t } = useLanguage();
 
   useEffect(() => {
     window.scrollTo(0, 0);
     setLoading(true);
     axios.get(`${API}/partners/${slug}${isPreview ? '?preview=true' : ''}`)
-      .then(res => { setPartner(res.data); document.title = `${getText(res.data.name)} — Septa Ecosystem`; })
+      .then(res => {
+        setPartner(res.data);
+        document.title = `${getText(res.data.name)} — Septa Ecosystem`;
+        return axios.get(`${API}/partners/${slug}/projects`);
+      })
+      .then(res => setPartnerProjects(res.data || []))
       .catch(() => setPartner(null))
       .finally(() => setLoading(false));
   }, [slug, isPreview]);
