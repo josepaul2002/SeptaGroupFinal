@@ -1,397 +1,825 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+"""
+Septa Group API Server
+Full CMS with Admin Panel, Email Notifications, and Media Storage
+"""
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
 import logging
+import json
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
+
+from models.schemas import (
+    LeadCreate, LeadStatusUpdate, LeadResponse,
+    PartnerCreate, PartnerUpdate, PartnerResponse,
+    ProjectCreate, ProjectUpdate, ProjectResponse,
+    TestimonialCreate, TestimonialResponse,
+    AdminLoginRequest, AdminLoginResponse, AdminPasswordChange, AdminUser,
+    AuditLogEntry, ContentExport, PublishStatus,
+    BilingualText, PartnerStackItem, StoryModule, DesignModule, DeliveryModule, ProjectMedia
+)
+from services.email_service import send_admin_notification, send_user_confirmation
+from services.storage_service import upload_file, delete_file, get_presigned_upload_url, validate_file
+from utils.auth import (
+    verify_password, get_password_hash, create_access_token,
+    set_auth_cookie, clear_auth_cookie, get_current_admin, get_optional_admin
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Database setup
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-app = FastAPI()
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address)
+
+app = FastAPI(title="Septa Group API", version="2.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# --- Models ---
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
 
-class LeadCreate(BaseModel):
-    name: str
-    phone: str
-    email: str
-    project_location: Optional[str] = ""
-    project_type: Optional[str] = ""
-    budget_range: Optional[str] = ""
-    timeline: Optional[str] = ""
-    message: Optional[str] = ""
-    honeypot: Optional[str] = ""
+def make_bilingual(text: str) -> dict:
+    """Convert string to bilingual format"""
+    return {"en": text, "ml": None}
 
 
-class Project(BaseModel):
-    slug: str
-    title: str
-    location: str
-    type: str
-    status: str
-    sqft: str
-    duration: str
-    year: str
-    client_type: str
-    image: str
-    gallery: List[str] = []
-    short_description: str
-    challenge: str
-    challenge_detail: str
-    approach_detail: str
-    outcome_detail: str
-    septa_standards: List[str] = []
+def get_text(bilingual: Any, lang: str = "en") -> str:
+    """Get text from bilingual object with fallback"""
+    if isinstance(bilingual, dict):
+        return bilingual.get(lang) or bilingual.get("en", "")
+    return str(bilingual) if bilingual else ""
 
 
-class Testimonial(BaseModel):
-    client_name: str
-    client_role: str
-    project_type: str
-    content: str
-    rating: int = 5
+async def log_audit(
+    admin_id: str,
+    admin_email: str,
+    action: str,
+    resource_type: str,
+    resource_id: str,
+    changes: Optional[Dict] = None
+):
+    """Log admin action for audit trail"""
+    entry = {
+        "id": str(uuid.uuid4()),
+        "admin_id": admin_id,
+        "admin_email": admin_email,
+        "action": action,
+        "resource_type": resource_type,
+        "resource_id": resource_id,
+        "changes": changes,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.audit_logs.insert_one(entry)
+    logger.info(f"Audit: {admin_email} {action} {resource_type}/{resource_id}")
 
 
-class AdminAuth(BaseModel):
-    password: str
-
-
-class LeadStatusUpdate(BaseModel):
-    status: str
-
-
-# --- Lead endpoints ---
+# ============================================================================
+# LEAD ENDPOINTS
+# ============================================================================
 
 @api_router.post("/leads", status_code=201)
-async def create_lead(lead: LeadCreate):
+@limiter.limit("10/minute")
+async def create_lead(request: Request, lead: LeadCreate):
+    """
+    Create new lead with email notifications
+    Always saves to DB even if email fails
+    """
+    # Honeypot check
     if lead.honeypot:
+        logger.info("Honeypot triggered - bot detected")
         return {"message": "Thank you for your enquiry."}
+    
+    # Server-side validation
+    if not lead.name or len(lead.name) < 2:
+        raise HTTPException(status_code=400, detail="Name is required")
+    if not lead.phone or len(lead.phone) < 8:
+        raise HTTPException(status_code=400, detail="Valid phone number is required")
+    
+    # Prepare document
     doc = lead.model_dump()
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["status"] = "new"
     doc["id"] = str(uuid.uuid4())
+    doc["email_sent"] = False
+    doc["admin_notified"] = False
+    
+    # ALWAYS save to DB first
     await db.leads.insert_one(doc)
+    logger.info(f"Lead saved: {doc['id']}")
+    
+    # Send emails (non-blocking, failures don't affect response)
+    try:
+        # Admin notification
+        admin_result = await send_admin_notification(doc)
+        if admin_result.get("success"):
+            await db.leads.update_one(
+                {"id": doc["id"]},
+                {"$set": {"admin_notified": True}}
+            )
+        
+        # User confirmation
+        if lead.email:
+            user_result = await send_user_confirmation(lead.email, lead.name)
+            if user_result.get("success"):
+                await db.leads.update_one(
+                    {"id": doc["id"]},
+                    {"$set": {"email_sent": True}}
+                )
+    except Exception as e:
+        logger.error(f"Email send error (lead still saved): {str(e)}")
+    
     return {"message": "Enquiry received. We will contact you within 24 hours.", "id": doc["id"]}
 
 
 @api_router.get("/leads")
-async def get_leads():
-    leads = await db.leads.find({}, {"_id": 0}).to_list(1000)
+async def get_leads(admin: dict = Depends(get_current_admin)):
+    """Get all leads (admin only)"""
+    leads = await db.leads.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return leads
 
 
 @api_router.patch("/leads/{lead_id}")
-async def update_lead_status(lead_id: str, update: LeadStatusUpdate):
-    await db.leads.update_one({"id": lead_id}, {"$set": {"status": update.status}})
+async def update_lead_status(
+    lead_id: str,
+    update: LeadStatusUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update lead status"""
+    result = await db.leads.update_one(
+        {"id": lead_id},
+        {"$set": {"status": update.status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    await log_audit(admin["admin_id"], admin["email"], "update", "lead", lead_id, {"status": update.status})
     return {"message": "Status updated"}
 
 
 @api_router.delete("/leads/{lead_id}")
-async def delete_lead(lead_id: str):
-    await db.leads.delete_one({"id": lead_id})
+async def delete_lead(lead_id: str, admin: dict = Depends(get_current_admin)):
+    """Delete lead"""
+    result = await db.leads.delete_one({"id": lead_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    await log_audit(admin["admin_id"], admin["email"], "delete", "lead", lead_id)
     return {"message": "Lead deleted"}
 
 
-# --- Project endpoints ---
+# ============================================================================
+# PROJECT ENDPOINTS
+# ============================================================================
 
 @api_router.get("/projects")
-async def get_projects(type: Optional[str] = None, status: Optional[str] = None):
+async def get_projects(
+    type: Optional[str] = None,
+    status: Optional[str] = None,
+    published_only: bool = True,
+    admin: Optional[dict] = Depends(get_optional_admin)
+):
+    """Get projects with optional filters"""
     query = {}
     if type:
         query["type"] = type
     if status:
-        query["status"] = status
+        query["project_status"] = status
+    
+    # Only show published unless admin
+    if published_only and not admin:
+        query["status"] = "published"
+    
     projects = await db.projects.find(query, {"_id": 0}).to_list(1000)
     return projects
 
 
 @api_router.get("/projects/{slug}")
-async def get_project(slug: str):
-    project = await db.projects.find_one({"slug": slug}, {"_id": 0})
+async def get_project(
+    slug: str,
+    admin: Optional[dict] = Depends(get_optional_admin)
+):
+    """Get single project by slug"""
+    query = {"slug": slug}
+    
+    # Only show published unless admin
+    if not admin:
+        query["status"] = "published"
+    
+    project = await db.projects.find_one(query, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
 
 @api_router.post("/projects", status_code=201)
-async def create_project(project: Project):
+async def create_project(
+    project: ProjectCreate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Create new project"""
     existing = await db.projects.find_one({"slug": project.slug})
     if existing:
         raise HTTPException(status_code=400, detail="Slug already exists")
+    
     doc = project.model_dump()
     doc["id"] = str(uuid.uuid4())
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"] = doc["created_at"]
+    
     await db.projects.insert_one(doc)
-    return {"message": "Project created", "id": doc["id"]}
+    await log_audit(admin["admin_id"], admin["email"], "create", "project", doc["id"], {"slug": project.slug})
+    
+    return {"message": "Project created", "id": doc["id"], "slug": project.slug}
 
 
 @api_router.put("/projects/{slug}")
-async def update_project(slug: str, project: Project):
-    result = await db.projects.update_one({"slug": slug}, {"$set": project.model_dump()})
+async def update_project(
+    slug: str,
+    update: ProjectUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update project"""
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.projects.update_one({"slug": slug}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    project = await db.projects.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    await log_audit(admin["admin_id"], admin["email"], "update", "project", project["id"], update_data)
+    
     return {"message": "Project updated"}
 
 
 @api_router.delete("/projects/{slug}")
-async def delete_project(slug: str):
+async def delete_project(slug: str, admin: dict = Depends(get_current_admin)):
+    """Delete project"""
+    project = await db.projects.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
     await db.projects.delete_one({"slug": slug})
+    await log_audit(admin["admin_id"], admin["email"], "delete", "project", project["id"])
+    
     return {"message": "Project deleted"}
 
 
-# --- Testimonial endpoints ---
+# ============================================================================
+# PARTNER ENDPOINTS
+# ============================================================================
+
+@api_router.get("/partners")
+async def get_partners(
+    category: Optional[str] = None,
+    featured: Optional[bool] = None,
+    published_only: bool = True,
+    admin: Optional[dict] = Depends(get_optional_admin)
+):
+    """Get partners with optional filters"""
+    query = {}
+    if category:
+        query["category"] = category
+    if featured is not None:
+        query["featured"] = featured
+    
+    if published_only and not admin:
+        query["status"] = "published"
+    
+    partners = await db.partners.find(query, {"_id": 0}).to_list(1000)
+    return partners
+
+
+@api_router.get("/partners/{slug}")
+async def get_partner(
+    slug: str,
+    admin: Optional[dict] = Depends(get_optional_admin)
+):
+    """Get single partner by slug"""
+    query = {"slug": slug}
+    
+    if not admin:
+        query["status"] = "published"
+    
+    partner = await db.partners.find_one(query, {"_id": 0})
+    if not partner:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    return partner
+
+
+@api_router.post("/partners", status_code=201)
+async def create_partner(
+    partner: PartnerCreate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Create new partner"""
+    existing = await db.partners.find_one({"slug": partner.slug})
+    if existing:
+        raise HTTPException(status_code=400, detail="Slug already exists")
+    
+    doc = partner.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"] = doc["created_at"]
+    
+    await db.partners.insert_one(doc)
+    await log_audit(admin["admin_id"], admin["email"], "create", "partner", doc["id"], {"slug": partner.slug})
+    
+    return {"message": "Partner created", "id": doc["id"], "slug": partner.slug}
+
+
+@api_router.put("/partners/{slug}")
+async def update_partner(
+    slug: str,
+    update: PartnerUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update partner"""
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.partners.update_one({"slug": slug}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    
+    partner = await db.partners.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    await log_audit(admin["admin_id"], admin["email"], "update", "partner", partner["id"], update_data)
+    
+    return {"message": "Partner updated"}
+
+
+@api_router.delete("/partners/{slug}")
+async def delete_partner(slug: str, admin: dict = Depends(get_current_admin)):
+    """Delete partner"""
+    partner = await db.partners.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    if not partner:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    
+    await db.partners.delete_one({"slug": slug})
+    await log_audit(admin["admin_id"], admin["email"], "delete", "partner", partner["id"])
+    
+    return {"message": "Partner deleted"}
+
+
+# ============================================================================
+# TESTIMONIAL ENDPOINTS
+# ============================================================================
 
 @api_router.get("/testimonials")
 async def get_testimonials():
+    """Get all testimonials"""
     testimonials = await db.testimonials.find({}, {"_id": 0}).to_list(1000)
     return testimonials
 
 
 @api_router.post("/testimonials", status_code=201)
-async def create_testimonial(testimonial: Testimonial):
+async def create_testimonial(
+    testimonial: TestimonialCreate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Create testimonial"""
     doc = testimonial.model_dump()
     doc["id"] = str(uuid.uuid4())
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    
     await db.testimonials.insert_one(doc)
+    await log_audit(admin["admin_id"], admin["email"], "create", "testimonial", doc["id"])
+    
     return {"message": "Testimonial created", "id": doc["id"]}
 
 
 @api_router.put("/testimonials/{testimonial_id}")
-async def update_testimonial(testimonial_id: str, testimonial: Testimonial):
-    await db.testimonials.update_one({"id": testimonial_id}, {"$set": testimonial.model_dump()})
+async def update_testimonial(
+    testimonial_id: str,
+    testimonial: TestimonialCreate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update testimonial"""
+    result = await db.testimonials.update_one(
+        {"id": testimonial_id},
+        {"$set": testimonial.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Testimonial not found")
+    
+    await log_audit(admin["admin_id"], admin["email"], "update", "testimonial", testimonial_id)
     return {"message": "Testimonial updated"}
 
 
 @api_router.delete("/testimonials/{testimonial_id}")
-async def delete_testimonial(testimonial_id: str):
-    await db.testimonials.delete_one({"id": testimonial_id})
+async def delete_testimonial(
+    testimonial_id: str,
+    admin: dict = Depends(get_current_admin)
+):
+    """Delete testimonial"""
+    result = await db.testimonials.delete_one({"id": testimonial_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Testimonial not found")
+    
+    await log_audit(admin["admin_id"], admin["email"], "delete", "testimonial", testimonial_id)
     return {"message": "Testimonial deleted"}
 
 
-# --- Admin auth ---
+# ============================================================================
+# ADMIN AUTH ENDPOINTS
+# ============================================================================
 
+@api_router.post("/admin/login")
+@limiter.limit("5/minute")
+async def admin_login(request: Request, response: Response, auth: AdminLoginRequest):
+    """Admin login with JWT"""
+    admin = await db.admins.find_one({"email": auth.email}, {"_id": 0})
+    if not admin or not verify_password(auth.password, admin["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create token
+    token = create_access_token({"sub": admin["id"], "email": admin["email"]})
+    
+    # Set cookie
+    set_auth_cookie(response, token)
+    
+    # Update last login
+    await db.admins.update_one(
+        {"id": admin["id"]},
+        {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    logger.info(f"Admin login: {admin['email']}")
+    
+    return AdminLoginResponse(
+        access_token=token,
+        admin_id=admin["id"],
+        email=admin["email"]
+    )
+
+
+@api_router.post("/admin/logout")
+async def admin_logout(response: Response, admin: dict = Depends(get_current_admin)):
+    """Admin logout"""
+    clear_auth_cookie(response)
+    return {"message": "Logged out"}
+
+
+@api_router.get("/admin/me")
+async def get_current_admin_info(admin: dict = Depends(get_current_admin)):
+    """Get current admin info"""
+    admin_doc = await db.admins.find_one({"id": admin["admin_id"]}, {"_id": 0, "password_hash": 0})
+    if not admin_doc:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    return admin_doc
+
+
+@api_router.post("/admin/change-password")
+async def change_admin_password(
+    data: AdminPasswordChange,
+    admin: dict = Depends(get_current_admin)
+):
+    """Change admin password"""
+    admin_doc = await db.admins.find_one({"id": admin["admin_id"]})
+    if not admin_doc:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    if not verify_password(data.current_password, admin_doc["password_hash"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    new_hash = get_password_hash(data.new_password)
+    await db.admins.update_one(
+        {"id": admin["admin_id"]},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    await log_audit(admin["admin_id"], admin["email"], "password_change", "admin", admin["admin_id"])
+    
+    return {"message": "Password changed successfully"}
+
+
+# Legacy auth endpoint for backward compatibility
 @api_router.post("/admin/auth")
-async def admin_auth(auth: AdminAuth):
-    admin_password = os.environ.get("ADMIN_PASSWORD", "septa2024")
-    if auth.password != admin_password:
-        raise HTTPException(status_code=401, detail="Invalid password")
-    return {"authenticated": True, "message": "Welcome to Septa Admin"}
+@limiter.limit("5/minute")
+async def admin_auth_legacy(request: Request, response: Response, auth: dict):
+    """Legacy admin auth - redirects to new login"""
+    password = auth.get("password", "")
+    bootstrap_email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@septa.group")
+    
+    # Try with bootstrap email
+    return await admin_login(
+        request, response,
+        AdminLoginRequest(email=bootstrap_email, password=password)
+    )
 
 
-# --- Root ---
+# ============================================================================
+# MEDIA UPLOAD ENDPOINTS
+# ============================================================================
+
+@api_router.post("/upload")
+async def upload_media(
+    file: UploadFile = File(...),
+    admin: dict = Depends(get_current_admin)
+):
+    """Upload media file"""
+    content = await file.read()
+    
+    # Validate
+    is_valid, error = validate_file(file.filename, file.content_type, len(content))
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error)
+    
+    # Upload
+    result = await upload_file(content, file.filename, file.content_type)
+    if not result:
+        raise HTTPException(status_code=500, detail="Upload failed")
+    
+    await log_audit(admin["admin_id"], admin["email"], "upload", "media", result["key"])
+    
+    return result
+
+
+@api_router.post("/upload/presigned")
+async def get_upload_url(
+    filename: str = Query(...),
+    content_type: str = Query(...),
+    admin: dict = Depends(get_current_admin)
+):
+    """Get presigned URL for direct upload"""
+    result = await get_presigned_upload_url(filename, content_type)
+    if not result:
+        raise HTTPException(status_code=500, detail="Could not generate upload URL")
+    return result
+
+
+# ============================================================================
+# EXPORT ENDPOINTS
+# ============================================================================
+
+@api_router.get("/export/content")
+async def export_content(admin: dict = Depends(get_current_admin)):
+    """Export all content as JSON for backup"""
+    projects = await db.projects.find({}, {"_id": 0}).to_list(1000)
+    partners = await db.partners.find({}, {"_id": 0}).to_list(1000)
+    
+    export_data = {
+        "projects": projects,
+        "partners": partners,
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "exported_by": admin["email"]
+    }
+    
+    await log_audit(admin["admin_id"], admin["email"], "export", "content", "all")
+    
+    return export_data
+
+
+@api_router.get("/audit-logs")
+async def get_audit_logs(
+    limit: int = Query(100, le=500),
+    admin: dict = Depends(get_current_admin)
+):
+    """Get audit logs"""
+    logs = await db.audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return logs
+
+
+# ============================================================================
+# CATEGORIES ENDPOINT
+# ============================================================================
+
+@api_router.get("/categories/partners")
+async def get_partner_categories():
+    """Get all partner categories"""
+    return [
+        "Architecture & Design",
+        "Interiors & Fit-out",
+        "Engineering (MEP/Structural/QS)",
+        "Landscape & Outdoor",
+        "Materials & Vendors",
+        "Smart Home / Technology",
+        "Branding, Signage & Wayfinding",
+        "Marketing & Digital",
+        "Leasing & Real Estate",
+        "Legal / Finance"
+    ]
+
+
+@api_router.get("/categories/projects")
+async def get_project_categories():
+    """Get project type categories"""
+    return {
+        "types": ["Institutional", "Healthcare", "Commercial", "Residential", "Mixed-use"],
+        "statuses": ["Completed", "Ongoing"],
+        "client_lens": ["Residential", "Commercial", "Institutional"]
+    }
+
+
+# ============================================================================
+# ROOT & HEALTH
+# ============================================================================
 
 @api_router.get("/")
 async def root():
-    return {"message": "Septa Group API v1.0"}
+    """API root"""
+    return {"message": "Septa Group API v2.0", "status": "healthy"}
 
 
-# --- Seed data ---
+@api_router.get("/health")
+async def health_check():
+    """Health check"""
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
 
-def _seed_projects():
-    return [
-        {
+
+# ============================================================================
+# STARTUP: BOOTSTRAP ADMIN & SEED DATA
+# ============================================================================
+
+async def bootstrap_admin():
+    """Create admin from env vars if none exists"""
+    admin_count = await db.admins.count_documents({})
+    if admin_count == 0:
+        email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@septa.group")
+        password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "septa2024admin")
+        
+        admin = {
             "id": str(uuid.uuid4()),
-            "slug": "st-thomas-school-thrissur",
-            "title": "St. Thomas School of Excellence",
-            "location": "Thrissur, Kerala",
-            "type": "Institutional",
-            "status": "Completed",
-            "sqft": "42,000",
-            "duration": "18 months",
-            "year": "2023",
-            "client_type": "Educational Institution",
-            "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=900&q=80",
-            "gallery": [
-                "https://images.unsplash.com/photo-1562774053-701939374585?w=900&q=80",
-                "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=900&q=80",
-                "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=900&q=80"
-            ],
-            "short_description": "A four-storey academic campus with integrated library, science labs, and multipurpose hall — delivered across three phased builds during an active academic year.",
-            "challenge": "Phased delivery during active academic year with 1,200 enrolled students",
-            "challenge_detail": "Construction had to proceed in strict phases to avoid disrupting ongoing academic sessions. Site access, noise controls, and dust management required daily coordination with school administration.",
-            "approach_detail": "We mapped a three-phase schedule aligned to school holidays and weekend windows. Structural work was sequenced to completed wings first, while fit-out of the new block proceeded in parallel. A dedicated site foreman managed daily handoff between academic staff and construction teams.",
-            "outcome_detail": "Campus delivered on schedule with zero disruption to the academic calendar. RCC quality audited externally at each floor level. The client cited Septa's communication protocols as the differentiating factor in the final tender decision.",
-            "septa_standards": ["Phased site access plan", "Weekly principal briefings", "Noise compliance schedule", "Third-party RCC audit", "Snag-to-handover protocol"],
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "slug": "lakeview-medical-centre-ernakulam",
-            "title": "Lakeview Medical Centre",
-            "location": "Ernakulam, Kerala",
-            "type": "Healthcare",
-            "status": "Completed",
-            "sqft": "28,500",
-            "duration": "14 months",
-            "year": "2022",
-            "client_type": "Private Healthcare Provider",
-            "image": "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=900&q=80",
-            "gallery": [
-                "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=900&q=80",
-                "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=900&q=80"
-            ],
-            "short_description": "A multi-speciality outpatient and diagnostic centre built to stringent hygiene, waterproofing, and M&E coordination standards.",
-            "challenge": "Healthcare-grade finishes with tight M&E trade coordination",
-            "challenge_detail": "Healthcare environments demand a higher-than-standard grade of waterproofing, wall finish precision, and HVAC integration. Six trade contractors required coordinated scheduling to avoid costly rework.",
-            "approach_detail": "Dedicated M&E coordination drawings were prepared before site commencement. Waterproofing and flooring subcontractors were briefed on healthcare standards. Weekly three-way coordination meetings were held with the client's medical equipment vendor.",
-            "outcome_detail": "Facility passed Kerala Health Department inspection on first submission. HVAC commissioning completed two weeks ahead of handover, allowing full systems testing before fit-out completion.",
-            "septa_standards": ["M&E coordination pre-drawings", "Waterproofing checkpoint at slab level", "Healthcare finish schedule", "Pre-handover systems commissioning", "Defects liability protocol"],
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "slug": "prestige-business-square-kochi",
-            "title": "Prestige Business Square",
-            "location": "Kochi, Kerala",
-            "type": "Commercial",
-            "status": "Completed",
-            "sqft": "55,000",
-            "duration": "22 months",
-            "year": "2023",
-            "client_type": "Commercial Developer",
-            "image": "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=900&q=80",
-            "gallery": [
-                "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=900&q=80",
-                "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80"
-            ],
-            "short_description": "Six-storey mixed commercial office building with basement parking and retail podium — delivered in a high water-table zone without incident.",
-            "challenge": "Basement waterproofing failure risk in a high water-table zone",
-            "challenge_detail": "The Kochi site presented a perched water table that made traditional basement construction high-risk. The developer had experienced waterproofing failures on an adjacent project built by another contractor.",
-            "approach_detail": "A tanked waterproofing system with secondary drainage layer was specified. Septa's procurement team sourced a CPWD-approved waterproofing contractor. Inspection protocols were set at formwork, pour, and curing stages with photographic records maintained per floor.",
-            "outcome_detail": "Zero waterproofing failures post-completion. Basement passed structural integrity test at 3 months post-occupancy. Project delivered 8 days ahead of contractual completion date.",
-            "septa_standards": ["Tanked waterproofing protocol", "Water-table monitoring log", "Subcontractor performance review", "Milestone-aligned stage payments", "Post-occupancy inspection at 90 days"],
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "slug": "malabar-residency-kozhikode",
-            "title": "Malabar Residency",
-            "location": "Kozhikode, Kerala",
-            "type": "Residential",
-            "status": "Completed",
-            "sqft": "34,200",
-            "duration": "20 months",
-            "year": "2022",
-            "client_type": "Private Developer",
-            "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=900&q=80",
-            "gallery": [
-                "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=900&q=80",
-                "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=900&q=80"
-            ],
-            "short_description": "Twelve premium apartments across five floors with club amenities and landscaped podium — consistent finish quality across all units.",
-            "challenge": "Delivering consistent finish quality across 12 independently-owned units",
-            "challenge_detail": "With twelve apartments and individual buyer expectations, finish consistency became the primary execution challenge. Tile-laying, plaster quality, and joinery had to be uniform across all units.",
-            "approach_detail": "A finish inspection matrix was created per unit type. A dedicated snagging team conducted two rounds of internal QC before external client walkthroughs. Unit-specific punch lists were tracked weekly in shared reports with the developer.",
-            "outcome_detail": "Final snag list for all 12 units closed within 3 weeks of handover. Client NPS score of 94% based on post-handover survey. Multiple buyers referred subsequent projects through direct recommendation.",
-            "septa_standards": ["Unit-level finish matrix", "Two-round internal snag protocol", "Buyer walkthrough checklist", "Developer punch list tracker", "60-day post-handover support"],
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "slug": "green-hills-villa-trivandrum",
-            "title": "Green Hills Villa Complex",
-            "location": "Trivandrum, Kerala",
-            "type": "Residential",
-            "status": "Ongoing",
-            "sqft": "18,000",
-            "duration": "16 months",
-            "year": "2024",
-            "client_type": "Boutique Developer",
-            "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80",
-            "gallery": [
-                "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80"
-            ],
-            "short_description": "Six bespoke villas with natural laterite cladding, private pools, and passive energy design on hillside terrain.",
-            "challenge": "Natural stone precision detailing on challenging hillside terrain",
-            "challenge_detail": "Hillside terrain posed foundation challenges, and the use of natural laterite and granite required specialist masonry teams with prior villa-grade experience.",
-            "approach_detail": "Geotechnical assessment was commissioned before tender. Laterite sourced from Kannur was quality-graded on arrival at site. A specialist masonry team was engaged on a dedicated package with direct QC oversight by Septa's senior site engineer.",
-            "outcome_detail": "Currently on track. First two villas reached weathertight stage at Week 28. Client reports highest confidence in communication and reporting quality compared to previous construction experience.",
-            "septa_standards": ["Geotechnical pre-assessment", "Material quality grading on arrival", "Specialist masonry QC package", "Weekly video site report", "Client decision log"],
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "slug": "harmony-business-centre-kottayam",
-            "title": "Harmony Business Centre",
-            "location": "Kottayam, Kerala",
-            "type": "Mixed-use",
-            "status": "Ongoing",
-            "sqft": "68,000",
-            "duration": "28 months",
-            "year": "2024",
-            "client_type": "Investment Developer",
-            "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80",
-            "gallery": [
-                "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80"
-            ],
-            "short_description": "Eight-storey mixed-use development with retail ground floor, co-working levels, and serviced offices — coordinating shell-and-core delivery with concurrent tenant fit-outs.",
-            "challenge": "Shell-and-core floor handover coordinated with concurrent tenant fit-outs",
-            "challenge_detail": "The developer committed floors to tenants before building completion. Coordinating shell-and-core handover floor-by-floor while base construction continued above was a complex programme management challenge.",
-            "approach_detail": "A floor-level completion schedule was developed in coordination with the developer's leasing timeline. Temporary hoarding and lift management protocols were established. Progress was tracked via a shared project dashboard updated weekly.",
-            "outcome_detail": "Currently at structure completion for floors 1–5. Ground floor retail shell handed over to first tenant ahead of schedule. Programme confidence rated high by developer's PM team.",
-            "septa_standards": ["Floor-by-floor handover schedule", "Tenant coordination protocol", "Shared progress dashboard", "Temporary works safety plan", "Monthly cost report"],
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "email": email,
+            "password_hash": get_password_hash(password),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_login": None
         }
-    ]
+        await db.admins.insert_one(admin)
+        logger.info(f"Bootstrap admin created: {email}")
 
 
-def _seed_testimonials():
-    return [
-        {
-            "id": str(uuid.uuid4()),
-            "client_name": "P. Rajan",
-            "client_role": "Principal, Educational Institution, Thrissur",
-            "project_type": "Institutional",
-            "content": "Septa's structured approach gave us confidence throughout the entire build. Weekly reports were clear and consistent. We never had to chase them for updates. The phased delivery methodology they proposed was something no other contractor even mentioned.",
-            "rating": 5,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "client_name": "Dr. S. Nair",
-            "client_role": "Managing Director, Healthcare Facility, Ernakulam",
-            "project_type": "Healthcare",
-            "content": "The M&E coordination was handled professionally at every stage. We passed the Health Department inspection on first submission — that speaks directly to build quality. Septa clearly understood what healthcare-grade construction demands.",
-            "rating": 5,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "client_name": "A. Menon",
-            "client_role": "Developer, Residential Project, Kozhikode",
-            "project_type": "Residential",
-            "content": "We have built three projects with different contractors. Septa's finish quality and documentation discipline is a full level above the rest. Our apartment buyers had fewer handover complaints than any previous project we have delivered.",
-            "rating": 5,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-    ]
+async def migrate_json_to_db():
+    """Migrate JSON content to MongoDB if DB is empty"""
+    # Check if already migrated
+    project_count = await db.projects.count_documents({})
+    partner_count = await db.partners.count_documents({})
+    
+    if project_count > 0 and partner_count > 0:
+        logger.info("Data already exists in DB - skipping migration")
+        return
+    
+    frontend_content = ROOT_DIR.parent / "frontend" / "src" / "content"
+    
+    # Migrate projects
+    if project_count == 0:
+        projects_file = frontend_content / "projects.json"
+        if projects_file.exists():
+            with open(projects_file) as f:
+                data = json.load(f)
+            
+            for p in data.get("projects", []):
+                doc = {
+                    "id": str(uuid.uuid4()),
+                    "slug": p.get("slug"),
+                    "title": make_bilingual(p.get("title", "")),
+                    "location": p.get("location", ""),
+                    "type": p.get("type", ""),
+                    "project_status": p.get("status", "Completed"),
+                    "sqft": p.get("sqft", ""),
+                    "duration": p.get("duration", ""),
+                    "year": p.get("year", ""),
+                    "client_type": p.get("clientType", ""),
+                    "client_lens": p.get("clientLens", ""),
+                    "image": p.get("image", ""),
+                    "gallery": p.get("gallery", []),
+                    "short_description": make_bilingual(p.get("shortDescription", "")),
+                    "challenge": make_bilingual(p.get("challenge", "")),
+                    "challenge_detail": make_bilingual(p.get("challengeDetail", "")),
+                    "approach_detail": make_bilingual(p.get("approachDetail", "")),
+                    "outcome_detail": make_bilingual(p.get("outcomeDetail", "")),
+                    "partner_stack": [
+                        {
+                            "partner_id": ps.get("partnerId"),
+                            "role_label": ps.get("roleLabel"),
+                            "contribution": make_bilingual(ps.get("contribution", ""))
+                        }
+                        for ps in p.get("partnerStack", [])
+                    ],
+                    "story": {
+                        "paragraphs": [make_bilingual(para) for para in p.get("story", {}).get("storyParagraphs", [])],
+                        "owner_quote": make_bilingual(p.get("story", {}).get("ownerQuote", ""))
+                    } if p.get("story") else None,
+                    "design": {
+                        "intent": make_bilingual(p.get("design", {}).get("designIntent", "")),
+                        "tags": p.get("design", {}).get("designTags", [])
+                    } if p.get("design") else None,
+                    "delivery": {
+                        "highlights": [make_bilingual(h) for h in p.get("delivery", {}).get("deliveryHighlights", [])],
+                        "septa_standards": p.get("delivery", {}).get("septaStandardApplied", [])
+                    } if p.get("delivery") else None,
+                    "media": None,
+                    "status": "published",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.projects.insert_one(doc)
+            
+            logger.info(f"Migrated {len(data.get('projects', []))} projects from JSON")
+    
+    # Migrate partners
+    if partner_count == 0:
+        partners_file = frontend_content / "partners.json"
+        if partners_file.exists():
+            with open(partners_file) as f:
+                data = json.load(f)
+            
+            for p in data.get("partners", []):
+                doc = {
+                    "id": str(uuid.uuid4()),
+                    "slug": p.get("slug", p.get("id")),
+                    "name": make_bilingual(p.get("name", "")),
+                    "category": p.get("category", ""),
+                    "specialties": p.get("specialties", []),
+                    "districts": p.get("districts", []),
+                    "bio_short": make_bilingual(p.get("bioShort", "")),
+                    "bio_long": make_bilingual(p.get("bioLong", "")),
+                    "relationship_type": p.get("relationshipType", "Project Partner"),
+                    "website": p.get("website"),
+                    "instagram": p.get("instagram"),
+                    "email": p.get("email"),
+                    "logo_url": p.get("logo"),
+                    "cover_image": p.get("coverImage"),
+                    "featured": p.get("featured", False),
+                    "known_for": [make_bilingual(k) for k in p.get("knownFor", [])],
+                    "septa_collaboration": make_bilingual(p.get("septaCollaboration", "")),
+                    "status": "published",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.partners.insert_one(doc)
+            
+            logger.info(f"Migrated {len(data.get('partners', []))} partners from JSON")
+    
+    # Seed testimonials if empty
+    testimonial_count = await db.testimonials.count_documents({})
+    if testimonial_count == 0:
+        testimonials = [
+            {
+                "id": str(uuid.uuid4()),
+                "client_name": "P. Rajan",
+                "client_role": "Principal, Educational Institution, Thrissur",
+                "project_type": "Institutional",
+                "content": make_bilingual("Septa's structured approach gave us confidence throughout the entire build. Weekly reports were clear and consistent."),
+                "rating": 5,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "client_name": "Dr. S. Nair",
+                "client_role": "Managing Director, Healthcare Facility, Ernakulam",
+                "project_type": "Healthcare",
+                "content": make_bilingual("The M&E coordination was handled professionally at every stage. We passed the Health Department inspection on first submission."),
+                "rating": 5,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "client_name": "A. Menon",
+                "client_role": "Developer, Residential Project, Kozhikode",
+                "project_type": "Residential",
+                "content": make_bilingual("Septa's finish quality and documentation discipline is a full level above the rest. Our apartment buyers had fewer handover complaints."),
+                "rating": 5,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        ]
+        for t in testimonials:
+            await db.testimonials.insert_one(t)
+        logger.info("Seeded testimonials")
 
 
 @app.on_event("startup")
 async def startup_event():
-    count = await db.projects.count_documents({})
-    if count == 0:
-        logger.info("Seeding database with initial data...")
-        for p in _seed_projects():
-            await db.projects.insert_one(p)
-        for t in _seed_testimonials():
-            await db.testimonials.insert_one(t)
-        logger.info("Database seeded successfully.")
+    """Initialize on startup"""
+    await bootstrap_admin()
+    await migrate_json_to_db()
+    logger.info("Septa API started successfully")
 
+
+# ============================================================================
+# APP SETUP
+# ============================================================================
 
 app.include_router(api_router)
 
@@ -406,4 +834,5 @@ app.add_middleware(
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    """Cleanup on shutdown"""
     client.close()
