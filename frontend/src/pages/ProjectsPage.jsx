@@ -1,12 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Filter } from 'lucide-react';
+import { ArrowRight, Filter, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import projectsData from '../content/projects.json';
-import partnersData from '../content/partners.json';
-
-const { projects } = projectsData;
-const { partners } = partnersData;
+import { useProjects, usePartners, getText } from '../hooks/useApi';
 
 const typeFilters = ['All', 'Institutional', 'Healthcare', 'Commercial', 'Residential', 'Mixed-use'];
 const statusFilters = ['All', 'Completed', 'Ongoing'];
@@ -19,15 +15,11 @@ const typeColors = {
   'Mixed-use': 'bg-[#F0EAF4] text-[#6A3A7A]',
 };
 
-function getArchitectName(project) {
-  const arch = project.partnerStack?.find(ps => ps.roleLabel === 'Architect');
-  if (!arch) return null;
-  const partner = partners.find(p => p.id === arch.partnerId);
-  return partner ? partner.name : null;
-}
-
 export default function ProjectsPage() {
   useScrollReveal();
+  const { data: projects, loading: projectsLoading } = useProjects();
+  const { data: partners, loading: partnersLoading } = usePartners();
+  
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [partnerFilter, setPartnerFilter] = useState('All');
@@ -37,23 +29,37 @@ export default function ProjectsPage() {
     document.title = 'Projects — Septa Group Kerala Construction';
   }, []);
 
+  const getArchitectName = (project) => {
+    const arch = project.partner_stack?.find(ps => ps.role_label === 'Architect');
+    if (!arch) return null;
+    const partner = partners.find(p => p.slug === arch.partner_id || p.id === arch.partner_id);
+    return partner ? getText(partner.name) : null;
+  };
+
   const allTags = useMemo(() => {
     const t = new Set();
-    projects.forEach(p => p.design?.designTags?.forEach(tag => t.add(tag)));
+    projects.forEach(p => p.design?.tags?.forEach(tag => t.add(tag)));
     return ['All', ...Array.from(t).sort()];
-  }, []);
+  }, [projects]);
 
   const filtered = useMemo(() => {
     return projects.filter(p => {
       const matchType = typeFilter === 'All' || p.type === typeFilter;
-      const matchStatus = statusFilter === 'All' || p.status === statusFilter;
-      const matchPartner = partnerFilter === 'All' || p.partnerStack?.some(ps => ps.partnerId === partnerFilter);
-      const matchTag = tagFilter === 'All' || p.design?.designTags?.includes(tagFilter);
+      const matchStatus = statusFilter === 'All' || p.project_status === statusFilter;
+      const matchPartner = partnerFilter === 'All' || p.partner_stack?.some(ps => ps.partner_id === partnerFilter);
+      const matchTag = tagFilter === 'All' || p.design?.tags?.includes(tagFilter);
       return matchType && matchStatus && matchPartner && matchTag;
     });
-  }, [typeFilter, statusFilter, partnerFilter, tagFilter]);
+  }, [projects, typeFilter, statusFilter, partnerFilter, tagFilter]);
 
-  const clearFilters = () => { setTypeFilter('All'); setStatusFilter('All'); setPartnerFilter('All'); setTagFilter('All'); };
+  const clearFilters = () => {
+    setTypeFilter('All');
+    setStatusFilter('All');
+    setPartnerFilter('All');
+    setTagFilter('All');
+  };
+
+  const loading = projectsLoading || partnersLoading;
 
   return (
     <div className="pt-16">
@@ -111,7 +117,7 @@ export default function ProjectsPage() {
                 className="h-8 px-2 text-xs font-inter border border-[#A7ADB5]/30 bg-transparent text-[#1F2328] outline-none focus:border-[#0F5E5B]"
               >
                 <option value="All">All Partners</option>
-                {partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {partners.map(p => <option key={p.slug} value={p.slug}>{getText(p.name)}</option>)}
               </select>
               <div className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter flex-shrink-0 sm:ml-3">Design</div>
               <select
@@ -130,7 +136,11 @@ export default function ProjectsPage() {
       {/* Projects Grid */}
       <section className="py-14 md:py-20 bg-[#F3F0E8]" data-testid="projects-grid-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="py-20 flex items-center justify-center" data-testid="projects-loading">
+              <Loader2 className="animate-spin text-[#0F5E5B]" size={32} />
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="py-20 text-center" data-testid="no-projects-msg">
               <p className="text-[#A7ADB5] font-inter text-sm">No projects match the selected filters.</p>
               <button onClick={clearFilters} className="mt-4 text-sm font-inter text-[#0F5E5B] hover:underline">
@@ -149,9 +159,9 @@ export default function ProjectsPage() {
                     className={`group block reveal reveal-delay-${Math.min(i % 3 + 1, 4)}`}
                   >
                     <div className="relative overflow-hidden aspect-[4/3] bg-[#E8E6E0]">
-                      <img src={project.image} alt={project.title} loading="lazy"
+                      <img src={project.image} alt={getText(project.title)} loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                      {project.status === 'Ongoing' && (
+                      {project.project_status === 'Ongoing' && (
                         <div className="absolute top-4 right-4 bg-[#0F5E5B] text-white text-xs font-inter px-2.5 py-1 uppercase tracking-wider">
                           Ongoing
                         </div>
@@ -159,7 +169,7 @@ export default function ProjectsPage() {
                     </div>
                     <div className="pt-5 pb-6 border-b border-[#A7ADB5]/20">
                       <div className="flex items-start justify-between gap-3 mb-1">
-                        <h3 className="text-base font-sora font-medium text-[#1F2328] leading-snug">{project.title}</h3>
+                        <h3 className="text-base font-sora font-medium text-[#1F2328] leading-snug">{getText(project.title)}</h3>
                         <span className={`text-xs font-inter px-2 py-0.5 flex-shrink-0 ${typeColors[project.type] || 'bg-gray-100 text-gray-600'}`}>
                           {project.type}
                         </span>
@@ -176,11 +186,11 @@ export default function ProjectsPage() {
                         <div className="w-1 h-1 bg-[#C6A15B] mt-1.5 flex-shrink-0" />
                         <p className="text-xs font-inter text-[#1F2328]/60 leading-relaxed">
                           <span className="font-medium text-[#1F2328]/70">Key challenge: </span>
-                          {project.challenge}
+                          {getText(project.challenge)}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-3">
-                        {project.design?.designTags?.slice(0, 2).map(tag => (
+                        {project.design?.tags?.slice(0, 2).map(tag => (
                           <span key={tag} className="text-xs font-inter px-2 py-0.5 bg-[#F3F0E8] text-[#A7ADB5] border border-[#A7ADB5]/20">
                             {tag}
                           </span>
