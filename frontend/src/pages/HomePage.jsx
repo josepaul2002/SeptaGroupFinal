@@ -64,12 +64,13 @@ export default function HomePage() {
   const [form, setForm] = useState({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
   const [formStatus, setFormStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [spotlightPartners, setSpotlightPartners] = useState([]);
 
   const featuredProjects = useMemo(() => projects.slice(0, 6), [projects]);
-  const featuredPartners = useMemo(() => partners.filter(p => p.featured), [partners]);
 
   useEffect(() => {
     document.title = 'Septa Group — Built with Clarity. Construction Kerala';
+    axios.get(`${API}/partners-featured`).then(r => setSpotlightPartners(r.data || [])).catch(() => {});
   }, []);
 
   const handleSubmit = async (e) => {
