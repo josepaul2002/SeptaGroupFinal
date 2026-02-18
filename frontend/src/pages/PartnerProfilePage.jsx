@@ -64,18 +64,22 @@ export default function PartnerProfilePage() {
   const partnerName = getText(partner.name);
   const bioLong = getText(partner.bio_long);
   const septaCollab = getText(partner.septa_collaboration);
+  const showPreviewBanner = isPreview || partner._preview_mode;
 
   return (
-    <div className="pt-16" data-testid="partner-profile-page">
+    <div className={showPreviewBanner ? "pt-28" : "pt-16"} data-testid="partner-profile-page">
+      {/* Preview Banner */}
+      {showPreviewBanner && <PreviewBanner type="partner" slug={slug} />}
+      
       {/* Back */}
       <div className="bg-[#F3F0E8] border-b border-[#A7ADB5]/20 py-4">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <Link
-            to="/ecosystem"
+            to={showPreviewBanner ? "/admin" : "/ecosystem"}
             data-testid="back-to-ecosystem-btn"
             className="inline-flex items-center gap-2 text-xs font-inter text-[#A7ADB5] hover:text-[#0F5E5B] transition-colors uppercase tracking-widest"
           >
-            <ArrowLeft size={13} strokeWidth={1.5} /> Ecosystem
+            <ArrowLeft size={13} strokeWidth={1.5} /> {showPreviewBanner ? "Back to Admin" : "Ecosystem"}
           </Link>
         </div>
       </div>
