@@ -106,7 +106,7 @@ async def log_audit(
 # ============================================================================
 
 @api_router.post("/leads", status_code=201)
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 async def create_lead(request: Request, lead: LeadCreate):
     """
     Create new lead with email notifications
