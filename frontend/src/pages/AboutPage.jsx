@@ -1,190 +1,146 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ClipboardList, BarChart2, CheckCircle, FileText, Search, Shield, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { usePageContent, getText } from '../hooks/useApi';
+import { useLanguage } from '../components/LanguageToggle';
 
-const values = [
-  {
-    title: 'Responsibility Over Promises',
-    desc: 'We do not make commitments we cannot track. Every delivery milestone is documented, and accountability is built into our weekly reporting — not left to verbal assurance.',
-  },
-  {
-    title: 'Deserving Trust, Not Just Claiming It',
-    desc: 'Trust in construction is earned through consistency, not marketing. We focus on doing what we say, showing what we have done, and letting clients compare us against the evidence.',
-  },
-  {
-    title: 'Disciplined Management',
-    desc: 'Site management at Septa is structured, not informal. From subcontractor coordination to material tracking, we operate with the discipline of an engineering firm — not a traditional contractor.',
-  },
-];
-
-const differentiators = [
-  {
-    label: 'Architect Collaboration',
-    point: 'We work alongside architects as partners, not contractors trying to reduce scope. Design intent is protected through construction.',
-    proof: 'Multiple projects delivered with full architectural sign-off at handover — not just structural completion.',
-  },
-  {
-    label: 'Long-term Workforce Continuity',
-    point: 'Our site leadership and trade supervisors have worked with us for 8–15 years. Continuity in teams means consistency in quality.',
-    proof: 'No project has seen mid-delivery leadership change due to workforce attrition — a common failure point with peers.',
-  },
-  {
-    label: 'Documentation Discipline',
-    point: 'We generate site records the way an auditable firm would. Weekly reports, checkpoint photographs, and decision logs are produced consistently.',
-    proof: 'Clients who have built with other contractors consistently cite our documentation quality as the clearest differentiator.',
-  },
-];
-
-const team = [
-  { role: 'Managing Partner', years: '20+ years industry experience', domain: 'Business Development & Client Relations' },
-  { role: 'Site Engineer Lead', years: '12 years on-site experience', domain: 'RCC, Waterproofing & Structural Quality' },
-  { role: 'Quantity Surveyor', years: '10 years estimation & billing', domain: 'Cost Control & BOQ Management' },
-  { role: 'Procurement Head', years: '15 years procurement', domain: 'Materials, Vendors & Supply Chain' },
-];
+const iconMap = {
+  'clipboard-list': ClipboardList, 'bar-chart-2': BarChart2, 'check-circle': CheckCircle,
+  'file-text': FileText, 'search': Search, 'shield': Shield,
+};
 
 export default function AboutPage() {
   useScrollReveal();
+  const { blocks, loading } = usePageContent('about');
+  const { t } = useLanguage();
 
-  useEffect(() => {
-    document.title = 'About Septa Group — Legacy Construction, Modern Delivery';
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); document.title = 'About — Septa Group'; }, []);
+
+  const metrics = blocks.filter(b => b.block_type === 'metrics').sort((a, b) => a.order - b.order);
+  const steps = blocks.filter(b => b.block_type === 'timeline_step').sort((a, b) => a.order - b.order);
+  const proofs = blocks.filter(b => b.block_type === 'proof_callout').sort((a, b) => a.order - b.order);
 
   return (
-    <div className="pt-16">
-      {/* Page Hero */}
-      <section className="py-20 md:py-28 bg-[#1F2328]" data-testid="about-hero">
+    <div className="pt-16" data-testid="about-page">
+      {/* Hero */}
+      <section className="bg-[#F3F0E8] py-16 md:py-24">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-[0.28em] text-[#C6A15B] font-inter mb-4 reveal">
-              About Us
-            </p>
-            <h1 className="text-4xl md:text-6xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight mb-6 reveal reveal-delay-1">
-              Legacy Trust.<br />Modern Execution.
-            </h1>
-            <p className="text-base md:text-lg font-inter font-light text-[#F3F0E8]/55 leading-relaxed reveal reveal-delay-2">
-              Septa Group has been building in Kerala for over two decades — from institutional campuses and healthcare facilities to premium residences. We have evolved from a traditional contractor into a delivery-focused build studio that operates with process, documentation, and long-term workforce continuity.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Story */}
-      <section className="py-20 md:py-28 bg-[#F3F0E8]" data-testid="about-story">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
-            <div className="lg:col-span-5 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-4">Our Story</p>
-              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
-                Two Decades of Building,<br />Delivered with Precision
-              </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-7 reveal">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">About Septa Group</p>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
+                Built with Clarity.<br />Delivered with Discipline.
+              </h1>
+              <p className="text-base md:text-lg font-inter font-light text-[#1F2328]/55 leading-relaxed max-w-xl mt-6">
+                Since 2004, Septa Group has been delivering construction projects across Kerala with a focus on process, accountability, and quality that clients can verify — not just trust.
+              </p>
             </div>
-            <div className="lg:col-span-7 space-y-5 reveal reveal-delay-1">
-              <p className="text-base font-inter font-light text-[#1F2328]/65 leading-relaxed">
-                Septa Group was established in Kerala with a simple conviction: that a construction company's most valuable asset is not equipment or capital — it is a consistent, trusted reputation built project by project.
-              </p>
-              <p className="text-base font-inter font-light text-[#1F2328]/65 leading-relaxed">
-                Over twenty years, we have grown from residential builds to institutional and commercial projects, earning mandates from schools, hospitals, commercial developers, and boutique residential clients who value discipline over promises.
-              </p>
-              <p className="text-base font-inter font-light text-[#1F2328]/65 leading-relaxed">
-                The Septa of today is a modern build delivery studio — one that combines the craft knowledge of a long-tenure site workforce with the process rigour of a managed services firm. Weekly reporting, quality checkpoints, and structured handover protocols are not marketing language; they are how we operate every day on every site.
-              </p>
-              <div className="pt-2">
-                <div className="h-px bg-[#C6A15B]/40 mb-4" />
-                <p className="text-sm font-inter font-medium text-[#1F2328] italic">
-                  "Our word-of-mouth reputation is our most honest marketing. Every referral is a reflection of a project delivered well."
-                </p>
-                <p className="text-xs font-inter text-[#A7ADB5] mt-2">— Managing Partner, Septa Group</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Values */}
-      <section className="py-20 md:py-28 bg-white" data-testid="about-values">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="mb-14 reveal">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">What We Stand For</p>
-            <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
-              Our Values
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {values.map((v, i) => (
-              <div
-                key={v.title}
-                className={`p-8 border border-[#1F2328]/8 hover:border-[#C6A15B]/50 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
-                data-testid={`value-card-${i}`}
-              >
-                <div className="w-6 h-px bg-[#C6A15B] mb-5" />
-                <h3 className="text-lg font-sora font-medium text-[#1F2328] mb-3 leading-snug">{v.title}</h3>
-                <p className="text-sm font-inter font-light text-[#1F2328]/60 leading-relaxed">{v.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Different */}
-      <section className="py-20 md:py-28 bg-[#F3F0E8]" data-testid="about-differentiators">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="mb-14 reveal">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Proof, Not Claims</p>
-            <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight max-w-lg">
-              Why Septa Delivers Differently
-            </h2>
-          </div>
-          <div className="space-y-6">
-            {differentiators.map((d, i) => (
-              <div
-                key={d.label}
-                className={`grid grid-cols-1 md:grid-cols-12 gap-6 p-8 bg-white border border-[#1F2328]/8 reveal reveal-delay-${i + 1}`}
-                data-testid={`differentiator-${i}`}
-              >
-                <div className="md:col-span-3">
-                  <p className="text-xs uppercase tracking-widest text-[#0F5E5B] font-inter font-medium">{d.label}</p>
-                </div>
-                <div className="md:col-span-5">
-                  <p className="text-sm font-inter text-[#1F2328]/75 leading-relaxed">{d.point}</p>
-                </div>
-                <div className="md:col-span-4">
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle2 size={14} className="text-[#0F5E5B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                    <p className="text-sm font-inter font-light text-[#A7ADB5] leading-relaxed italic">{d.proof}</p>
+            <div className="lg:col-span-5 reveal reveal-delay-1">
+              <div className="aspect-[4/5] bg-[#1F2328] relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0F5E5B]/20 to-[#1F2328]" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-6xl font-sora font-light text-white/10">S</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-[#C6A15B] font-inter mt-2">Est. 2004</p>
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Team */}
-      <section className="py-20 md:py-28 bg-white" data-testid="about-team">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="mb-14 reveal">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">The Team</p>
-            <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
-              Core Leadership
-            </h2>
-            <p className="text-sm font-inter text-[#A7ADB5] mt-3">
-              [Team profiles and photos to be added — content placeholder]
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {team.map((member, i) => (
-              <div
-                key={member.role}
-                className={`p-7 border border-[#1F2328]/8 reveal reveal-delay-${i + 1}`}
-                data-testid={`team-card-${i}`}
-              >
-                <div className="w-14 h-14 bg-[#E8E6E0] mb-5 flex items-center justify-center">
-                  <span className="text-xs font-inter text-[#A7ADB5] uppercase tracking-widest">Photo</span>
+      {/* Proof Strip Metrics */}
+      {metrics.length > 0 && (
+        <section className="py-12 bg-[#1F2328]" data-testid="about-metrics">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+            <div className={`grid grid-cols-2 md:grid-cols-${Math.min(metrics.length, 4)} gap-8 md:gap-12`}>
+              {metrics.map((m, i) => (
+                <div key={m.id || i} className={`text-center reveal reveal-delay-${i + 1}`} data-testid={`metric-${m.metadata?.key || i}`}>
+                  <p className="text-3xl md:text-4xl font-sora font-light text-[#C6A15B]">{t(m.title)}</p>
+                  <p className="text-xs md:text-sm font-inter text-[#F3F0E8]/60 mt-1 uppercase tracking-wider">{t(m.subtitle)}</p>
                 </div>
-                <p className="text-base font-sora font-medium text-[#1F2328] mb-1">{member.role}</p>
-                <p className="text-xs font-inter text-[#0F5E5B] mb-1">{member.years}</p>
-                <p className="text-xs font-inter text-[#A7ADB5] leading-relaxed">{member.domain}</p>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Septa Standard Timeline */}
+      {steps.length > 0 && (
+        <section className="py-16 md:py-24 bg-white" data-testid="about-septa-standard">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+            <div className="max-w-2xl mb-12 reveal">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">The Septa Standard</p>
+              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
+                A working protocol applied on every site, every week.
+              </h2>
+              <p className="text-base font-inter font-light text-[#1F2328]/55 leading-relaxed mt-4">
+                Not aspirational copy — this is our operating system for construction delivery.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {steps.map((step, i) => {
+                const Icon = iconMap[step.icon] || CheckCircle;
+                return (
+                  <div key={step.id || i} className={`p-6 border border-[#A7ADB5]/15 hover:border-[#0F5E5B]/30 transition-colors reveal reveal-delay-${(i % 3) + 1}`}
+                    data-testid={`step-${i}`}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-[#E8F0EF] flex items-center justify-center flex-shrink-0">
+                        <Icon size={16} className="text-[#0F5E5B]" strokeWidth={1.5} />
+                      </div>
+                      <span className="text-xs font-inter text-[#A7ADB5] uppercase tracking-wider">{String(i + 1).padStart(2, '0')}</span>
+                    </div>
+                    <h3 className="text-sm font-sora font-medium text-[#1F2328] mb-2">{t(step.title)}</h3>
+                    <p className="text-sm font-inter font-light text-[#1F2328]/55 leading-relaxed">{t(step.body)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Proof Callouts */}
+      {proofs.length > 0 && (
+        <section className="py-12 md:py-16 bg-[#F3F0E8]" data-testid="about-proofs">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-6 reveal">Proof Points</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {proofs.map((proof, i) => (
+                <div key={proof.id || i} className={`p-6 bg-white border border-[#A7ADB5]/15 hover:border-[#C6A15B]/40 transition-colors reveal reveal-delay-${i + 1}`}
+                  data-testid={`proof-${i}`}>
+                  <h3 className="text-sm font-sora font-medium text-[#1F2328] mb-2">{t(proof.title)}</h3>
+                  <p className="text-sm font-inter font-light text-[#1F2328]/55 leading-relaxed mb-3">{t(proof.body)}</p>
+                  {proof.link_url && (
+                    <Link to={proof.link_url} className="inline-flex items-center gap-1.5 text-xs font-inter font-medium text-[#0F5E5B] hover:text-[#C6A15B] transition-colors uppercase tracking-wider">
+                      {proof.link_label || 'View project'} <ArrowRight size={12} strokeWidth={1.5} />
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Values */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+          <div className="max-w-2xl mb-12 reveal">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Our Values</p>
+            <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight">What we stand for</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { title: 'Transparency', body: 'Weekly reporting, documented change orders, and open-book accounting. Clients see everything.' },
+              { title: 'Accountability', body: 'Named project leads, structured handoffs, and a quality system that doesn\'t depend on who\'s on site.' },
+              { title: 'Craftsmanship', body: 'Material selection, finish quality, and attention to detail that makes the difference between building and building well.' },
+            ].map((val, i) => (
+              <div key={i} className={`reveal reveal-delay-${i + 1}`} data-testid={`value-${i}`}>
+                <h3 className="text-lg font-sora font-medium text-[#1F2328] mb-3">{val.title}</h3>
+                <p className="text-sm font-inter font-light text-[#1F2328]/55 leading-relaxed">{val.body}</p>
               </div>
             ))}
           </div>
@@ -192,18 +148,20 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 md:py-20 bg-[#0F5E5B]" data-testid="about-cta">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-6">
-          <p className="text-2xl font-sora font-light text-white tracking-tight">
-            Considering a project? Let us walk you through how we work.
-          </p>
-          <Link
-            to="/contact"
-            data-testid="about-cta-btn"
-            className="flex-shrink-0 h-12 px-8 bg-white text-[#0F5E5B] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#F3F0E8] transition-colors flex items-center gap-2"
-          >
-            Get in Touch <ArrowRight size={14} strokeWidth={1.5} />
-          </Link>
+      <section className="py-16 bg-[#1F2328]" data-testid="about-cta">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 text-center">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Work With Us</p>
+          <h2 className="text-2xl md:text-3xl font-sora font-light text-[#F3F0E8] tracking-tight mb-6">
+            Ready to build something that matters?
+          </h2>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link to="/projects" className="h-12 px-8 border border-[#F3F0E8]/20 text-[#F3F0E8] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#F3F0E8] hover:text-[#1F2328] transition-all flex items-center gap-2" data-testid="about-view-work-btn">
+              View Our Work
+            </Link>
+            <Link to="/contact" className="h-12 px-8 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center gap-2" data-testid="about-contact-btn">
+              Start a Conversation <ArrowRight size={14} strokeWidth={1.5} />
+            </Link>
+          </div>
         </div>
       </section>
     </div>
