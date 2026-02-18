@@ -1,14 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowRight, Phone, MessageCircle, CheckCircle2, Building2, Stethoscope, Home, Layers, ClipboardList, Cpu } from 'lucide-react';
+import { ArrowRight, Phone, MessageCircle, CheckCircle2, Building2, Stethoscope, Home, Layers, ClipboardList, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import projectsData from '../content/projects.json';
-import partnersData from '../content/partners.json';
+import { useProjects, usePartners, useTestimonials, getText } from '../hooks/useApi';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const featuredProjects = projectsData.projects.slice(0, 6);
-const featuredPartners = partnersData.partners.filter(p => p.featured);
 
 const trustMetrics = [
   { value: '20+', label: 'Years Legacy', sub: 'Est. 2004, Kerala' },
@@ -58,15 +55,19 @@ const typeColors = {
 
 export default function HomePage() {
   useScrollReveal();
-  const [testimonials, setTestimonials] = useState([]);
+  const { data: projects, loading: projectsLoading } = useProjects();
+  const { data: partners, loading: partnersLoading } = usePartners();
+  const { data: testimonials } = useTestimonials();
+  
   const [form, setForm] = useState({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
   const [formStatus, setFormStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const featuredProjects = useMemo(() => projects.slice(0, 6), [projects]);
+  const featuredPartners = useMemo(() => partners.filter(p => p.featured), [partners]);
+
   useEffect(() => {
     document.title = 'Septa Group — Built with Clarity. Construction Kerala';
-    // Still load testimonials from API for fresh data
-    axios.get(`${API}/testimonials`).then(r => setTestimonials(r.data)).catch(() => {});
   }, []);
 
   const handleSubmit = async (e) => {
@@ -84,6 +85,7 @@ export default function HomePage() {
         budget_range: '',
         timeline: '',
         honeypot: form.honeypot,
+        page_source: 'Home Page'
       });
       setFormStatus('success');
       setForm({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
@@ -93,6 +95,8 @@ export default function HomePage() {
       setSubmitting(false);
     }
   };
+
+  const loading = projectsLoading || partnersLoading;
 
   return (
     <div>
@@ -185,49 +189,55 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="projects-grid">
-            {featuredProjects.map((project, i) => (
-              <Link
-                key={project.slug}
-                to={`/projects/${project.slug}`}
-                data-testid={`project-card-${project.slug}`}
-                className={`group block reveal reveal-delay-${Math.min(i + 1, 5)}`}
-              >
-                <div className="relative overflow-hidden aspect-[4/3] bg-[#E8E6E0]">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-[#1F2328]/0 group-hover:bg-[#1F2328]/50 transition-all duration-400" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="text-white text-xs font-inter uppercase tracking-wider mb-1">{project.type}</p>
-                    <p className="text-white text-sm font-inter font-light">{project.short_description}</p>
-                    <div className="flex items-center gap-1.5 mt-3">
-                      <span className="text-[#C6A15B] text-xs font-inter font-medium uppercase tracking-wider">View Case Study</span>
-                      <ArrowRight size={12} className="text-[#C6A15B]" strokeWidth={1.5} />
+          {loading ? (
+            <div className="py-20 flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#0F5E5B]" size={32} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="projects-grid">
+              {featuredProjects.map((project, i) => (
+                <Link
+                  key={project.slug}
+                  to={`/projects/${project.slug}`}
+                  data-testid={`project-card-${project.slug}`}
+                  className={`group block reveal reveal-delay-${Math.min(i + 1, 5)}`}
+                >
+                  <div className="relative overflow-hidden aspect-[4/3] bg-[#E8E6E0]">
+                    <img
+                      src={project.image}
+                      alt={getText(project.title)}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-[#1F2328]/0 group-hover:bg-[#1F2328]/50 transition-all duration-400" />
+                    <div className="absolute inset-0 flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <p className="text-white text-xs font-inter uppercase tracking-wider mb-1">{project.type}</p>
+                      <p className="text-white text-sm font-inter font-light">{getText(project.short_description)}</p>
+                      <div className="flex items-center gap-1.5 mt-3">
+                        <span className="text-[#C6A15B] text-xs font-inter font-medium uppercase tracking-wider">View Case Study</span>
+                        <ArrowRight size={12} className="text-[#C6A15B]" strokeWidth={1.5} />
+                      </div>
                     </div>
+                    {/* Status badge */}
+                    {project.project_status === 'Ongoing' && (
+                      <div className="absolute top-4 right-4 bg-[#0F5E5B] text-white text-xs font-inter px-2.5 py-1 uppercase tracking-wider">
+                        Ongoing
+                      </div>
+                    )}
                   </div>
-                  {/* Status badge */}
-                  {project.status === 'Ongoing' && (
-                    <div className="absolute top-4 right-4 bg-[#0F5E5B] text-white text-xs font-inter px-2.5 py-1 uppercase tracking-wider">
-                      Ongoing
+                  <div className="pt-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-base font-sora font-medium text-[#1F2328]">{getText(project.title)}</h3>
+                      <span className={`text-xs font-inter px-2 py-0.5 ${typeColors[project.type] || 'bg-gray-100 text-gray-600'}`}>
+                        {project.type}
+                      </span>
                     </div>
-                  )}
-                </div>
-                <div className="pt-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-base font-sora font-medium text-[#1F2328]">{project.title}</h3>
-                    <span className={`text-xs font-inter px-2 py-0.5 ${typeColors[project.type] || 'bg-gray-100 text-gray-600'}`}>
-                      {project.type}
-                    </span>
+                    <p className="text-xs font-inter text-[#A7ADB5]">{project.location} · {project.sqft} sqft · {project.duration}</p>
                   </div>
-                  <p className="text-xs font-inter text-[#A7ADB5]">{project.location} · {project.sqft} sqft · {project.duration}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -320,7 +330,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <p className="text-sm font-inter font-light text-[#F3F0E8]/80 leading-relaxed mb-6">
-                    "{t.content}"
+                    "{getText(t.content)}"
                   </p>
                   <div className="border-t border-[#F3F0E8]/10 pt-4">
                     <p className="text-sm font-sora font-medium text-[#F3F0E8]">{t.client_name}</p>
@@ -357,16 +367,16 @@ export default function HomePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {featuredPartners.map((partner, i) => (
                   <Link
-                    key={partner.id}
+                    key={partner.slug}
                     to={`/ecosystem/${partner.slug}`}
                     data-testid={`ecosystem-preview-${partner.slug}`}
                     className={`group border border-[#F3F0E8]/10 p-4 hover:border-[#C6A15B]/40 transition-colors duration-300 reveal reveal-delay-${Math.min(i + 1, 4)}`}
                   >
                     <p className="text-xs font-inter text-[#C6A15B] uppercase tracking-wider mb-2">{partner.category.split(' ')[0]}</p>
                     <p className="text-sm font-sora font-medium text-[#F3F0E8] group-hover:text-[#C6A15B] transition-colors leading-snug">
-                      {partner.name}
+                      {getText(partner.name)}
                     </p>
-                    <p className="text-xs font-inter text-[#A7ADB5] mt-1">{partner.relationshipType}</p>
+                    <p className="text-xs font-inter text-[#A7ADB5] mt-1">{partner.relationship_type}</p>
                   </Link>
                 ))}
                 <Link
