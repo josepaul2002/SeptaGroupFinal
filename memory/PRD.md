@@ -3,7 +3,7 @@
 ## Project Overview
 Production-ready marketing website for Septa Group, a Kerala-based construction company. Goal: win trust fast and convert visitors into leads (calls + WhatsApp + enquiry form).
 
-**Live URL:** https://septa-projects.preview.emergentagent.com  
+**Live URL:** https://construct-hub-210.preview.emergentagent.com  
 **Admin Panel:** /admin (password: septa2024)  
 **Content Checklist:** /content-checklist  
 
