@@ -368,20 +368,35 @@ export default function HomePage() {
             </div>
             <div className="lg:col-span-7">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {featuredPartners.map((partner, i) => (
-                  <Link
-                    key={partner.slug}
-                    to={`/ecosystem/${partner.slug}`}
-                    data-testid={`ecosystem-preview-${partner.slug}`}
-                    className={`group border border-[#F3F0E8]/10 p-4 hover:border-[#C6A15B]/40 transition-colors duration-300 reveal reveal-delay-${Math.min(i + 1, 4)}`}
-                  >
-                    <p className="text-xs font-inter text-[#C6A15B] uppercase tracking-wider mb-2">{partner.category.split(' ')[0]}</p>
-                    <p className="text-sm font-sora font-medium text-[#F3F0E8] group-hover:text-[#C6A15B] transition-colors leading-snug">
-                      {getText(partner.name)}
-                    </p>
-                    <p className="text-xs font-inter text-[#A7ADB5] mt-1">{partner.relationship_type}</p>
-                  </Link>
-                ))}
+                {spotlightPartners.slice(0, 5).map((partner, i) => {
+                  const cardImg = partner.media?.card_image || partner.cover_image;
+                  return (
+                    <Link
+                      key={partner.slug}
+                      to={`/ecosystem/${partner.slug}`}
+                      data-testid={`ecosystem-preview-${partner.slug}`}
+                      className={`group block overflow-hidden border border-[#F3F0E8]/10 hover:border-[#C6A15B]/40 transition-colors duration-300 reveal reveal-delay-${Math.min(i + 1, 4)}`}
+                    >
+                      {cardImg ? (
+                        <div className="aspect-[16/9] overflow-hidden">
+                          <img src={cardImg} alt={getText(partner.name)} loading="lazy"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-70 group-hover:opacity-90" />
+                        </div>
+                      ) : (
+                        <div className="aspect-[16/9] bg-[#F3F0E8]/5 flex items-center justify-center">
+                          <span className="text-2xl font-sora font-light text-[#F3F0E8]/10">{getText(partner.name).charAt(0)}</span>
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <p className="text-xs font-inter text-[#C6A15B] uppercase tracking-wider mb-1">{partner.category.split(' ')[0]}</p>
+                        <p className="text-sm font-sora font-medium text-[#F3F0E8] group-hover:text-[#C6A15B] transition-colors leading-snug">
+                          {getText(partner.name)}
+                        </p>
+                        <p className="text-[10px] font-inter text-[#A7ADB5] mt-0.5">{partner.relationship_type}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
                 <Link
                   to="/ecosystem"
                   data-testid="see-all-partners-btn"
