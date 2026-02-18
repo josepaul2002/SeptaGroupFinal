@@ -38,7 +38,9 @@ const lensLabels = {
 export default function ProjectCaseStudyPage() {
   useScrollReveal();
   const { slug } = useParams();
-  const { project, loading: projectLoading } = useProject(slug);
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
+  const { project, loading: projectLoading } = useProject(slug, isPreview);
   const { data: allProjects, loading: projectsLoading } = useProjects();
   const { data: partners, loading: partnersLoading } = usePartners();
 
