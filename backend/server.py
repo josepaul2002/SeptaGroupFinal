@@ -173,15 +173,40 @@ async def update_lead_status(
     admin: dict = Depends(get_current_admin)
 ):
     """Update lead status"""
+    update_data = {"status": update.status}
+    if update.notes is not None:
+        update_data["notes"] = update.notes
+    
     result = await db.leads.update_one(
         {"id": lead_id},
-        {"$set": {"status": update.status}}
+        {"$set": update_data}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Lead not found")
     
-    await log_audit(admin["admin_id"], admin["email"], "update", "lead", lead_id, {"status": update.status})
+    await log_audit(admin["admin_id"], admin["email"], "update", "lead", lead_id, update_data)
     return {"message": "Status updated"}
+
+
+@api_router.get("/leads/export-csv")
+async def export_leads_csv(admin: dict = Depends(get_current_admin)):
+    """Export leads as CSV"""
+    import csv, io
+    leads = await db.leads.find({}, {"_id": 0}).sort("created_at", -1).to_list(5000)
+    
+    output = io.StringIO()
+    fieldnames = ["name", "phone", "email", "project_type", "project_location", "budget_range", "timeline", "message", "status", "partner_ref", "created_at"]
+    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    for lead in leads:
+        writer.writerow(lead)
+    
+    csv_content = output.getvalue()
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=septa-leads-{datetime.now(timezone.utc).strftime('%Y%m%d')}.csv"}
+    )
 
 
 @api_router.delete("/leads/{lead_id}")
