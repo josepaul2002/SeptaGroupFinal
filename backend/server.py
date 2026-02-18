@@ -160,10 +160,19 @@ async def create_lead(request: Request, lead: LeadCreate):
 
 
 @api_router.get("/leads")
-async def get_leads(admin: dict = Depends(get_current_admin)):
-    """Get all leads (admin only)"""
-    leads = await db.leads.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
-    return leads
+async def get_leads(
+    skip: int = Query(0),
+    limit: int = Query(50, le=200),
+    status: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """Get leads with pagination and filtering (admin only)"""
+    query = {}
+    if status and status != "all":
+        query["status"] = status
+    total = await db.leads.count_documents(query)
+    leads = await db.leads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return {"leads": leads, "total": total, "skip": skip, "limit": limit}
 
 
 @api_router.patch("/leads/{lead_id}")
