@@ -217,18 +217,27 @@ async def get_projects(
 @api_router.get("/projects/{slug}")
 async def get_project(
     slug: str,
+    preview: Optional[str] = None,
     admin: Optional[dict] = Depends(get_optional_admin)
 ):
     """Get single project by slug"""
     query = {"slug": slug}
     
-    # Only show published unless admin
-    if not admin:
+    # Preview mode: allow viewing draft with valid preview token
+    is_preview = preview and admin
+    
+    # Only show published unless admin or valid preview
+    if not admin and not is_preview:
         query["status"] = "published"
     
     project = await db.projects.find_one(query, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Add preview flag to response
+    if is_preview and project.get("status") == "draft":
+        project["_preview_mode"] = True
+    
     return project
 
 
