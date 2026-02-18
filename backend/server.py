@@ -633,15 +633,19 @@ async def get_partner_categories():
     """Get all partner categories"""
     return [
         "Architecture & Design",
+        "Structural Engineering",
+        "MEP Engineering",
+        "Quantity Surveying",
         "Interiors & Fit-out",
-        "Engineering (MEP/Structural/QS)",
         "Landscape & Outdoor",
+        "Lighting Design",
         "Materials & Vendors",
-        "Smart Home / Technology",
+        "Smart Home / Security / Automation",
         "Branding, Signage & Wayfinding",
         "Marketing & Digital",
         "Leasing & Real Estate",
-        "Legal / Finance"
+        "Photo / Video / 3D Documentation",
+        "Legal / Compliance / Approvals"
     ]
 
 
@@ -651,8 +655,97 @@ async def get_project_categories():
     return {
         "types": ["Institutional", "Healthcare", "Commercial", "Residential", "Mixed-use"],
         "statuses": ["Completed", "Ongoing"],
-        "client_lens": ["Residential", "Commercial", "Institutional"]
+        "client_lens": ["Residential", "Commercial", "Institutional", "Mixed-use"]
     }
+
+
+# ============================================================================
+# SOLUTION PACKS ENDPOINTS
+# ============================================================================
+
+@api_router.get("/solution-packs")
+async def get_solution_packs():
+    """Get all solution packs"""
+    packs = await db.solution_packs.find({"status": "published"}, {"_id": 0}).to_list(100)
+    return packs
+
+
+@api_router.get("/solution-packs/{slug}")
+async def get_solution_pack(slug: str):
+    """Get single solution pack"""
+    pack = await db.solution_packs.find_one({"slug": slug}, {"_id": 0})
+    if not pack:
+        raise HTTPException(status_code=404, detail="Solution pack not found")
+    return pack
+
+
+@api_router.post("/solution-packs", status_code=201)
+async def create_solution_pack(pack: dict, admin: dict = Depends(get_current_admin)):
+    """Create solution pack"""
+    existing = await db.solution_packs.find_one({"slug": pack.get("slug")})
+    if existing:
+        raise HTTPException(status_code=400, detail="Slug already exists")
+    
+    pack["id"] = str(uuid.uuid4())
+    pack["created_at"] = datetime.now(timezone.utc).isoformat()
+    pack["updated_at"] = pack["created_at"]
+    
+    await db.solution_packs.insert_one(pack)
+    await log_audit(admin["admin_id"], admin["email"], "create", "solution_pack", pack["id"])
+    
+    return {"message": "Solution pack created", "id": pack["id"]}
+
+
+@api_router.put("/solution-packs/{slug}")
+async def update_solution_pack(slug: str, updates: dict, admin: dict = Depends(get_current_admin)):
+    """Update solution pack"""
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.solution_packs.update_one({"slug": slug}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Solution pack not found")
+    
+    pack = await db.solution_packs.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    await log_audit(admin["admin_id"], admin["email"], "update", "solution_pack", pack["id"])
+    
+    return {"message": "Solution pack updated"}
+
+
+@api_router.delete("/solution-packs/{slug}")
+async def delete_solution_pack(slug: str, admin: dict = Depends(get_current_admin)):
+    """Delete solution pack"""
+    pack = await db.solution_packs.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    if not pack:
+        raise HTTPException(status_code=404, detail="Solution pack not found")
+    
+    await db.solution_packs.delete_one({"slug": slug})
+    await log_audit(admin["admin_id"], admin["email"], "delete", "solution_pack", pack["id"])
+    
+    return {"message": "Solution pack deleted"}
+
+
+# ============================================================================
+# EMAIL LOGS ENDPOINT
+# ============================================================================
+
+@api_router.get("/email-logs")
+async def get_email_logs(
+    limit: int = Query(100, le=500),
+    admin: dict = Depends(get_current_admin)
+):
+    """Get email send logs for debugging"""
+    logs = await db.email_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return logs
+
+
+# ============================================================================
+# STORAGE STATUS ENDPOINT
+# ============================================================================
+
+@api_router.get("/storage/status")
+async def get_storage_config(admin: dict = Depends(get_current_admin)):
+    """Get storage configuration status"""
+    return get_storage_status()
 
 
 # ============================================================================
