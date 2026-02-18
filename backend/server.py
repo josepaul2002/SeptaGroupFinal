@@ -751,6 +751,116 @@ async def get_storage_config(admin: dict = Depends(get_current_admin)):
 
 
 # ============================================================================
+# SITE SETTINGS ENDPOINTS
+# ============================================================================
+
+DEFAULT_SETTINGS = {
+    "id": "site_settings",
+    "contact": {
+        "phone_display": "+91 XXXXX XXXXX",
+        "phone_link": "tel:+919876543210",
+        "whatsapp_number": "919876543210",
+        "whatsapp_link": "https://wa.me/919876543210",
+        "email": "info@septagroup.in",
+        "office_address": "Septa Group, Kerala, India",
+        "office_address_short": "Kerala, India",
+        "map_link": "",
+        "operating_districts": ["Ernakulam", "Thrissur", "Kozhikode", "Trivandrum", "Kottayam"],
+    },
+    "enquiry": {
+        "project_types": [
+            "Institutional / Educational",
+            "Healthcare / Wellness",
+            "Commercial",
+            "Residential Apartment",
+            "Villa / Bungalow",
+            "Mixed-use",
+            "Project Management Consulting",
+        ],
+        "budget_ranges": [
+            "Under ₹50 Lakhs",
+            "₹50L – ₹1 Crore",
+            "₹1Cr – ₹3 Crore",
+            "₹3Cr – ₹10 Crore",
+            "Above ₹10 Crore",
+        ],
+        "timeline_ranges": [
+            "Within 3 months",
+            "3–6 months",
+            "6 months – 1 year",
+            "1–2 years",
+            "2+ years",
+        ],
+        "lead_notification_email": os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@septa.group"),
+    },
+    "content_language_mode": "english_only",
+    "footer_tagline": "Built with Clarity. Delivered with Discipline.",
+}
+
+
+@api_router.get("/settings")
+async def get_site_settings():
+    """Get public site settings (contact, enquiry options)"""
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        return DEFAULT_SETTINGS
+    return settings
+
+
+@api_router.put("/settings")
+async def update_site_settings(
+    updates: dict,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update site settings"""
+    updates.pop("_id", None)
+    updates.pop("id", None)
+    updates["id"] = "site_settings"
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.site_settings.update_one(
+        {"id": "site_settings"},
+        {"$set": updates},
+        upsert=True
+    )
+    await log_audit(admin["admin_id"], admin["email"], "update", "site_settings", "site_settings")
+    return {"message": "Settings updated"}
+
+
+# ============================================================================
+# PAGE CONTENT ENDPOINTS (CMS-driven About/Services)
+# ============================================================================
+
+@api_router.get("/pages/{page_id}")
+async def get_page_content(page_id: str):
+    """Get CMS content blocks for a page"""
+    page = await db.page_content.find_one({"page_id": page_id}, {"_id": 0})
+    if not page:
+        return {"page_id": page_id, "blocks": []}
+    return page
+
+
+@api_router.put("/pages/{page_id}")
+async def update_page_content(
+    page_id: str,
+    content: dict,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update page content blocks"""
+    content.pop("_id", None)
+    content["page_id"] = page_id
+    content["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.page_content.update_one(
+        {"page_id": page_id},
+        {"$set": content},
+        upsert=True
+    )
+    await log_audit(admin["admin_id"], admin["email"], "update", "page_content", page_id)
+    return {"message": f"Page '{page_id}' updated"}
+
+
+# ============================================================================
 # ROOT & HEALTH
 # ============================================================================
 
