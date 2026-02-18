@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import '@/App.css';
+import './App.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -11,6 +11,8 @@ import ProjectCaseStudyPage from './pages/ProjectCaseStudyPage';
 import ContactPage from './pages/ContactPage';
 import AdminPage from './pages/AdminPage';
 import ContentChecklist from './pages/ContentChecklist';
+import EcosystemPage from './pages/EcosystemPage';
+import PartnerProfilePage from './pages/PartnerProfilePage';
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:slug" element={<ProjectCaseStudyPage />} />
+            <Route path="/ecosystem" element={<EcosystemPage />} />
+            <Route path="/ecosystem/:slug" element={<PartnerProfilePage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/content-checklist" element={<ContentChecklist />} />
