@@ -178,9 +178,9 @@ export default function HomePage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
             <div className="reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Our Work</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.our_work']}</p>
               <h2 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
-                Selected Projects
+                {ui['section.selected_projects']}
               </h2>
             </div>
             <Link
@@ -278,7 +278,7 @@ export default function HomePage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-4 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">What We Build</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.services']}</p>
               <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-5">
                 Services
               </h2>
@@ -315,7 +315,7 @@ export default function HomePage() {
         <section className="py-20 md:py-32 bg-[#1F2328]" data-testid="testimonials-section">
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
             <div className="mb-14 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Client Voices</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.testimonials']}</p>
               <h2 className="text-3xl md:text-5xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight">
                 What Clients Say
               </h2>
@@ -351,7 +351,7 @@ export default function HomePage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Partner Network</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.ecosystem']}</p>
               <h2 className="text-3xl md:text-4xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight mb-5">
                 The ecosystem behind every project
               </h2>
@@ -405,7 +405,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
             {/* Copy */}
             <div className="lg:col-span-5 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Start a Conversation</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">{ui['section.contact']}</p>
               <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-5">
                 Compare contractors on risk, not just price.
               </h2>
