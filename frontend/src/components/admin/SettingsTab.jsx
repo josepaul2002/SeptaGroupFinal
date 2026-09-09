@@ -70,9 +70,26 @@ export default function SettingsTab({ token }) {
   const sections = [
     { id: 'contact', label: 'Contact Info' },
     { id: 'enquiry', label: 'Enquiry Form' },
+    { id: 'navigation', label: 'Navigation' },
     { id: 'language', label: 'Language Mode' },
     { id: 'export', label: 'Export / Backup' },
   ];
+
+  const navItems = [
+    { key: 'about', label: 'About' },
+    { key: 'services', label: 'Services' },
+    { key: 'projects', label: 'Projects' },
+    { key: 'ecosystem', label: 'Ecosystem' },
+    { key: 'contact', label: 'Contact' },
+  ];
+
+  const navVis = settings.nav_visibility || {};
+  const toggleNav = (key) => {
+    setSettings({
+      ...settings,
+      nav_visibility: { ...navVis, [key]: navVis[key] === false ? true : false },
+    });
+  };
 
   return (
     <div className="space-y-6" data-testid="settings-tab">
@@ -139,9 +156,33 @@ export default function SettingsTab({ token }) {
         </div>
       )}
 
+      {/* NAVIGATION */}
+      {activeSection === 'navigation' && (
+        <div className="bg-white border border-[#A7ADB5]/20 p-6 space-y-4" data-testid="nav-visibility-section">
+          <h3 className="text-sm font-sora font-medium text-[#1F2328] mb-2">Navigation Menu Visibility</h3>
+          <p className="text-xs text-[#A7ADB5] mb-4">Show or hide pages in the header and mobile menu. Hidden pages are removed from the menu but still reachable by direct URL. Home is always shown.</p>
+          <div className="space-y-2">
+            {navItems.map(item => {
+              const on = navVis[item.key] !== false;
+              return (
+                <div key={item.key} className="flex items-center justify-between p-3 border border-[#A7ADB5]/20"
+                  data-testid={`nav-toggle-row-${item.key}`}>
+                  <span className="text-sm font-inter text-[#1F2328]">{item.label}</span>
+                  <button type="button" onClick={() => toggleNav(item.key)}
+                    data-testid={`nav-toggle-${item.key}`}
+                    role="switch" aria-checked={on}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${on ? 'bg-[#0F5E5B]' : 'bg-[#A7ADB5]/40'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${on ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* LANGUAGE MODE */}
-      {activeSection === 'language' && (
-        <div className="bg-white border border-[#A7ADB5]/20 p-6 space-y-4">
+      {activeSection === 'language' && (        <div className="bg-white border border-[#A7ADB5]/20 p-6 space-y-4">
           <h3 className="text-sm font-sora font-medium text-[#1F2328] mb-2">Content Language Mode</h3>
           <p className="text-xs text-[#A7ADB5] mb-4">Controls how bilingual content is displayed. Navigation and buttons always stay in English.</p>
           {['english_only', 'malayalam_primary', 'toggle'].map(mode => (

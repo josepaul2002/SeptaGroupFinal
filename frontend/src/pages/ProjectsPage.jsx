@@ -159,8 +159,15 @@ export default function ProjectsPage() {
                     className={`group block reveal reveal-delay-${Math.min(i % 3 + 1, 4)}`}
                   >
                     <div className="relative overflow-hidden aspect-[4/3] bg-[#E8E6E0]">
-                      <img src={project.image} alt={getText(project.title)} loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      {project.image ? (
+                        <img src={project.image} alt={getText(project.title)} loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" data-testid={`project-noimg-${project.slug}`}
+                          style={{ background: 'linear-gradient(135deg, #0F5E5B 0%, #0D4E4C 60%, #1F2328 100%)' }}>
+                          <span className="text-xs font-inter uppercase tracking-[0.3em] text-[#C6A15B]">{project.type}</span>
+                        </div>
+                      )}
                       {project.project_status === 'Ongoing' && (
                         <div className="absolute top-4 right-4 bg-[#0F5E5B] text-white text-xs font-inter px-2.5 py-1 uppercase tracking-wider">
                           Ongoing

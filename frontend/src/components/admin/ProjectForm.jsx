@@ -34,6 +34,7 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
     challenge: project?.challenge || { en: '', ml: null },
     status: project?.status || 'draft',
     media: project?.media || { hero_video: null, images: [], model_3d: null, plans: [] },
+    media_visible: project?.media_visible !== false,
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -197,6 +198,20 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
           {/* MEDIA TAB */}
           {activeFormTab === 'media' && (
             <>
+              {/* Media visibility toggle */}
+              <div className="flex items-start justify-between p-4 bg-[#F3F0E8] border border-[#A7ADB5]/30" data-testid="project-media-visible-row">
+                <div className="pr-4">
+                  <p className="text-sm font-inter font-medium text-[#1F2328]">Show media & gallery on project page</p>
+                  <p className="text-xs text-[#A7ADB5] mt-0.5">Turn off for projects without proper photos. The Media tab and gallery are hidden; the story and details still show.</p>
+                </div>
+                <button type="button" onClick={() => setForm({ ...form, media_visible: !form.media_visible })}
+                  data-testid="project-media-visible-toggle"
+                  role="switch" aria-checked={form.media_visible}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 ${form.media_visible ? 'bg-[#0F5E5B]' : 'bg-[#A7ADB5]/40'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.media_visible ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
               {/* Hero Image */}
               <FormField label="Hero Image">
                 <div className="flex gap-3 items-end">

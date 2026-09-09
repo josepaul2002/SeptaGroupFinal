@@ -80,8 +80,10 @@ export default function ProjectCaseStudyPage() {
   const relatedProjects = getRelatedProjects();
   const projectTitle = t(project.title);
   const showPreviewBanner = isPreview || project._preview_mode;
+  const mediaVisible = project.media_visible !== false;
+  const hasHero = !!(project.media?.hero_video || project.image);
 
-  const hasMedia = project.media?.hero_video || project.media?.images?.length > 0 || project.media?.model_3d || project.media?.plans?.length > 0 || project.gallery?.length > 0;
+  const hasMedia = mediaVisible && (project.media?.hero_video || project.media?.images?.length > 0 || project.media?.model_3d || project.media?.plans?.length > 0 || project.gallery?.length > 0);
 
   return (
     <div className={showPreviewBanner ? "pt-28" : "pt-16"} data-testid="case-study-page">
@@ -98,22 +100,43 @@ export default function ProjectCaseStudyPage() {
       </div>
 
       {/* Hero */}
-      <div className="relative h-[45vh] md:h-[60vh] overflow-hidden bg-[#E8E6E0]">
-        {project.media?.hero_video ? (
-          <VideoPlayer src={project.media.hero_video} poster={project.image} title={projectTitle} className="w-full h-full" autoPlay />
-        ) : (
-          <img src={project.image} alt={projectTitle} className="w-full h-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-[#1F2328]/45 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 lg:p-16 pointer-events-none">
-          <div className="max-w-[1400px] mx-auto">
-            <span className="inline-block text-xs font-inter uppercase tracking-widest text-[#C6A15B] mb-3">{project.type}</span>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-sora font-light text-white tracking-tight leading-tight">
-              {projectTitle}
-            </h1>
+      {hasHero ? (
+        <div className="relative h-[45vh] md:h-[60vh] overflow-hidden bg-[#E8E6E0]">
+          {project.media?.hero_video ? (
+            <VideoPlayer src={project.media.hero_video} poster={project.image} title={projectTitle} className="w-full h-full" autoPlay />
+          ) : (
+            <img src={project.image} alt={projectTitle} className="w-full h-full object-cover" />
+          )}
+          <div className="absolute inset-0 bg-[#1F2328]/45 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 lg:p-16 pointer-events-none">
+            <div className="max-w-[1400px] mx-auto">
+              <span className="inline-block text-xs font-inter uppercase tracking-widest text-[#C6A15B] mb-3">{project.type}</span>
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-sora font-light text-white tracking-tight leading-tight">
+                {projectTitle}
+              </h1>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* Graceful no-image banner */
+        <div className="relative h-[32vh] md:h-[42vh] overflow-hidden bg-[#0F5E5B]" data-testid="case-study-no-hero-banner">
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0F5E5B 0%, #0D4E4C 55%, #1F2328 100%)' }} />
+          <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #F3F0E8 1px, transparent 0)', backgroundSize: '22px 22px' }} />
+          <div className="absolute top-8 right-8 md:top-12 md:right-16 w-px h-16 bg-[#C6A15B]/50" />
+          <div className="relative h-full flex items-end p-8 md:p-12 lg:p-16">
+            <div className="max-w-[1400px] mx-auto w-full">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-6 h-px bg-[#C6A15B]" />
+                <span className="text-xs font-inter uppercase tracking-widest text-[#C6A15B]">{project.type}</span>
+              </div>
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight">
+                {projectTitle}
+              </h1>
+              <p className="mt-3 text-sm font-inter text-[#F3F0E8]/45">{project.location} · {project.sqft} sq.ft.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Project Meta */}
       <section className="py-8 bg-white border-b border-[#A7ADB5]/15">
@@ -222,7 +245,7 @@ export default function ProjectCaseStudyPage() {
                     </p>
                   </div>
                 )}
-                {project.gallery && project.gallery.length > 0 && (
+                {mediaVisible && project.gallery && project.gallery.length > 0 && (
                   <ImageGallery images={project.gallery} />
                 )}
               </div>
@@ -406,8 +429,15 @@ export default function ProjectCaseStudyPage() {
                 <Link key={rp.slug} to={`/projects/${rp.slug}`} data-testid={`related-project-${rp.slug}`}
                   className={`group block reveal reveal-delay-${i + 1}`}>
                   <div className="aspect-[4/3] overflow-hidden bg-[#E8E6E0] mb-4">
-                    <img src={rp.image} alt={t(rp.title)} loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    {rp.image ? (
+                      <img src={rp.image} alt={t(rp.title)} loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, #0F5E5B 0%, #0D4E4C 60%, #1F2328 100%)' }}>
+                        <span className="text-xs font-inter uppercase tracking-[0.3em] text-[#C6A15B]">{rp.type}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="text-sm font-sora font-medium text-[#1F2328]">{t(rp.title)}</h3>

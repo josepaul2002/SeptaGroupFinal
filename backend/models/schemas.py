@@ -199,6 +199,7 @@ class ProjectBase(BaseModel):
     design: Optional[DesignModule] = None
     delivery: Optional[DeliveryModule] = None
     media: Optional[ProjectMedia] = None
+    media_visible: bool = True
 
 
 class ProjectCreate(ProjectBase):
@@ -227,6 +228,7 @@ class ProjectUpdate(BaseModel):
     design: Optional[DesignModule] = None
     delivery: Optional[DeliveryModule] = None
     media: Optional[ProjectMedia] = None
+    media_visible: Optional[bool] = None
     status: Optional[PublishStatus] = None
 
 
@@ -325,9 +327,18 @@ class EnquiryFormSettings(BaseModel):
     lead_notification_email: str = ""
 
 
+class NavVisibilitySettings(BaseModel):
+    about: bool = True
+    services: bool = True
+    projects: bool = True
+    ecosystem: bool = True
+    contact: bool = True
+
+
 class SiteSettings(BaseModel):
     contact: SiteContactSettings = SiteContactSettings()
     enquiry: EnquiryFormSettings = EnquiryFormSettings()
+    nav_visibility: NavVisibilitySettings = NavVisibilitySettings()
     content_language_mode: str = "english_only"
     footer_tagline: str = "Built with Clarity. Delivered with Discipline."
 

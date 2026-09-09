@@ -84,5 +84,10 @@ Transform the Septa Group Kerala construction company website from a brochure si
 - P2: Plan Drawings watermarking + access control
 - P3: Server-side pagination for large datasets
 
+## Phase 5 — Visibility Controls (June 2026) — tested ✓
+- **Nav visibility (soft-hide):** `site_settings.nav_visibility` map {about, services, projects, ecosystem, contact}. Admin > Settings > Navigation toggles each page on/off in desktop header + mobile burger. Home always shown. Hidden pages still reachable by direct URL. Default merged on GET /api/settings for legacy docs.
+- **Per-project media visibility:** `project.media_visible` (default True). Admin > Project > Media tab toggle. When off, the public case study hides the Media tab + Design-tab gallery (story/details still show). Default merged on GET /api/projects & /api/projects/{slug}.
+- **Graceful fallbacks:** projects with no hero image render a branded gradient banner (data-testid=case-study-no-hero-banner); projects with no listing image render a branded placeholder tile (data-testid=project-noimg-{slug}).
+
 ## Last Updated
-February 2026 — Scopes A–E Complete
+June 2026 — Phase 5 (nav + media visibility controls) complete

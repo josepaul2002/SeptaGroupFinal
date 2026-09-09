@@ -1,0 +1,57 @@
+{
+  "summary": "Phase 5 features fully tested and PASSED: (A) Admin nav_visibility settings (Settings > Navigation sub-tab) correctly toggles menu items on/off in desktop header and mobile burger; hidden pages remain reachable by direct URL (soft-hide). (B) Per-project media_visible toggle correctly hides the Media tab on public case study when off, restores when on. (C) Projects with no hero image show branded gradient no-hero-banner on case study page. (D) Projects listing shows branded placeholder tile (project-noimg-{slug}) for projects with no image. All test state was restored (nav_visibility reset to all-True, st-thomas media_visible restored to True, temp project septa-cms-preview deleted).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/projects/{slug}", "issue": "Legacy projects that never had media_visible saved to DB return the field absent from response (rather than defaulting to True). Frontend treats undefined as True so UI is fine, but for consistency the backend could merge a default of True on read (similar to how nav_visibility is merged on GET /api/settings)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase5_navvis_mediavis.py",
+    "/app/test_reports/pytest/pytest_phase5_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Nav visibility: NavVisibilitySettings schema + DEFAULT_SETTINGS merge on GET /api/settings correctly ensures legacy documents get default true values on read.",
+    "ProjectCaseStudyPage correctly gates Media tab: appears only when media_visible !== false AND gallery has items; no-hero fallback (data-testid=case-study-no-hero-banner) renders with title/type over gradient.",
+    "ProjectsPage placeholder tile (data-testid=project-noimg-{slug}) uses the same aspect ratio as image tiles, so the grid stays visually consistent.",
+    "SettingsTab has clean sub-tabs: Contact Info, Enquiry Form, Navigation, Language Mode, Export/Backup. Nav toggles have data-testid=nav-toggle-{key} as documented.",
+    "Home nav item correctly has no toggle (always shown, per spec).",
+    "Minor: Legacy console errors visible in Admin > Leads tab (Emergent instrumentation wrapping <span data-ve-dynamic> inside <thead>/<tbody>/<tr>) — hydration warnings only, no functional impact. Not related to this phase."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase5_navvis_mediavis.py"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 tests passed)",
+    "frontend": "100% (all 6 requested scenarios verified)"
+  },
+  "test_credentials": {
+    "admin_email": "admin@septa.group",
+    "admin_password": "septa2024admin"
+  },
+  "seed_data_creation": "Temp project 'septa-cms-preview' (copied from harmony-business-centre-kottayam, hero/cover/image blanked, gallery emptied) was created via POST /api/projects for no-hero + no-image placeholder verification, then DELETED. All settings and modified project (st-thomas-school-thrissur.media_visible) restored to original state.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 5 (nav_visibility soft-hide + per-project media_visible + no-hero/no-image graceful fallback) is complete and verified. Admin auth uses POST /api/admin/login (not /api/auth/login). Response returns access_token. Admin Settings has 5 sub-tabs; Navigation sub-tab exposes toggles for about/services/projects/ecosystem/contact (Home always shown). ProjectForm Media tab has data-testid=project-media-visible-toggle. Case study page shows data-testid=case-study-no-hero-banner when hero_image/hero_video are empty. Projects listing shows data-testid=project-noimg-{slug} when project has no image. Legacy projects lack media_visible in GET response (defaults to True in UI). Verified restoration script important: always re-enable nav toggles and reset any changed project's media_visible to True after tests.",
+  "features_tested": {
+    "1_get_settings_nav_visibility": "PASS - Returns nav_visibility with all 5 keys (about/services/projects/ecosystem/contact) as bools",
+    "2_put_settings_toggle_ecosystem_off": "PASS - Persists nav_visibility.ecosystem=False; requires admin auth (401 without token)",
+    "3_public_desktop_nav_hides_toggled_item": "PASS - Ecosystem removed from data-testid=navbar-desktop-nav after toggle OFF",
+    "4_public_mobile_burger_hides_toggled_item": "PASS - Ecosystem removed from data-testid=navbar-mobile-menu",
+    "5_soft_hide_direct_url_reachable": "PASS - /ecosystem still renders full Ecosystem page when hidden from menu",
+    "6_toggle_restore": "PASS - Turning back ON restores Ecosystem in both desktop nav and mobile burger",
+    "7_admin_nav_visibility_section": "PASS - data-testid=nav-visibility-section present with nav-toggle-{key} for all 5 pages",
+    "8_project_media_visible_field": "PASS - PUT /api/projects/{slug} accepts media_visible; GET returns it after set",
+    "9_public_media_tab_hidden_when_false": "PASS - data-testid=project-tab-media not present on case study when media_visible=False",
+    "10_public_media_tab_shown_when_true": "PASS - Media tab shown when media_visible=True AND gallery has items",
+    "11_no_hero_banner": "PASS - data-testid=case-study-no-hero-banner renders on project with empty hero_image",
+    "12_projects_grid_noimg_placeholder": "PASS - data-testid=project-noimg-septa-cms-preview rendered for project with no image",
+    "13_admin_project_media_toggle_selector": "PASS - data-testid=project-media-visible-toggle exists in ProjectForm.jsx Media tab"
+  }
+}

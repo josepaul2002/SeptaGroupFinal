@@ -2,20 +2,27 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import LanguageToggle from './LanguageToggle';
+import { useSiteSettings } from '../hooks/useApi';
 
 const navLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
-  { to: '/services', label: 'Services' },
-  { to: '/projects', label: 'Projects' },
-  { to: '/ecosystem', label: 'Ecosystem' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/', label: 'Home', key: 'home' },
+  { to: '/about', label: 'About', key: 'about' },
+  { to: '/services', label: 'Services', key: 'services' },
+  { to: '/projects', label: 'Projects', key: 'projects' },
+  { to: '/ecosystem', label: 'Ecosystem', key: 'ecosystem' },
+  { to: '/contact', label: 'Contact', key: 'contact' },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { settings } = useSiteSettings();
+
+  const navVis = settings?.nav_visibility || {};
+  const visibleLinks = navLinks.filter(
+    (link) => link.key === 'home' || navVis[link.key] !== false
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -43,7 +50,7 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8" data-testid="navbar-desktop-nav">
-          {navLinks.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -83,7 +90,7 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden bg-[#F3F0E8] border-t border-[#A7ADB5]/20 px-6 py-6 flex flex-col gap-5" data-testid="navbar-mobile-menu">
-          {navLinks.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}

@@ -252,6 +252,8 @@ async def get_projects(
         query["status"] = "published"
     
     projects = await db.projects.find(query, {"_id": 0}).to_list(200)
+    for p in projects:
+        p.setdefault("media_visible", True)
     return projects
 
 
@@ -279,6 +281,7 @@ async def get_project(
     if is_preview and project.get("status") == "draft":
         project["_preview_mode"] = True
     
+    project.setdefault("media_visible", True)
     return project
 
 
@@ -861,6 +864,13 @@ DEFAULT_SETTINGS = {
     },
     "content_language_mode": "english_only",
     "footer_tagline": "Built with Clarity. Delivered with Discipline.",
+    "nav_visibility": {
+        "about": True,
+        "services": True,
+        "projects": True,
+        "ecosystem": True,
+        "contact": True,
+    },
 }
 
 
@@ -870,6 +880,8 @@ async def get_site_settings():
     settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     if not settings:
         return DEFAULT_SETTINGS
+    if "nav_visibility" not in settings:
+        settings["nav_visibility"] = DEFAULT_SETTINGS["nav_visibility"]
     return settings
 
 
