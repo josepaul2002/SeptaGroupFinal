@@ -187,7 +187,7 @@ export default function SettingsTab({ token }) {
           <p className="text-xs text-[#8A8A8A] mb-4">Controls how bilingual content is displayed. Navigation and buttons always stay in English.</p>
           {['english_only', 'malayalam_primary', 'toggle'].map(mode => (
             <label key={mode} className={`flex items-start gap-3 p-3 border cursor-pointer transition-colors ${
-              settings.content_language_mode === mode ? 'border-[#606060] bg-[#E8F0EF]/30' : 'border-[#8A8A8A]/20'
+              settings.content_language_mode === mode ? 'border-[#606060] bg-[#ECECEA]/30' : 'border-[#8A8A8A]/20'
             }`} data-testid={`lang-mode-${mode}`}>
               <input type="radio" name="lang_mode" checked={settings.content_language_mode === mode}
                 onChange={() => setSettings({ ...settings, content_language_mode: mode })}

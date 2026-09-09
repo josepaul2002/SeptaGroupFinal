@@ -8,7 +8,7 @@ import { useLanguage } from '../components/LanguageToggle';
 const relationshipColors = {
   'Group Company': 'bg-[#050505] text-white',
   'Core Partner': 'bg-[#8A8A8A] text-white',
-  'Project Partner': 'bg-[#E8F0EF] text-[#606060]',
+  'Project Partner': 'bg-[#ECECEA] text-[#606060]',
   'Preferred Vendor': 'bg-[#F6F6F3] text-[#050505]',
 };
 

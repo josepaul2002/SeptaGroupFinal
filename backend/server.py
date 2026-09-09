@@ -856,14 +856,16 @@ async def get_storage_config(admin: dict = Depends(get_current_admin)):
 DEFAULT_SETTINGS = {
     "id": "site_settings",
     "contact": {
-        "phone_display": "+91 XXXXX XXXXX",
-        "phone_link": "tel:+919876543210",
-        "whatsapp_number": "919876543210",
-        "whatsapp_link": "https://wa.me/919876543210",
+        "phone_display": "+91 94009 39936",
+        "phone_link": "tel:+919400939936",
+        "whatsapp_number": "919400939936",
+        "whatsapp_link": "https://wa.me/919400939936",
         "email": "info@septagroup.in",
         "office_address": "Septa Group, Kerala, India",
         "office_address_short": "Kerala, India",
         "map_link": "",
+        "contact_person": "Paul Jose",
+        "contact_person_role": "Managing Director",
         "operating_districts": ["Ernakulam", "Thrissur", "Kozhikode", "Trivandrum", "Kottayam"],
     },
     "enquiry": {

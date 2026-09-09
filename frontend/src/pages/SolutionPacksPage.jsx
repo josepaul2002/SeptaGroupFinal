@@ -125,7 +125,7 @@ export default function SolutionPacksPage() {
                   </div>
 
                   {/* Disclaimer */}
-                  <div className="p-8 bg-[#F8F7F4]">
+                  <div className="p-8 bg-[#ECECEA]">
                     <p className="text-xs font-inter text-[#8A8A8A] leading-relaxed">
                       {t(pack.disclaimers)}
                     </p>

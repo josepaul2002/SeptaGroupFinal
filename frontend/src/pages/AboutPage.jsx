@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ClipboardList, BarChart2, CheckCircle, FileText, Search, Shield, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, ClipboardList, BarChart2, CheckCircle, FileText, Search, Shield, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { usePageContent, getText } from '../hooks/useApi';
 import { useLanguage } from '../components/LanguageToggle';
@@ -87,7 +87,7 @@ export default function AboutPage() {
                   <div key={step.id || i} className={`p-6 border border-[#8A8A8A]/15 hover:border-[#606060]/30 transition-colors reveal reveal-delay-${(i % 3) + 1}`}
                     data-testid={`step-${i}`}>
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-8 h-8 bg-[#E8F0EF] flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 bg-[#ECECEA] flex items-center justify-center flex-shrink-0">
                         <Icon size={16} className="text-[#606060]" strokeWidth={1.5} />
                       </div>
                       <span className="text-xs font-inter text-[#8A8A8A] uppercase tracking-wider">{String(i + 1).padStart(2, '0')}</span>

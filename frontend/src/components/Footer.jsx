@@ -35,7 +35,7 @@ export default function Footer() {
               <img src="/septa-logo.png" alt="Septa Group" className="h-10 w-auto" />
               <span className="flex items-baseline gap-2 font-display uppercase tracking-[0.16em]">
                 <span className="text-lg font-semibold text-white">SEPTA</span>
-                <span className="text-lg font-light text-white/60">GROUP</span>
+                <span className="text-lg font-light text-[#C6A15B]">GROUP</span>
               </span>
             </div>
             <p className="text-sm font-inter font-light text-[#8A8A8A] leading-relaxed max-w-xs mb-6">
@@ -112,7 +112,17 @@ export default function Footer() {
             <p className="tech-label text-[11px] text-[#8A8A8A]">
               &copy; {new Date().getFullYear()} Septa Group — All Rights Reserved
             </p>
-            <p className="tech-label text-[11px] text-[#8A8A8A]">Built in Kerala</p>
+            <div className="flex items-center gap-5">
+              <p className="tech-label text-[11px] text-[#8A8A8A]">Built in Kerala</p>
+              <span className="w-px h-3 bg-white/15" />
+              <Link
+                to="/admin"
+                data-testid="footer-admin-link"
+                className="tech-label text-[11px] text-[#8A8A8A] hover:text-white transition-colors"
+              >
+                Admin Portal
+              </Link>
+            </div>
           </div>
         </div>
       </div>

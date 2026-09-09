@@ -12,7 +12,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const relationshipLabels = {
   'Group Company': { color: 'bg-[#050505] text-white', desc: 'Part of the Septa Group family' },
   'Core Partner': { color: 'bg-[#8A8A8A] text-white', desc: 'Long-term collaboration across multiple projects' },
-  'Project Partner': { color: 'bg-[#E8F0EF] text-[#606060]', desc: 'Engaged for specific project requirements' },
+  'Project Partner': { color: 'bg-[#ECECEA] text-[#606060]', desc: 'Engaged for specific project requirements' },
   'Preferred Vendor': { color: 'bg-[#F6F6F3] text-[#050505]', desc: 'Trusted supplier in our material network' },
 };
 

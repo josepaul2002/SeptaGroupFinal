@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronDown, Check, X as XIcon, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, ChevronDown, Check, X as XIcon, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { usePageContent, getText } from '../hooks/useApi';
 import { useLanguage } from '../components/LanguageToggle';

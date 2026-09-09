@@ -110,3 +110,27 @@ June 2026 — Phase 5 (nav + media visibility controls) complete
 
 ## Last Updated (latest)
 June 2026 — Phase 7 monochrome rebrand complete (site-wide incl. admin)
+
+## Phase 8 — Homepage rhythm, transparent logo, contact details, admin link (June 2026) — tested ✓ (visual, desktop+mobile)
+- Homepage rebuilt to the exact architectural section rhythm: HERO(black) → TRUST(off-white) → SELECTED PROJECTS(white) → SEPTA STANDARD/process(black) → SERVICES(off-white) → TESTIMONIALS(white) → ECOSYSTEM(off-white) → CTA(black) → FOOTER(#050505). Oversized Space Grotesk statement headings ("From idea / to infrastructure.", "Building starts before construction.", "One partner. / The entire project."), grayscale imagery (colour on hover), mono section numbers, 1px plan-grid dividers, architectural arrow buttons, dark-section enquiry form (.input-underline-dark added to index.css).
+- Transparent logo: generated + alpha-processed grey mark at /app/frontend/public/septa-mark.png (used in Navbar + Footer; works on any background). Original at /septa-logo.png retained.
+- Contact details wired to live settings: WhatsApp/phone = +91 94009 39936, contact_person = "Paul Jose", contact_person_role = "Managing Director" (added to SiteContactSettings schema + DEFAULT_SETTINGS + pushed to DB). Hero/CTA WhatsApp + call now pull from settings (no more hardcoded 919876543210).
+- Admin Portal link added to Footer bottom (data-testid=footer-admin-link → /admin).
+- All remaining colourful type-badge hexes neutralised to monochrome across all pages.
+
+## PENDING — Live Email (needs user credentials)
+- email_service.py is built and reads RESEND_API_KEY, FROM_EMAIL, ADMIN_NOTIFY_EMAIL from backend/.env. Currently placeholders. Awaiting Resend API key + verified sender domain + notify recipient to switch on.
+
+## Phase 9 — Reverted to black-and-white design + gold accent (June 2026)
+- Design reverted to the strict black-dominant version (dark navbar, black hero + process, black CTAs) per user preference after trying light-dominant.
+- Original logo (/septa-logo.png) restored in navbar + footer (transparent /septa-mark.png no longer used).
+- Removed grayscale filter from all photos — full-colour imagery now.
+- Added GOLD accent (#C6A15B, tailwind `septa-gold`): active nav link, "GROUP" wordmark (nav + footer), homepage section eyebrows + process numbers, hero image accent bar.
+- Contact: WhatsApp/phone +91 94009 39936, Paul Jose (Managing Director). Enquiry notifications set to paul@septa.one (backend ADMIN_NOTIFY_EMAIL). Footer has Admin Portal link.
+
+## PENDING
+- Google login for admin (Emergent Google Auth) — user chose it; playbook fetched. Allowlist: paul@septa.one, admin@septa.group. NOT yet built.
+- Live email sending needs a Resend API key (user will add) + verified sender domain (paul@septa.one / septa.one).
+
+## Last Updated (latest)
+June 2026 — Phase 9: black-and-white design + gold accent; Google login pending

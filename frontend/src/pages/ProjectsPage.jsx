@@ -8,11 +8,11 @@ const typeFilters = ['All', 'Institutional', 'Healthcare', 'Commercial', 'Reside
 const statusFilters = ['All', 'Completed', 'Ongoing'];
 
 const typeColors = {
-  Institutional: 'bg-[#E8F0EF] text-[#606060]',
-  Healthcare: 'bg-[#EEF0F7] text-[#3B4A8A]',
-  Commercial: 'bg-[#F0EBE5] text-[#7A4E2D]',
-  Residential: 'bg-[#EFF0E8] text-[#4A5C1F]',
-  'Mixed-use': 'bg-[#F0EAF4] text-[#6A3A7A]',
+  Institutional: 'bg-[#ECECEA] text-[#606060]',
+  Healthcare: 'bg-[#ECECEA] text-[#666666]',
+  Commercial: 'bg-[#ECECEA] text-[#666666]',
+  Residential: 'bg-[#ECECEA] text-[#666666]',
+  'Mixed-use': 'bg-[#ECECEA] text-[#666666]',
 };
 
 export default function ProjectsPage() {

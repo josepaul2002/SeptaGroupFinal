@@ -326,6 +326,8 @@ class SiteContactSettings(BaseModel):
     office_address: str = ""
     office_address_short: str = ""
     map_link: str = ""
+    contact_person: str = ""
+    contact_person_role: str = ""
     operating_districts: List[str] = []
 
 

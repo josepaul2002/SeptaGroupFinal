@@ -46,7 +46,7 @@ export default function Navbar() {
           <img src="/septa-logo.png" alt="Septa Group" className="h-8 md:h-9 w-auto" />
           <span className="hidden sm:flex items-baseline gap-2 font-display uppercase tracking-[0.16em] text-white">
             <span className="text-[15px] font-semibold">SEPTA</span>
-            <span className="text-[15px] font-light text-white/70">GROUP</span>
+            <span className="text-[15px] font-light text-[#C6A15B]">GROUP</span>
           </span>
         </Link>
 
@@ -58,7 +58,7 @@ export default function Navbar() {
               data-testid={`navbar-nav-item-${link.key}`}
               className={`font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-200 ${
                 location.pathname === link.to
-                  ? 'text-white'
+                  ? 'text-[#C6A15B]'
                   : 'text-white/50 hover:text-white'
               }`}
             >
@@ -98,7 +98,7 @@ export default function Navbar() {
               to={link.to}
               data-testid={`mobile-navbar-nav-item-${link.key}`}
               className={`font-mono text-[13px] uppercase tracking-[0.14em] ${
-                location.pathname === link.to ? 'text-white' : 'text-white/60'
+                location.pathname === link.to ? 'text-[#C6A15B]' : 'text-white/60'
               }`}
             >
               {link.label}

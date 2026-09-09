@@ -45,7 +45,7 @@ export default function ContactPage() {
     return (
       <div className="pt-16 min-h-screen bg-[#F6F6F3] flex items-center justify-center" data-testid="contact-success">
         <div className="text-center max-w-md px-6">
-          <div className="w-14 h-14 bg-[#E8F0EF] flex items-center justify-center mx-auto mb-5">
+          <div className="w-14 h-14 bg-[#ECECEA] flex items-center justify-center mx-auto mb-5">
             <CheckCircle2 size={28} className="text-[#606060]" strokeWidth={1.5} />
           </div>
           <h1 className="text-2xl font-sora font-light text-[#050505] mb-3">Enquiry Received</h1>
@@ -183,7 +183,7 @@ export default function ContactPage() {
                 </div>
 
                 {partnerRef && (
-                  <p className="text-xs font-inter text-[#606060] bg-[#E8F0EF] px-3 py-2">
+                  <p className="text-xs font-inter text-[#606060] bg-[#ECECEA] px-3 py-2">
                     Referred from partner: <strong>{partnerRef}</strong>
                   </p>
                 )}
@@ -208,7 +208,7 @@ function ContactItem({ icon, label, value, href, tid, external }) {
   const linkProps = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
   return (
     <Tag {...linkProps} className="flex items-start gap-3 group" data-testid={tid}>
-      <div className="w-8 h-8 bg-[#E8F0EF] flex items-center justify-center flex-shrink-0 text-[#606060]">{icon}</div>
+      <div className="w-8 h-8 bg-[#ECECEA] flex items-center justify-center flex-shrink-0 text-[#606060]">{icon}</div>
       <div>
         <p className="text-xs font-inter text-[#8A8A8A] uppercase tracking-wider">{label}</p>
         <p className={`text-sm font-inter text-[#050505] mt-0.5 ${href ? 'group-hover:text-[#606060] transition-colors' : ''}`}>{value}</p>
