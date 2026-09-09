@@ -1,11 +1,18 @@
 import { MessageCircle } from 'lucide-react';
-import { useState } from 'react';
-
-const WHATSAPP_NUMBER = '919876543210'; // placeholder
-const WHATSAPP_MESSAGE = encodeURIComponent('Hello, I would like to enquire about construction services from Septa Group.');
+import { useState, useEffect } from 'react';
+import { useSiteSettings } from '../hooks/useApi';
 
 export default function WhatsAppButton() {
   const [hovered, setHovered] = useState(false);
+  const { settings } = useSiteSettings();
+
+  const whatsappLink = settings?.contact?.whatsapp_link;
+  const whatsappNumber = settings?.contact?.whatsapp_number;
+
+  if (!whatsappNumber && !whatsappLink) return null;
+
+  const message = encodeURIComponent('Hello, I would like to enquire about construction services from Septa Group.');
+  const href = whatsappLink || `https://wa.me/${whatsappNumber}?text=${message}`;
 
   return (
     <div
@@ -18,7 +25,7 @@ export default function WhatsAppButton() {
         </div>
       )}
       <a
-        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="WhatsApp Us"

@@ -251,7 +251,7 @@ async def get_projects(
     if published_only and not admin:
         query["status"] = "published"
     
-    projects = await db.projects.find(query, {"_id": 0}).to_list(1000)
+    projects = await db.projects.find(query, {"_id": 0}).to_list(200)
     return projects
 
 
@@ -357,7 +357,7 @@ async def get_partners(
     if published_only and not admin:
         query["status"] = "published"
     
-    partners = await db.partners.find(query, {"_id": 0}).sort("sort_order", 1).to_list(1000)
+    partners = await db.partners.find(query, {"_id": 0}).sort("sort_order", 1).to_list(200)
     return partners
 
 
@@ -448,7 +448,7 @@ async def delete_partner(slug: str, admin: dict = Depends(get_current_admin)):
 @api_router.get("/testimonials")
 async def get_testimonials():
     """Get all testimonials"""
-    testimonials = await db.testimonials.find({}, {"_id": 0}).to_list(1000)
+    testimonials = await db.testimonials.find({}, {"_id": 0}).to_list(50)
     return testimonials
 
 
@@ -734,7 +734,7 @@ async def get_project_categories():
 @api_router.get("/solution-packs")
 async def get_solution_packs():
     """Get all solution packs"""
-    packs = await db.solution_packs.find({"status": "published"}, {"_id": 0}).to_list(100)
+    packs = await db.solution_packs.find({"status": "published"}, {"_id": 0}).to_list(50)
     return packs
 
 
