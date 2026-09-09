@@ -163,9 +163,8 @@ export default function ProjectsPage() {
                         <img src={project.image} alt={getText(project.title)} loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center" data-testid={`project-noimg-${project.slug}`}
-                          style={{ background: 'linear-gradient(135deg, #606060 0%, #262626 60%, #050505 100%)' }}>
-                          <span className="text-xs font-inter uppercase tracking-[0.3em] text-[#8A8A8A]">{project.type}</span>
+                        <div className="w-full h-full flex items-center justify-center bg-[#050505]" data-testid={`project-noimg-${project.slug}`}>
+                          <span className="tech-label text-[11px] text-[#C6A15B]">{project.type}</span>
                         </div>
                       )}
                       {project.project_status === 'Ongoing' && (

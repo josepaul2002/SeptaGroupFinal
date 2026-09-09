@@ -14,6 +14,7 @@ from slowapi.errors import RateLimitExceeded
 import os
 import logging
 import json
+import httpx
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 import uuid
@@ -564,6 +565,53 @@ async def admin_login(request: Request, response: Response, auth: AdminLoginRequ
         admin_id=admin["id"],
         email=admin["email"]
     )
+
+
+@api_router.post("/admin/google-session")
+async def admin_google_session(request: Request, response: Response):
+    """Sign in to admin via Emergent-managed Google Auth, restricted to an email allowlist."""
+    session_id = request.headers.get("X-Session-ID")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Missing session id")
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id},
+            )
+    except Exception:
+        raise HTTPException(status_code=502, detail="Auth service unreachable")
+    if r.status_code != 200:
+        raise HTTPException(status_code=401, detail="Google authentication failed")
+    data = r.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=401, detail="No email returned from Google")
+    allowed = [e.strip().lower() for e in os.environ.get(
+        "ADMIN_ALLOWED_GOOGLE_EMAILS", "paul@septa.one,admin@septa.group"
+    ).split(",") if e.strip()]
+    if email not in allowed:
+        raise HTTPException(status_code=403, detail="This Google account is not authorized for admin access.")
+
+    admin = await db.admins.find_one({"email": email}, {"_id": 0})
+    if not admin:
+        admin_id = f"admin_{uuid.uuid4().hex[:12]}"
+        await db.admins.insert_one({
+            "id": admin_id,
+            "email": email,
+            "name": data.get("name", ""),
+            "password_hash": "",
+            "auth_provider": "google",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    else:
+        admin_id = admin["id"]
+
+    token = create_access_token({"sub": admin_id, "email": email})
+    set_auth_cookie(response, token)
+    await db.admins.update_one({"id": admin_id}, {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}})
+    logger.info(f"Admin Google login: {email}")
+    return AdminLoginResponse(access_token=token, admin_id=admin_id, email=email)
 
 
 @api_router.post("/admin/logout")

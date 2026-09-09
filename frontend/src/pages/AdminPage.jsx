@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LogOut, Lock, AlertCircle, Loader2, MessageSquare, Folder, Users, FileText, Settings, History, LayoutDashboard } from 'lucide-react';
 import { useAdminAuth } from '../hooks/useApi';
 import LeadsTab from '../components/admin/LeadsTab';
@@ -20,11 +20,34 @@ const TABS = [
 ];
 
 export default function AdminPage() {
-  const { token, admin, loading: authLoading, login, logout, isAuthenticated } = useAdminAuth();
+  const { token, admin, loading: authLoading, login, loginWithGoogle, logout, isAuthenticated } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('leads');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('session_id=')) {
+      const sid = new URLSearchParams(hash.replace('#', '')).get('session_id');
+      if (sid) {
+        setLoginLoading(true);
+        loginWithGoogle(sid)
+          .catch((e) => setLoginError(e?.response?.data?.detail || 'Google sign-in failed'))
+          .finally(() => {
+            setLoginLoading(false);
+            window.history.replaceState(null, '', window.location.pathname);
+          });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleGoogleLogin = () => {
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    const redirectUrl = window.location.origin + '/admin';
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -75,6 +98,19 @@ export default function AdminPage() {
               {loginLoading ? <Loader2 className="animate-spin" size={16} /> : 'Login'}
             </button>
           </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-[#8A8A8A]/20" />
+            <span className="text-[10px] uppercase tracking-widest text-[#8A8A8A] font-inter">or</span>
+            <div className="flex-1 h-px bg-[#8A8A8A]/20" />
+          </div>
+
+          <button type="button" onClick={handleGoogleLogin} data-testid="admin-google-login-btn"
+            className="w-full h-11 border border-[#8A8A8A]/40 text-[#050505] text-xs font-inter font-medium uppercase tracking-widest hover:border-[#C6A15B] hover:text-[#C6A15B] transition-colors flex items-center justify-center gap-2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+            Sign in with Google
+          </button>
+          <p className="text-[10px] text-[#8A8A8A] font-inter text-center mt-3">Restricted to approved accounts</p>
         </div>
       </div>
     );

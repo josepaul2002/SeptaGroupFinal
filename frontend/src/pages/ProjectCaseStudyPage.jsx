@@ -125,22 +125,17 @@ export default function ProjectCaseStudyPage() {
           </div>
         </div>
       ) : (
-        /* Graceful no-image banner */
-        <div className="relative h-[32vh] md:h-[42vh] overflow-hidden bg-[#050505]" data-testid="case-study-no-hero-banner">
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #606060 0%, #262626 55%, #050505 100%)' }} />
-          <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #F6F6F3 1px, transparent 0)', backgroundSize: '22px 22px' }} />
-          <div className="absolute top-8 right-8 md:top-12 md:right-16 w-px h-16 bg-[#8A8A8A]/50" />
-          <div className="relative h-full flex items-end p-8 md:p-12 lg:p-16">
-            <div className="max-w-[1400px] mx-auto w-full">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-px bg-[#8A8A8A]" />
-                <span className="text-xs font-inter uppercase tracking-widest text-[#8A8A8A]">{project.type}</span>
-              </div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-sora font-light text-[#F6F6F3] tracking-tight leading-tight">
-                {projectTitle}
-              </h1>
-              <p className="mt-3 text-sm font-inter text-[#F6F6F3]/45">{project.location} · {project.sqft} sq.ft.</p>
+        /* Clean no-image header (no wallpaper/gradient) */
+        <div className="bg-[#050505] border-b border-white/10" data-testid="case-study-no-hero-banner">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 py-16 md:py-24">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-6 h-px bg-[#C6A15B]" />
+              <span className="tech-label text-[11px] text-[#C6A15B]">{project.type}</span>
             </div>
+            <h1 className="font-display font-medium text-[#F6F6F3] tracking-[-0.04em] leading-[0.98]" style={{ fontSize: 'clamp(38px, 5.5vw, 88px)' }}>
+              {projectTitle}
+            </h1>
+            <p className="mt-4 tech-label text-[11px] text-[#8A8A8A]">{project.location} · {project.sqft} sq.ft.</p>
           </div>
         </div>
       )}
@@ -440,9 +435,8 @@ export default function ProjectCaseStudyPage() {
                       <img src={rp.image} alt={t(rp.title)} loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, #606060 0%, #262626 60%, #050505 100%)' }}>
-                        <span className="text-xs font-inter uppercase tracking-[0.3em] text-[#8A8A8A]">{rp.type}</span>
+                      <div className="w-full h-full flex items-center justify-center bg-[#050505]">
+                        <span className="tech-label text-[11px] text-[#C6A15B]">{rp.type}</span>
                       </div>
                     )}
                   </div>

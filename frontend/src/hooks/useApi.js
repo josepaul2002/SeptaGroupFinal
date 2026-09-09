@@ -149,6 +149,17 @@ export function useAdminAuth() {
     return res.data;
   };
 
+  const loginWithGoogle = async (sessionId) => {
+    const res = await axios.post(`${API}/admin/google-session`, {}, {
+      headers: { 'X-Session-ID': sessionId }
+    });
+    const newToken = res.data.access_token;
+    localStorage.setItem('septa-admin-token', newToken);
+    setToken(newToken);
+    setAdmin({ id: res.data.admin_id, email: res.data.email });
+    return res.data;
+  };
+
   const logout = async () => {
     try {
       await axios.post(`${API}/admin/logout`, {}, {
@@ -160,7 +171,7 @@ export function useAdminAuth() {
     setAdmin(null);
   };
 
-  return { token, admin, loading, login, logout, isAuthenticated: !!admin };
+  return { token, admin, loading, login, loginWithGoogle, logout, isAuthenticated: !!admin };
 }
 
 // Admin data hooks

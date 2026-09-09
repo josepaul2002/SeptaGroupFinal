@@ -211,7 +211,7 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
                   <p className="text-sm font-inter font-medium text-[#050505]">Show media & gallery on project page</p>
                   <p className="text-xs text-[#8A8A8A] mt-0.5">Turn off for projects without proper photos. The Media tab and gallery are hidden; the story and details still show.</p>
                 </div>
-                <button type="button" onClick={() => setForm({ ...form, media_visible: !form.media_visible })}
+                <button type="button" onClick={() => setForm(prev => ({ ...prev, media_visible: !prev.media_visible }))}
                   data-testid="project-media-visible-toggle"
                   role="switch" aria-checked={form.media_visible}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 ${form.media_visible ? 'bg-[#050505]' : 'bg-[#8A8A8A]/40'}`}>
@@ -236,7 +236,7 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
                     <div key={s.key} className="flex items-center justify-between" data-testid={`project-tab-vis-row-${s.key}`}>
                       <span className="text-sm font-inter text-[#050505]/80">{s.label}</span>
                       <button type="button"
-                        onClick={() => setForm({ ...form, tab_visibility: { ...form.tab_visibility, [s.key]: !on } })}
+                        onClick={() => setForm(prev => ({ ...prev, tab_visibility: { ...prev.tab_visibility, [s.key]: !prev.tab_visibility[s.key] } }))}
                         data-testid={`project-tab-vis-${s.key}`}
                         role="switch" aria-checked={on}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${on ? 'bg-[#050505]' : 'bg-[#8A8A8A]/40'}`}>

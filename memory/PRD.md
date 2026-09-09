@@ -132,5 +132,15 @@ June 2026 — Phase 7 monochrome rebrand complete (site-wide incl. admin)
 - Google login for admin (Emergent Google Auth) — user chose it; playbook fetched. Allowlist: paul@septa.one, admin@septa.group. NOT yet built.
 - Live email sending needs a Resend API key (user will add) + verified sender domain (paul@septa.one / septa.one).
 
+## Phase 10 — Google admin login + visibility verification + placeholder reformat (June 2026) — tested ✓ (iteration_10, 100%)
+- **Google Login for admin**: POST /api/admin/google-session (Emergent Google Auth via session_id → session-data), allowlist ADMIN_ALLOWED_GOOGLE_EMAILS (paul@septa.one, admin@septa.group). Mints the same JWT as password login so all admin routes work unchanged. /admin has "Sign in with Google" button (data-testid=admin-google-login-btn) + hash session_id handler. Password login still works.
+- **Verified the media_visible + tab_visibility toggles work end-to-end** (was reported as maybe-broken; confirmed working — earlier glitch was test timing). Hardened with functional setForm updates to avoid rapid-click stale state.
+- **No-photo reformat**: removed gradient/dotted "wallpaper" placeholders. No-hero case study = clean solid #050505 header (title + gold type). No-image grid/related tiles = clean solid #050505 tile with gold type label.
+- ADMIN_ALLOWED_GOOGLE_EMAILS added to backend/.env.
+
+## PENDING
+- Live email sending: user will add Resend API key + verify septa.one (FROM_EMAIL); ADMIN_NOTIFY_EMAIL already = paul@septa.one.
+- Content upload: user to add real project photos + partner logos via admin.
+
 ## Last Updated (latest)
-June 2026 — Phase 9: black-and-white design + gold accent; Google login pending
+June 2026 — Phase 10: Google admin login live; visibility toggles verified; placeholders reformatted
