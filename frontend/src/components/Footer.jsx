@@ -24,32 +24,35 @@ export default function Footer() {
   const contact = settings?.contact || {};
 
   return (
-    <footer className="bg-[#1F2328] text-[#F3F0E8]" data-testid="footer">
-      <div className="h-px bg-[#C6A15B]/40" />
+    <footer className="bg-[#050505] text-[#F6F6F3]" data-testid="footer">
+      <div className="h-px bg-[#8A8A8A]/40" />
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 py-16 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
 
           <div className="md:col-span-4">
-            <div className="flex items-center gap-1 mb-4">
-              <span className="font-sora font-semibold text-2xl text-[#0F5E5B]">SEPTA</span>
-              <span className="font-sora font-light text-2xl text-[#F3F0E8]">GROUP</span>
+            <div className="flex items-center gap-3 mb-5">
+              <img src="/septa-logo.png" alt="Septa Group" className="h-10 w-auto" />
+              <span className="flex items-baseline gap-2 font-display uppercase tracking-[0.16em]">
+                <span className="text-lg font-semibold text-white">SEPTA</span>
+                <span className="text-lg font-light text-white/60">GROUP</span>
+              </span>
             </div>
-            <p className="text-sm font-inter font-light text-[#A7ADB5] leading-relaxed max-w-xs mb-6">
+            <p className="text-sm font-inter font-light text-[#8A8A8A] leading-relaxed max-w-xs mb-6">
               {settings?.footer_tagline || 'Built with Clarity. Delivered with Discipline.'}
             </p>
-            <p className="text-xs uppercase tracking-widest text-[#C6A15B] font-inter">Est. 2004 · Kerala</p>
+            <p className="tech-label text-[11px] text-[#8A8A8A]">Est. 2004 · Kerala</p>
           </div>
 
           <div className="md:col-span-2">
-            <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-5">Pages</p>
+            <p className="tech-label text-[11px] text-[#8A8A8A] mb-5">Pages</p>
             <ul className="space-y-3">
               {footerPages.map((p) => (
                 <li key={p.to}>
                   <Link
                     to={p.to}
                     data-testid={`footer-link-${p.label.toLowerCase().replace(/\s+/g, '-')}`}
-                    className="text-sm font-inter text-[#F3F0E8]/70 hover:text-[#F3F0E8] transition-colors"
+                    className="text-sm font-inter text-[#F6F6F3]/70 hover:text-[#F6F6F3] transition-colors"
                   >
                     {p.label}
                   </Link>
@@ -59,34 +62,34 @@ export default function Footer() {
           </div>
 
           <div className="md:col-span-3">
-            <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-5">Services</p>
+            <p className="tech-label text-[11px] text-[#8A8A8A] mb-5">Services</p>
             <ul className="space-y-3">
               {footerServices.map((s) => (
                 <li key={s}>
-                  <span className="text-sm font-inter text-[#F3F0E8]/70">{s}</span>
+                  <span className="text-sm font-inter text-[#F6F6F3]/70">{s}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           <div className="md:col-span-3">
-            <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-5">Contact</p>
+            <p className="tech-label text-[11px] text-[#8A8A8A] mb-5">Contact</p>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <Phone size={14} className="text-[#C6A15B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                <a href={contact.phone_link || '#'} className="text-sm font-inter text-[#F3F0E8]/70 hover:text-[#F3F0E8] transition-colors" data-testid="footer-phone">
+                <Phone size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                <a href={contact.phone_link || '#'} className="text-sm font-inter text-[#F6F6F3]/70 hover:text-[#F6F6F3] transition-colors" data-testid="footer-phone">
                   {contact.phone_display || '+91 XXXXX XXXXX'}
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <Mail size={14} className="text-[#C6A15B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                <a href={`mailto:${contact.email || ''}`} className="text-sm font-inter text-[#F3F0E8]/70 hover:text-[#F3F0E8] transition-colors" data-testid="footer-email">
+                <Mail size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                <a href={`mailto:${contact.email || ''}`} className="text-sm font-inter text-[#F6F6F3]/70 hover:text-[#F6F6F3] transition-colors" data-testid="footer-email">
                   {contact.email || 'info@septagroup.in'}
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin size={14} className="text-[#C6A15B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                <span className="text-sm font-inter text-[#F3F0E8]/70" data-testid="footer-address">
+                <MapPin size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                <span className="text-sm font-inter text-[#F6F6F3]/70" data-testid="footer-address">
                   {contact.office_address || 'Kerala, India'}
                 </span>
               </li>
@@ -94,18 +97,23 @@ export default function Footer() {
             <Link
               to="/contact"
               data-testid="footer-enquire-btn"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-inter font-medium text-[#0F5E5B] hover:text-[#C6A15B] transition-colors"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-inter font-medium text-[#606060] hover:text-[#8A8A8A] transition-colors"
             >
               Start an Enquiry <ArrowUpRight size={14} strokeWidth={1.5} />
             </Link>
           </div>
         </div>
 
-        <div className="mt-14 pt-6 border-t border-[#F3F0E8]/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <p className="text-xs font-inter text-[#A7ADB5]">
-            &copy; {new Date().getFullYear()} Septa Group. All rights reserved.
-          </p>
-          <p className="text-xs font-inter text-[#A7ADB5]">Built with care in Kerala.</p>
+        <div className="mt-16 pt-8 border-t border-white/10">
+          <div className="font-display font-medium uppercase tracking-[-0.02em] text-white/[0.06] leading-none text-[clamp(48px,12vw,150px)] select-none pointer-events-none">
+            SEPTA GROUP
+          </div>
+          <div className="mt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <p className="tech-label text-[11px] text-[#8A8A8A]">
+              &copy; {new Date().getFullYear()} Septa Group — All Rights Reserved
+            </p>
+            <p className="tech-label text-[11px] text-[#8A8A8A]">Built in Kerala</p>
+          </div>
         </div>
       </div>
     </footer>

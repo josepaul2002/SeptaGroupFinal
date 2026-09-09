@@ -39,7 +39,7 @@ export default function ImageGallery({ images, className = "" }) {
             <button
               key={i}
               onClick={() => openLightbox(i)}
-              className="group relative aspect-[4/3] overflow-hidden bg-[#E8E6E0] cursor-zoom-in"
+              className="group relative aspect-[4/3] overflow-hidden bg-[#ECECEA] cursor-zoom-in"
               data-testid={`gallery-image-${i}`}
             >
               <img

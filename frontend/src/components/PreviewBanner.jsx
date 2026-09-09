@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function PreviewBanner({ type, slug, onClose }) {
   return (
-    <div className="fixed top-16 left-0 right-0 z-50 bg-[#C6A15B] text-white" data-testid="preview-banner">
+    <div className="fixed top-16 left-0 right-0 z-50 bg-[#8A8A8A] text-white" data-testid="preview-banner">
       <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Eye size={16} strokeWidth={1.5} />

@@ -39,7 +39,7 @@ export default function Model3DViewer({
     <div className={`relative ${className}`} data-testid="model-3d-viewer">
       {/* Idle state - poster with button */}
       {viewerState === 'idle' && (
-        <div className="relative aspect-video bg-[#1F2328] overflow-hidden">
+        <div className="relative aspect-video bg-[#050505] overflow-hidden">
           {posterImage && (
             <img
               src={posterImage}
@@ -53,7 +53,7 @@ export default function Model3DViewer({
               {modelUrl && (
                 <button
                   onClick={handleView3D}
-                  className="flex items-center gap-2 px-6 py-3 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#0D4E4C] transition-colors"
+                  className="flex items-center gap-2 px-6 py-3 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] transition-colors"
                   data-testid="view-3d-btn"
                 >
                   <Box size={16} /> View 3D Model
@@ -80,18 +80,18 @@ export default function Model3DViewer({
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6">
           <div className="bg-white max-w-sm p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Smartphone size={24} className="text-[#C6A15B]" />
-              <h3 className="text-lg font-sora font-medium text-[#1F2328]">
+              <Smartphone size={24} className="text-[#8A8A8A]" />
+              <h3 className="text-lg font-sora font-medium text-[#050505]">
                 3D Best on Desktop
               </h3>
             </div>
-            <p className="text-sm font-inter text-[#1F2328]/60 mb-6">
+            <p className="text-sm font-inter text-[#050505]/60 mb-6">
               The 3D viewer works best on larger screens. Would you like to continue on mobile or watch the drone video instead?
             </p>
             <div className="flex flex-col gap-2">
               <button
                 onClick={handleMobileConfirm}
-                className="w-full px-4 py-2 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-wider"
+                className="w-full px-4 py-2 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider"
               >
                 Continue Anyway
               </button>
@@ -100,7 +100,7 @@ export default function Model3DViewer({
                   href={fallbackVideoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full px-4 py-2 border border-[#1F2328]/20 text-[#1F2328] text-xs font-inter font-medium uppercase tracking-wider text-center"
+                  className="w-full px-4 py-2 border border-[#050505]/20 text-[#050505] text-xs font-inter font-medium uppercase tracking-wider text-center"
                   onClick={() => setShowMobileWarning(false)}
                 >
                   Watch Video Instead
@@ -108,7 +108,7 @@ export default function Model3DViewer({
               )}
               <button
                 onClick={() => setShowMobileWarning(false)}
-                className="w-full px-4 py-2 text-[#A7ADB5] text-xs font-inter"
+                className="w-full px-4 py-2 text-[#8A8A8A] text-xs font-inter"
               >
                 Cancel
               </button>
@@ -119,15 +119,15 @@ export default function Model3DViewer({
 
       {/* Loading state */}
       {viewerState === 'loading' && (
-        <div className="aspect-video bg-[#1F2328] flex flex-col items-center justify-center gap-4">
-          <Loader2 size={32} className="text-[#0F5E5B] animate-spin" />
+        <div className="aspect-video bg-[#050505] flex flex-col items-center justify-center gap-4">
+          <Loader2 size={32} className="text-[#606060] animate-spin" />
           <p className="text-sm font-inter text-white/50">Loading 3D model...</p>
         </div>
       )}
 
       {/* 3D Viewer placeholder */}
       {viewerState === 'loaded' && (
-        <div className="relative aspect-video bg-[#1F2328]">
+        <div className="relative aspect-video bg-[#050505]">
           <div className="w-full h-full flex items-center justify-center text-white/50">
             <p className="text-sm font-inter">3D Viewer - GLB/GLTF Renderer</p>
           </div>
@@ -149,7 +149,7 @@ export default function Model3DViewer({
 
       {/* Error state */}
       {viewerState === 'error' && (
-        <div className="aspect-video bg-[#1F2328] flex flex-col items-center justify-center gap-4">
+        <div className="aspect-video bg-[#050505] flex flex-col items-center justify-center gap-4">
           <p className="text-sm font-inter text-white/50">Failed to load 3D model</p>
           {fallbackVideoUrl && (
             <a

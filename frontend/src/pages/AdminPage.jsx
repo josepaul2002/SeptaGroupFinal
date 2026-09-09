@@ -40,29 +40,29 @@ export default function AdminPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#F3F0E8] flex items-center justify-center pt-16">
-        <Loader2 className="animate-spin text-[#0F5E5B]" size={32} />
+      <div className="min-h-screen bg-[#F6F6F3] flex items-center justify-center pt-16">
+        <Loader2 className="animate-spin text-[#606060]" size={32} />
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#F3F0E8] flex items-center justify-center pt-16" data-testid="admin-login-page">
-        <div className="w-full max-w-sm p-8 bg-white border border-[#A7ADB5]/20">
+      <div className="min-h-screen bg-[#F6F6F3] flex items-center justify-center pt-16" data-testid="admin-login-page">
+        <div className="w-full max-w-sm p-8 bg-white border border-[#8A8A8A]/20">
           <div className="flex items-center gap-3 mb-8">
-            <Lock size={18} className="text-[#0F5E5B]" />
-            <h1 className="text-xl font-sora font-medium text-[#1F2328]">Admin Login</h1>
+            <Lock size={18} className="text-[#606060]" />
+            <h1 className="text-xl font-sora font-medium text-[#050505]">Admin Login</h1>
           </div>
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Email</label>
-              <input type="email" required className="w-full h-10 px-3 text-sm font-inter border border-[#A7ADB5]/30 bg-transparent text-[#1F2328] outline-none focus:border-[#0F5E5B] transition-colors"
+              <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Email</label>
+              <input type="email" required className="w-full h-10 px-3 text-sm font-inter border border-[#8A8A8A]/30 bg-transparent text-[#050505] outline-none focus:border-[#606060] transition-colors"
                 value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} data-testid="admin-email-input" />
             </div>
             <div>
-              <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Password</label>
-              <input type="password" required className="w-full h-10 px-3 text-sm font-inter border border-[#A7ADB5]/30 bg-transparent text-[#1F2328] outline-none focus:border-[#0F5E5B] transition-colors"
+              <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Password</label>
+              <input type="password" required className="w-full h-10 px-3 text-sm font-inter border border-[#8A8A8A]/30 bg-transparent text-[#050505] outline-none focus:border-[#606060] transition-colors"
                 value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} data-testid="admin-password-input" />
             </div>
             {loginError && (
@@ -71,7 +71,7 @@ export default function AdminPage() {
               </div>
             )}
             <button type="submit" disabled={loginLoading} data-testid="admin-login-btn"
-              className="w-full h-11 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+              className="w-full h-11 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
               {loginLoading ? <Loader2 className="animate-spin" size={16} /> : 'Login'}
             </button>
           </form>
@@ -81,12 +81,12 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F0E8] pt-16" data-testid="admin-dashboard">
-      <div className="bg-white border-b border-[#A7ADB5]/20">
+    <div className="min-h-screen bg-[#F6F6F3] pt-16" data-testid="admin-dashboard">
+      <div className="bg-white border-b border-[#8A8A8A]/20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-sora font-medium text-[#1F2328]">Admin Panel</h1>
+          <h1 className="text-lg font-sora font-medium text-[#050505]">Admin Panel</h1>
           <div className="flex items-center gap-4">
-            <span className="text-xs font-inter text-[#A7ADB5]">{admin?.email}</span>
+            <span className="text-xs font-inter text-[#8A8A8A]">{admin?.email}</span>
             <button onClick={logout} className="flex items-center gap-2 text-xs font-inter text-red-500 hover:text-red-600 transition-colors" data-testid="admin-logout-btn">
               <LogOut size={14} /> Logout
             </button>
@@ -101,7 +101,7 @@ export default function AdminPage() {
               {TABS.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-testid={`tab-${tab.id}`}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-inter rounded transition-colors ${
-                    activeTab === tab.id ? 'bg-[#0F5E5B] text-white' : 'text-[#1F2328]/70 hover:bg-[#0F5E5B]/10'
+                    activeTab === tab.id ? 'bg-[#050505] text-white' : 'text-[#050505]/70 hover:bg-[#050505]/10'
                   }`}>
                   <tab.icon size={16} />{tab.label}
                 </button>

@@ -20,7 +20,7 @@ export default function WhatsAppButton() {
       data-testid="whatsapp-float-btn"
     >
       {hovered && (
-        <div className="bg-[#1F2328] text-white text-xs font-inter px-3 py-2 rounded-sm shadow-lg whitespace-nowrap">
+        <div className="bg-[#050505] text-white text-xs font-inter px-3 py-2 rounded-sm shadow-lg whitespace-nowrap">
           WhatsApp Us
         </div>
       )}
@@ -31,7 +31,7 @@ export default function WhatsAppButton() {
         aria-label="WhatsApp Us"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="w-13 h-13 w-[52px] h-[52px] bg-[#25D366] hover:bg-[#20c05b] text-white flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 rounded-sm"
+        className="w-[52px] h-[52px] bg-[#050505] hover:bg-white text-white hover:text-[#050505] border border-white/15 hover:border-[#050505] flex items-center justify-center transition-colors duration-200 rounded-[4px]"
       >
         <MessageCircle size={24} strokeWidth={1.5} />
       </a>

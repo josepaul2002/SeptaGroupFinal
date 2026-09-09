@@ -83,9 +83,9 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-[#A7ADB5]/20 flex items-center justify-between">
-          <h2 className="text-lg font-sora font-medium text-[#1F2328]">{partner ? 'Edit Partner' : 'New Partner'}</h2>
-          <button onClick={onClose} className="text-[#A7ADB5] hover:text-[#1F2328]" data-testid="close-partner-form"><X size={20} /></button>
+        <div className="p-6 border-b border-[#8A8A8A]/20 flex items-center justify-between">
+          <h2 className="text-lg font-sora font-medium text-[#050505]">{partner ? 'Edit Partner' : 'New Partner'}</h2>
+          <button onClick={onClose} className="text-[#8A8A8A] hover:text-[#050505]" data-testid="close-partner-form"><X size={20} /></button>
         </div>
 
         {needsCardImage && (
@@ -94,11 +94,11 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
           </div>
         )}
 
-        <div className="border-b border-[#A7ADB5]/20 flex">
+        <div className="border-b border-[#8A8A8A]/20 flex">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} data-testid={`partner-form-tab-${t.id}`}
               className={`px-6 py-3 text-xs font-inter uppercase tracking-wider transition-colors ${
-                tab === t.id ? 'text-[#0F5E5B] border-b-2 border-[#0F5E5B] font-medium' : 'text-[#A7ADB5] hover:text-[#1F2328]'
+                tab === t.id ? 'text-[#606060] border-b-2 border-[#606060] font-medium' : 'text-[#8A8A8A] hover:text-[#050505]'
               }`}>{t.label}{t.id === 'media' && needsCardImage ? ' !' : ''}</button>
           ))}
         </div>
@@ -137,11 +137,11 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                 <div className="flex gap-2 mb-2">
                   <input type="text" className="form-input flex-1" placeholder="Add..." value={specInput}
                     onChange={e => setSpecInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSpecialty())} />
-                  <button type="button" onClick={addSpecialty} className="px-3 py-1 bg-[#0F5E5B] text-white text-xs">Add</button>
+                  <button type="button" onClick={addSpecialty} className="px-3 py-1 bg-[#050505] text-white text-xs">Add</button>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {form.specialties.map(s => (
-                    <span key={s} className="text-xs bg-[#F3F0E8] px-2 py-1 flex items-center gap-1">{s}
+                    <span key={s} className="text-xs bg-[#F6F6F3] px-2 py-1 flex items-center gap-1">{s}
                       <button type="button" onClick={() => setForm({ ...form, specialties: form.specialties.filter(x => x !== s) })} className="text-red-400"><X size={10} /></button>
                     </span>
                   ))}
@@ -213,20 +213,20 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                   ))}
                 </div>
                 {(form.media.gallery_images || []).length < 10 && (
-                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F3F0E8] text-[#1F2328] text-xs font-inter cursor-pointer hover:bg-[#E8E6E0] transition-colors border border-[#A7ADB5]/30">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
                     <Plus size={14} /> Add Image
                     <input type="file" accept="image/*" className="hidden" onChange={e => handleUpload(e, 'gallery_images')} />
                   </label>
                 )}
               </F>
-              {uploading && <div className="flex items-center gap-2 text-sm text-[#0F5E5B]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
+              {uploading && <div className="flex items-center gap-2 text-sm text-[#606060]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
             </>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#A7ADB5]/20">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-inter text-[#1F2328]/60 hover:text-[#1F2328]">Cancel</button>
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#8A8A8A]/20">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">Cancel</button>
             <button type="submit" disabled={saving} data-testid="save-partner-btn"
-              className="flex items-center gap-2 px-4 py-2 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#0D4E4C] disabled:opacity-60">
+              className="flex items-center gap-2 px-4 py-2 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] disabled:opacity-60">
               {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />} Save
             </button>
           </div>
@@ -239,7 +239,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
 function F({ label, children }) {
   return (
     <div>
-      <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">{label}</label>
+      <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">{label}</label>
       {children}
     </div>
   );
@@ -248,12 +248,12 @@ function F({ label, children }) {
 function MediaField({ label, hint, url, onUpload, onClear, onUrlChange }) {
   return (
     <div>
-      <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-1">{label}</label>
-      {hint && <p className="text-[10px] text-[#A7ADB5] mb-2">{hint}</p>}
+      <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-1">{label}</label>
+      {hint && <p className="text-[10px] text-[#8A8A8A] mb-2">{hint}</p>}
       <div className="flex gap-3 items-end">
         <input type="url" className="form-input flex-1" placeholder="Image URL" value={url || ''}
           onChange={e => onUrlChange(e.target.value || null)} />
-        <label className="flex items-center gap-2 px-4 py-2 bg-[#F3F0E8] text-[#1F2328] text-xs font-inter cursor-pointer hover:bg-[#E8E6E0] transition-colors border border-[#A7ADB5]/30">
+        <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
           <Upload size={14} /> Upload
           <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
         </label>

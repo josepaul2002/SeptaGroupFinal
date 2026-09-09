@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ArrowUpRight } from 'lucide-react';
 import LanguageToggle from './LanguageToggle';
 import { useSiteSettings } from '../hooks/useApi';
 
@@ -25,7 +25,7 @@ export default function Navbar() {
   );
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30);
+    const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -36,29 +36,30 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-[#F3F0E8]/92 backdrop-blur-md shadow-[0_1px_0_rgba(31,35,40,0.08)]' : 'bg-transparent'
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 border-b ${
+        scrolled ? 'bg-[#050505]/95 backdrop-blur-md border-white/10' : 'bg-[#050505] border-white/[0.06]'
       }`}
       data-testid="navbar"
     >
-      <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 h-16 md:h-18 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-1" data-testid="navbar-logo">
-          <span className="font-sora font-semibold text-xl text-[#0F5E5B] tracking-tight">SEPTA</span>
-          <span className="font-sora font-light text-xl text-[#1F2328] tracking-tight">GROUP</span>
-          <span className="ml-2 w-px h-4 bg-[#C6A15B] hidden md:block" />
-          <span className="ml-2 text-xs text-[#A7ADB5] font-inter hidden md:block tracking-widest uppercase">Kerala</span>
+      <div className="max-w-[1600px] mx-auto px-6 md:px-12 h-16 md:h-[76px] flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-3 group" data-testid="navbar-logo-link">
+          <img src="/septa-logo.png" alt="Septa Group" className="h-8 md:h-9 w-auto" />
+          <span className="hidden sm:flex items-baseline gap-2 font-display uppercase tracking-[0.16em] text-white">
+            <span className="text-[15px] font-semibold">SEPTA</span>
+            <span className="text-[15px] font-light text-white/70">GROUP</span>
+          </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8" data-testid="navbar-desktop-nav">
+        <nav className="hidden md:flex items-center gap-9" data-testid="navbar-desktop-nav">
           {visibleLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              data-testid={`nav-link-${link.label.toLowerCase()}`}
-              className={`text-sm font-inter transition-colors duration-200 ${
+              data-testid={`navbar-nav-item-${link.key}`}
+              className={`font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-200 ${
                 location.pathname === link.to
-                  ? 'text-[#0F5E5B] font-medium'
-                  : 'text-[#1F2328]/70 hover:text-[#0F5E5B]'
+                  ? 'text-white'
+                  : 'text-white/50 hover:text-white'
               }`}
             >
               {link.label}
@@ -66,20 +67,21 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-4">
-          <LanguageToggle className="text-[#1F2328]/60 hover:text-[#0F5E5B]" />
-          <div className="w-px h-4 bg-[#A7ADB5]/30" />
+        <div className="hidden md:flex items-center gap-5">
+          <LanguageToggle className="text-white/50 hover:text-white" />
+          <div className="w-px h-4 bg-white/15" />
           <Link
             to="/contact"
-            data-testid="navbar-cta-btn"
-            className="h-10 px-6 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center"
+            data-testid="navbar-get-quote-button"
+            className="group h-10 px-6 bg-white text-[#050505] border border-white text-[13px] font-body font-medium tracking-[0.02em] hover:bg-transparent hover:text-white transition-colors duration-200 flex items-center gap-2 rounded-[3px]"
           >
             Get a Quote
+            <ArrowUpRight size={15} strokeWidth={1.75} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
 
         <button
-          className="md:hidden p-2 text-[#1F2328]"
+          className="md:hidden p-2 text-white"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
           data-testid="navbar-mobile-toggle"
@@ -89,28 +91,28 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-[#F3F0E8] border-t border-[#A7ADB5]/20 px-6 py-6 flex flex-col gap-5" data-testid="navbar-mobile-menu">
+        <div className="md:hidden bg-[#050505] border-t border-white/10 px-6 py-7 flex flex-col gap-5" data-testid="navbar-mobile-menu">
           {visibleLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              data-testid={`mobile-nav-link-${link.label.toLowerCase()}`}
-              className={`text-base font-inter ${
-                location.pathname === link.to ? 'text-[#0F5E5B] font-medium' : 'text-[#1F2328]/80'
+              data-testid={`mobile-navbar-nav-item-${link.key}`}
+              className={`font-mono text-[13px] uppercase tracking-[0.14em] ${
+                location.pathname === link.to ? 'text-white' : 'text-white/60'
               }`}
             >
               {link.label}
             </Link>
           ))}
-          <div className="border-t border-[#A7ADB5]/20 pt-4 mt-2">
-            <LanguageToggle className="text-[#1F2328]/60 hover:text-[#0F5E5B]" />
+          <div className="border-t border-white/10 pt-5 mt-1">
+            <LanguageToggle className="text-white/50 hover:text-white" />
           </div>
           <Link
             to="/contact"
             data-testid="navbar-mobile-cta-btn"
-            className="mt-2 h-12 px-6 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest flex items-center justify-center"
+            className="mt-1 h-12 px-6 bg-white text-[#050505] text-[13px] font-body font-medium tracking-[0.02em] flex items-center justify-center gap-2 rounded-[3px]"
           >
-            Get a Quote
+            Get a Quote <ArrowUpRight size={15} strokeWidth={1.75} />
           </Link>
         </div>
       )}

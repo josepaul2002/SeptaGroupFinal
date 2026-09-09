@@ -91,3 +91,22 @@ Transform the Septa Group Kerala construction company website from a brochure si
 
 ## Last Updated
 June 2026 — Phase 5 (nav + media visibility controls) complete
+
+## Phase 6 — Section toggles, bulk cleanup, bilingual editor (June 2026) — tested ✓
+- Per-project SECTION/TAB visibility: `project.tab_visibility {story,design,delivery,partners}` (default all true). Admin > Project > Media tab "Page Sections" toggles. Public case study hides toggled-off tabs and auto-selects first visible tab. Default merged on GET.
+- Bulk "Hide Photo-less Media": POST /api/admin/projects/hide-photoless sets media_visible=false on projects with zero photos/media. Button in admin Projects header.
+- Page Content editor now has Malayalam (ml) inputs for title/subtitle/body (About/Services).
+- FIX: Admin ProjectForm 422 on legacy projects resolved (coerce string→BilingualText via toBL()).
+
+## Phase 7 — Monochrome Architectural Rebrand (June 2026) — tested ✓ (non-regressive)
+- Full site-wide rebrand to strict monochrome per user brand spec + supplied SEPTA logo.
+- Fonts: Space Grotesk (display/headings), Inter (body), IBM Plex Mono (technical labels). Wired in index.html + index.css + tailwind.config.js (font-sora now maps to Space Grotesk).
+- Palette: global className remap to tokens — teal→structural grey #606060, gold→#8A8A8A, carbon/teal-fills→#050505, cream→#F6F6F3, slate→#8A8A8A. CSS variables added in index.css (:root). Tailwind color tokens updated. No colourful accents.
+- Navbar: rebuilt dark (#050505) sticky bar with /septa-logo.png mark + "SEPTA GROUP" Space Grotesk wordmark, mono uppercase nav links, white "Get a Quote ↗" architectural CTA. data-testids: navbar-logo-link, navbar-nav-item-{key}, navbar-get-quote-button.
+- Footer: logo mark + wordmark, giant faint SEPTA GROUP wordmark, mono (tech-label) metadata.
+- WhatsApp float button + admin status/action badges neutralised to monochrome (removed bright green/coloured badges). Error states keep red.
+- Logo saved at /app/frontend/public/septa-logo.png. Design blueprint at /app/design_guidelines.json.
+- NOTE: rebrand was a global colour/font remap (fast, cohesive). Exact per-section black/off-white/white RHYTHM on each page (hero=black, intro=off-white, etc.) is a further refinement if desired.
+
+## Last Updated (latest)
+June 2026 — Phase 7 monochrome rebrand complete (site-wide incl. admin)

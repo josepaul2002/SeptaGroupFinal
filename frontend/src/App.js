@@ -20,7 +20,7 @@ function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-[#F3F0E8] font-inter">
+        <div className="min-h-screen bg-[#F6F6F3] font-inter">
           <Navbar />
           <main>
             <Routes>

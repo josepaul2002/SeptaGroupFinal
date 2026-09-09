@@ -76,6 +76,13 @@ class DeliveryModule(BaseModel):
     septa_standards: List[str] = []
 
 
+class ProjectTabVisibility(BaseModel):
+    story: bool = True
+    design: bool = True
+    delivery: bool = True
+    partners: bool = True
+
+
 # --- Lead Model ---
 
 class LeadCreate(BaseModel):
@@ -200,6 +207,7 @@ class ProjectBase(BaseModel):
     delivery: Optional[DeliveryModule] = None
     media: Optional[ProjectMedia] = None
     media_visible: bool = True
+    tab_visibility: ProjectTabVisibility = ProjectTabVisibility()
 
 
 class ProjectCreate(ProjectBase):
@@ -229,6 +237,7 @@ class ProjectUpdate(BaseModel):
     delivery: Optional[DeliveryModule] = None
     media: Optional[ProjectMedia] = None
     media_visible: Optional[bool] = None
+    tab_visibility: Optional[ProjectTabVisibility] = None
     status: Optional[PublishStatus] = None
 
 

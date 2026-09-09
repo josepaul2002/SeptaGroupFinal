@@ -5,15 +5,24 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sora: ["Sora", "sans-serif"],
+        sora: ["Space Grotesk", "Arial", "Helvetica", "sans-serif"],
+        display: ["Space Grotesk", "Arial", "Helvetica", "sans-serif"],
         inter: ["Inter", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+        mono: ["IBM Plex Mono", "monospace"],
       },
       colors: {
-        "septa-linen": "#F3F0E8",
-        "septa-carbon": "#1F2328",
-        "septa-teal": "#0F5E5B",
-        "septa-bronze": "#C6A15B",
-        "septa-slate": "#A7ADB5",
+        "septa-linen": "#F6F6F3",
+        "septa-carbon": "#050505",
+        "septa-teal": "#606060",
+        "septa-bronze": "#8A8A8A",
+        "septa-slate": "#8A8A8A",
+        "septa-black": "#050505",
+        "septa-grey": "#606060",
+        "mid-grey": "#8A8A8A",
+        "concrete": "#D8D8D5",
+        "soft-grey": "#ECECEA",
+        "off-white": "#F6F6F3",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

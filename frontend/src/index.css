@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,26 +6,37 @@
 
 @layer base {
   :root {
-    --background: 42 22% 93%;
-    --foreground: 213 13% 14%;
+    --septa-black: #050505;
+    --black: #000000;
+    --graphite: #171717;
+    --charcoal: #262626;
+    --septa-grey: #606060;
+    --mid-grey: #8A8A8A;
+    --concrete: #D8D8D5;
+    --soft-grey: #ECECEA;
+    --off-white: #F6F6F3;
+    --white: #FFFFFF;
+
+    --background: 60 18% 96%;
+    --foreground: 0 0% 2%;
     --card: 0 0% 100%;
-    --card-foreground: 213 13% 14%;
+    --card-foreground: 0 0% 2%;
     --popover: 0 0% 100%;
-    --popover-foreground: 213 13% 14%;
-    --primary: 178 73% 21%;
+    --popover-foreground: 0 0% 2%;
+    --primary: 0 0% 2%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 213 13% 14%;
-    --secondary-foreground: 42 22% 93%;
-    --muted: 213 6% 68%;
-    --muted-foreground: 213 10% 40%;
-    --accent: 38 46% 57%;
-    --accent-foreground: 213 13% 14%;
+    --secondary: 0 0% 38%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 60 6% 92%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 54%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 213 6% 82%;
-    --input: 213 6% 82%;
-    --ring: 178 73% 21%;
-    --radius: 0.125rem;
+    --border: 60 6% 85%;
+    --input: 60 6% 85%;
+    --ring: 0 0% 2%;
+    --radius: 0.25rem;
   }
 }
 
@@ -40,8 +51,15 @@
     -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Sora', sans-serif;
+    font-family: 'Space Grotesk', Arial, Helvetica, sans-serif;
   }
+}
+
+/* Technical / data label */
+.tech-label {
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* Scroll Reveal */
@@ -86,15 +104,15 @@
   width: 100%;
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
-  color: #1F2328;
+  color: #050505;
   outline: none;
   transition: border-color 0.2s ease;
 }
 .input-underline:focus {
-  border-bottom-color: #0F5E5B;
+  border-bottom-color: #606060;
 }
 .input-underline::placeholder {
-  color: #A7ADB5;
+  color: #8A8A8A;
 }
 
 /* Admin form inputs */
@@ -104,18 +122,18 @@
   padding: 0 12px;
   font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
-  color: #1F2328;
+  color: #050505;
   background: transparent;
   border: 1px solid rgba(167, 173, 181, 0.3);
   outline: none;
   transition: border-color 0.2s ease;
 }
 .form-input:focus {
-  border-color: #0F5E5B;
+  border-color: #606060;
 }
 .form-input:disabled {
-  background: #F3F0E8;
-  color: #A7ADB5;
+  background: #F6F6F3;
+  color: #8A8A8A;
 }
 textarea.form-input {
   height: auto;
@@ -134,8 +152,8 @@ textarea.form-input {
 
 /* Scroll bar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #F3F0E8; }
-::-webkit-scrollbar-thumb { background: #A7ADB5; border-radius: 0; }
+::-webkit-scrollbar-track { background: #F6F6F3; }
+::-webkit-scrollbar-thumb { background: #8A8A8A; border-radius: 0; }
 
 @layer base {
   [data-debug-wrapper="true"] { display: contents !important; }

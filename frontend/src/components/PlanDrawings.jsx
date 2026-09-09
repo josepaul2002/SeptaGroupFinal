@@ -32,15 +32,15 @@ export default function PlanDrawings({
             <button
               key={i}
               onClick={() => handleViewPlan({ url, caption })}
-              className="group relative aspect-[4/3] bg-[#F3F0E8] border border-[#A7ADB5]/20 overflow-hidden"
+              className="group relative aspect-[4/3] bg-[#F6F6F3] border border-[#8A8A8A]/20 overflow-hidden"
               data-testid={`plan-item-${i}`}
             >
               {/* Blurred preview if not public */}
               <div className={`w-full h-full ${!plansPublic ? 'blur-sm' : ''}`}>
                 {url.endsWith('.pdf') ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-[#E8E6E0]">
-                    <FileText size={32} className="text-[#A7ADB5]" strokeWidth={1} />
-                    <p className="text-xs font-inter text-[#A7ADB5] mt-2">PDF Document</p>
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-[#ECECEA]">
+                    <FileText size={32} className="text-[#8A8A8A]" strokeWidth={1} />
+                    <p className="text-xs font-inter text-[#8A8A8A] mt-2">PDF Document</p>
                   </div>
                 ) : (
                   <img
@@ -54,7 +54,7 @@ export default function PlanDrawings({
               {/* Watermark overlay for public plans */}
               {plansPublic && (
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                  <p className="text-[#1F2328]/10 text-xs font-inter rotate-[-30deg] whitespace-nowrap">
+                  <p className="text-[#050505]/10 text-xs font-inter rotate-[-30deg] whitespace-nowrap">
                     SEPTA GROUP - REFERENCE ONLY
                   </p>
                 </div>
@@ -62,7 +62,7 @@ export default function PlanDrawings({
 
               {/* Lock overlay for private plans */}
               {!plansPublic && (
-                <div className="absolute inset-0 bg-[#1F2328]/50 flex flex-col items-center justify-center gap-2">
+                <div className="absolute inset-0 bg-[#050505]/50 flex flex-col items-center justify-center gap-2">
                   <Lock size={24} className="text-white/70" strokeWidth={1.5} />
                   <p className="text-xs font-inter text-white/70">Request Access</p>
                 </div>
@@ -81,7 +81,7 @@ export default function PlanDrawings({
 
               {/* Caption */}
               <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-3 py-2">
-                <p className="text-xs font-inter text-[#1F2328] truncate">{caption}</p>
+                <p className="text-xs font-inter text-[#050505] truncate">{caption}</p>
               </div>
             </button>
           );
@@ -89,7 +89,7 @@ export default function PlanDrawings({
       </div>
 
       {/* Disclaimer */}
-      <p className="text-xs font-inter text-[#A7ADB5] mt-4">
+      <p className="text-xs font-inter text-[#8A8A8A] mt-4">
         {plansPublic
           ? "Plans are for reference only. Watermarked. Do not reproduce without permission."
           : "Plan drawings are available upon request for qualified enquiries."}
@@ -111,19 +111,19 @@ export default function PlanDrawings({
 
           <div className="max-w-5xl max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
             {/* Watermark banner */}
-            <div className="bg-[#C6A15B] text-white text-xs font-inter font-medium py-2 px-4 text-center">
+            <div className="bg-[#8A8A8A] text-white text-xs font-inter font-medium py-2 px-4 text-center">
               SEPTA GROUP - REFERENCE ONLY - DO NOT REPRODUCE
             </div>
 
             {selectedPlan.url.endsWith('.pdf') ? (
               <div className="bg-white p-8 text-center">
-                <FileText size={64} className="text-[#A7ADB5] mx-auto mb-4" strokeWidth={1} />
-                <p className="text-lg font-sora text-[#1F2328] mb-2">{selectedPlan.caption}</p>
+                <FileText size={64} className="text-[#8A8A8A] mx-auto mb-4" strokeWidth={1} />
+                <p className="text-lg font-sora text-[#050505] mb-2">{selectedPlan.caption}</p>
                 <a
                   href={selectedPlan.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-[#0F5E5B] text-sm font-inter hover:underline"
+                  className="inline-flex items-center gap-2 text-[#606060] text-sm font-inter hover:underline"
                 >
                   <Download size={14} /> Open PDF
                 </a>
@@ -173,13 +173,13 @@ export default function PlanDrawings({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
-              <Lock size={24} className="text-[#C6A15B]" />
-              <h3 className="text-lg font-sora font-medium text-[#1F2328]">
+              <Lock size={24} className="text-[#8A8A8A]" />
+              <h3 className="text-lg font-sora font-medium text-[#050505]">
                 Request Plan Access
               </h3>
             </div>
 
-            <p className="text-sm font-inter text-[#1F2328]/60 mb-6">
+            <p className="text-sm font-inter text-[#050505]/60 mb-6">
               Detailed plans for <strong>{projectTitle}</strong> are available to qualified enquiries.
               Please contact us to request access.
             </p>
@@ -187,19 +187,19 @@ export default function PlanDrawings({
             <div className="space-y-3">
               <a
                 href={`/contact?request=plans&project=${encodeURIComponent(projectTitle)}`}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#0D4E4C] transition-colors"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] transition-colors"
               >
                 <Mail size={14} /> Request Access via Enquiry
               </a>
               <button
                 onClick={() => setShowAccessRequest(false)}
-                className="w-full px-4 py-2 text-[#A7ADB5] text-xs font-inter"
+                className="w-full px-4 py-2 text-[#8A8A8A] text-xs font-inter"
               >
                 Cancel
               </button>
             </div>
 
-            <p className="text-xs font-inter text-[#A7ADB5] mt-6 text-center">
+            <p className="text-xs font-inter text-[#8A8A8A] mt-6 text-center">
               Access is granted at Septa's discretion based on project relevance.
             </p>
           </div>

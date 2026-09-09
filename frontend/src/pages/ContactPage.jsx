@@ -43,16 +43,16 @@ export default function ContactPage() {
 
   if (sent) {
     return (
-      <div className="pt-16 min-h-screen bg-[#F3F0E8] flex items-center justify-center" data-testid="contact-success">
+      <div className="pt-16 min-h-screen bg-[#F6F6F3] flex items-center justify-center" data-testid="contact-success">
         <div className="text-center max-w-md px-6">
           <div className="w-14 h-14 bg-[#E8F0EF] flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 size={28} className="text-[#0F5E5B]" strokeWidth={1.5} />
+            <CheckCircle2 size={28} className="text-[#606060]" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-sora font-light text-[#1F2328] mb-3">Enquiry Received</h1>
-          <p className="text-sm font-inter font-light text-[#1F2328]/55 leading-relaxed mb-6">
+          <h1 className="text-2xl font-sora font-light text-[#050505] mb-3">Enquiry Received</h1>
+          <p className="text-sm font-inter font-light text-[#050505]/55 leading-relaxed mb-6">
             Thank you, {form.name}. Our team will review your enquiry and get back to you within 24 hours.
           </p>
-          <a href="/" className="text-sm font-inter text-[#0F5E5B] hover:underline">Back to Home</a>
+          <a href="/" className="text-sm font-inter text-[#606060] hover:underline">Back to Home</a>
         </div>
       </div>
     );
@@ -61,13 +61,13 @@ export default function ContactPage() {
   return (
     <div className="pt-16" data-testid="contact-page">
       {/* Hero */}
-      <section className="bg-[#F3F0E8] py-14 md:py-20">
+      <section className="bg-[#F6F6F3] py-14 md:py-20">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3 reveal">Contact</p>
-          <h1 className="text-4xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight reveal reveal-delay-1">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3 reveal">Contact</p>
+          <h1 className="text-4xl md:text-5xl font-sora font-light text-[#050505] tracking-tight leading-tight reveal reveal-delay-1">
             Start a Conversation
           </h1>
-          <p className="text-base font-inter font-light text-[#1F2328]/55 leading-relaxed max-w-xl mt-5 reveal reveal-delay-2">
+          <p className="text-base font-inter font-light text-[#050505]/55 leading-relaxed max-w-xl mt-5 reveal reveal-delay-2">
             Tell us about your project. We'll respond with an honest assessment of fit, scope, and next steps.
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function ContactPage() {
             {/* Sidebar */}
             <div className="lg:col-span-4 space-y-8 reveal">
               <div>
-                <p className="text-xs uppercase tracking-widest text-[#C6A15B] font-inter mb-5">Get in Touch</p>
+                <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-5">Get in Touch</p>
                 <div className="space-y-5">
                   <ContactItem icon={<Phone size={16} strokeWidth={1.5} />} label="Phone"
                     value={contact.phone_display || '+91 XXXXX XXXXX'}
@@ -100,10 +100,10 @@ export default function ContactPage() {
 
               {contact.operating_districts?.length > 0 && (
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-3">Operating Districts</p>
+                  <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-3">Operating Districts</p>
                   <div className="flex flex-wrap gap-1.5">
                     {contact.operating_districts.map(d => (
-                      <span key={d} className="text-xs font-inter px-2 py-0.5 bg-[#F3F0E8] text-[#1F2328]/60 border border-[#A7ADB5]/15">
+                      <span key={d} className="text-xs font-inter px-2 py-0.5 bg-[#F6F6F3] text-[#050505]/60 border border-[#8A8A8A]/15">
                         {d}
                       </span>
                     ))}
@@ -123,26 +123,26 @@ export default function ContactPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Full Name *</label>
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Full Name *</label>
                     <input type="text" required className="form-input" value={form.name}
                       onChange={e => setForm({ ...form, name: e.target.value })} data-testid="input-name" />
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Phone *</label>
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Phone *</label>
                     <input type="tel" required className="form-input" value={form.phone}
                       onChange={e => setForm({ ...form, phone: e.target.value })} data-testid="input-phone" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Email</label>
+                  <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Email</label>
                   <input type="email" className="form-input" value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })} data-testid="input-email" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Project Type</label>
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Type</label>
                     <select className="form-input" value={form.project_type}
                       onChange={e => setForm({ ...form, project_type: e.target.value })} data-testid="input-project-type">
                       <option value="">Select...</option>
@@ -150,7 +150,7 @@ export default function ContactPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Project Location</label>
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Location</label>
                     <input type="text" className="form-input" placeholder="City / District"
                       value={form.project_location}
                       onChange={e => setForm({ ...form, project_location: e.target.value })} data-testid="input-location" />
@@ -159,7 +159,7 @@ export default function ContactPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Budget Range</label>
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Budget Range</label>
                     <select className="form-input" value={form.budget_range}
                       onChange={e => setForm({ ...form, budget_range: e.target.value })} data-testid="input-budget">
                       <option value="">Select...</option>
@@ -167,7 +167,7 @@ export default function ContactPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Expected Timeline</label>
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Expected Timeline</label>
                     <select className="form-input" value={form.timeline}
                       onChange={e => setForm({ ...form, timeline: e.target.value })} data-testid="input-timeline">
                       <option value="">Select...</option>
@@ -177,13 +177,13 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">Message</label>
+                  <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Message</label>
                   <textarea rows={4} className="form-input resize-none" placeholder="Tell us about your project..."
                     value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} data-testid="input-message" />
                 </div>
 
                 {partnerRef && (
-                  <p className="text-xs font-inter text-[#0F5E5B] bg-[#E8F0EF] px-3 py-2">
+                  <p className="text-xs font-inter text-[#606060] bg-[#E8F0EF] px-3 py-2">
                     Referred from partner: <strong>{partnerRef}</strong>
                   </p>
                 )}
@@ -191,7 +191,7 @@ export default function ContactPage() {
                 {error && <p className="text-sm text-red-500 font-inter" data-testid="form-error">{error}</p>}
 
                 <button type="submit" disabled={sending} data-testid="submit-enquiry-btn"
-                  className="h-12 px-8 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center gap-2 disabled:opacity-60">
+                  className="h-12 px-8 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors flex items-center gap-2 disabled:opacity-60">
                   {sending ? <Loader2 className="animate-spin" size={16} /> : <><Send size={14} /> Submit Enquiry</>}
                 </button>
               </form>
@@ -208,10 +208,10 @@ function ContactItem({ icon, label, value, href, tid, external }) {
   const linkProps = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
   return (
     <Tag {...linkProps} className="flex items-start gap-3 group" data-testid={tid}>
-      <div className="w-8 h-8 bg-[#E8F0EF] flex items-center justify-center flex-shrink-0 text-[#0F5E5B]">{icon}</div>
+      <div className="w-8 h-8 bg-[#E8F0EF] flex items-center justify-center flex-shrink-0 text-[#606060]">{icon}</div>
       <div>
-        <p className="text-xs font-inter text-[#A7ADB5] uppercase tracking-wider">{label}</p>
-        <p className={`text-sm font-inter text-[#1F2328] mt-0.5 ${href ? 'group-hover:text-[#0F5E5B] transition-colors' : ''}`}>{value}</p>
+        <p className="text-xs font-inter text-[#8A8A8A] uppercase tracking-wider">{label}</p>
+        <p className={`text-sm font-inter text-[#050505] mt-0.5 ${href ? 'group-hover:text-[#606060] transition-colors' : ''}`}>{value}</p>
       </div>
     </Tag>
   );

@@ -1,0 +1,49 @@
+{
+  "summary": "Phase 6 features tested: (A) Per-project tab_visibility for story/design/delivery/partners — backend API works perfectly (POST/PUT persists, GET setdefaults). Public case study page correctly hides tabs when toggled OFF, correctly auto-selects first visible tab when the default 'story' is hidden (no blank content). (B) POST /api/admin/projects/hide-photoless works: requires admin auth (401 without), returns {message,count,slugs}, correctly targets ONLY projects with zero photos/media (verified by seeding a temp photo-less project, seeing it in slugs, confirming harmony (with photos) untouched). UI bulk button shows confirm dialog, calls endpoint, alerts result. (C) Malayalam (ml) inputs render on Page Content editor (26 ml-placeholder inputs on About page) and title.ml persists via PUT /api/pages/about. CRITICAL frontend regression discovered: The Admin ProjectForm cannot save ANY edit on legacy projects because it submits legacy string values for title/short_description/challenge while backend ProjectUpdate schema expects BilingualText dicts → HTTP 422 on every save. This blocks the tab_visibility toggle UI (and media_visible + any other project edit) end-to-end even though the underlying API and public page logic are correct.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/projects (ProjectCreate)", "issue": "Schema mismatch with what UI/legacy data uses: 'media' schema expects hero_video as MediaItem object but frontend sends null OK; fields images/model_3d/plans are extras. Not blocking but confusing."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ProjectForm.jsx (Admin > Projects > Edit)", "issue": "Saving any legacy project returns HTTP 422 because form.title/short_description/challenge are strings (loaded verbatim from legacy DB docs) but ProjectUpdate schema requires BilingualText dict {en, ml}. Consequence: users CANNOT save tab_visibility / media_visible / any change through the UI on the 6 seeded projects. An uncaught AxiosError overlay also appears (handleSubmit's try/catch wraps onSave but the parent's updateProject rethrows async).", "selector": "[data-testid=save-project-btn]", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Admin edit → public case study tab visibility", "issue": "Because ProjectForm save 422s, the Page Sections toggles cannot be exercised end-to-end via the UI. Direct API PUT works and public page correctly hides/shows tabs and auto-selects.", "affected_selectors": ["[data-testid=project-tab-vis-design]", "[data-testid=save-project-btn]"]}
+    ],
+    "design_issues": [
+      {"screen": "Admin > any tab", "issues": ["Legacy hydration errors in Leads/Projects tables (emergent instrumentation <span data-ve-dynamic> inside <thead>/<tbody>/<tr>/<select>) — non-functional but noisy console. Same as prior iterations."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase6_tabvis_bulkhide_ml.py",
+    "/app/test_reports/pytest/pytest_phase6_results.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix ProjectForm.jsx to coerce legacy string fields to BilingualText when hydrating state, e.g. title: typeof p.title === 'string' ? {en: p.title, ml: null} : (p.title || {en:'', ml:null}); do the same for short_description, challenge, challenge_detail, approach_detail, outcome_detail. Otherwise ALL project edits (tab_visibility, media_visible, content) fail with 422 on existing seeded projects.",
+    "Also either fix admin/ProjectsTab.updateProject to swallow/handle the axios error so an uncaught rejection overlay doesn't appear, or ensure the form shows the alert instead.",
+    "Optional: make backend ProjectUpdate.title/short_description/etc accept Union[str, BilingualText] to be forgiving of legacy string inputs from callers, then normalize in server.py."
+  ],
+  "critical_code_review_comments": [
+    "server.py hide-photoless endpoint: 'has_photos' check is thorough (gallery + media.images/gallery/hero_video/model_3d/model_3d_url/plans/plan_drawings) — good. It correctly skips projects already media_visible=False.",
+    "ProjectCaseStudyPage: visibleTabs + effectiveTab pattern is correct — if the currently-selected tab becomes hidden, first visible tab is used. Content rendering below correctly uses effectiveTab so no blank state.",
+    "ProjectForm.jsx L28-44: state initializer treats project?.title etc. verbatim from GET response (which returns strings for legacy docs). This is the root cause of the 422 save bug. Convert to BilingualText on hydrate.",
+    "PageContentTab: Malayalam inputs render nicely below English inputs across metric/timeline/etc. blocks; placeholder in Malayalam script confirms feature.",
+    "Backend ProjectResponse extends ProjectBase which requires BilingualText — but GET returns raw dicts (with _id excluded). Since we bypass response_model on GET (returns dict directly), legacy string title is passed through unchanged. Good for read, but frontend must normalize."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase6_tabvis_bulkhide_ml.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 pytest tests passed, incl. bulk-hide with real seeded temp project verifying count=1 and slugs contains temp slug)",
+    "frontend": "60% — Public page tab visibility + auto-select + Malayalam inputs + bulk-hide button all work; ADMIN save flow blocked by 422 legacy-schema bug"
+  },
+  "test_credentials": {"admin_email": "admin@septa.group", "admin_password": "septa2024admin"},
+  "seed_data_creation": "Temp photo-less project (slug=test-photoless-<hex>) cloned from harmony with all photos blanked. Verified bulk-hide flipped its media_visible to False and included it in response slugs. Deleted after test. All modified state restored: harmony tab_visibility all True; harmony media_visible True; About page Malayalam edit reverted.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend APIs for tab_visibility, hide-photoless bulk, and Malayalam page content are all correct. The blocking issue is purely in the frontend ProjectForm hydrating legacy string bilingual fields verbatim; fixing state initializer in /app/frontend/src/components/admin/ProjectForm.jsx (lines 28-44) to coerce strings → {en, ml:null} should unblock the entire admin project edit flow. After the fix, retest: (1) edit harmony, toggle design OFF in Media > Page Sections, save (should be 200, not 422). (2) Confirm public /projects/harmony-business-centre-kottayam hides design tab. (3) Toggle back on. Use pytest file /app/backend/tests/test_phase6_tabvis_bulkhide_ml.py for API-level regression.",
+  "rca_of_the_issue": "Bug: PUT /api/projects/{slug} returns 422 from Admin ProjectForm. Root cause: ProjectForm.jsx state initializer sets `title: project?.title || ''` (implicitly a string when legacy DB has string) and similar for short_description/challenge. The backend ProjectUpdate schema for those fields is `Optional[BilingualText]` (dict). Pydantic v2 rejects the string with model_attributes_type. Reproduction: login admin → Projects → edit any seeded project → Save. Observed 422 with detail listing title/short_description/challenge type errors. Mitigation: coerce these fields at hydrate time in ProjectForm useState, or extend backend schema to accept Union[str, BilingualText] with a validator that normalizes."
+}

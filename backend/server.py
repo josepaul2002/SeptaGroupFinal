@@ -254,6 +254,7 @@ async def get_projects(
     projects = await db.projects.find(query, {"_id": 0}).to_list(200)
     for p in projects:
         p.setdefault("media_visible", True)
+        p.setdefault("tab_visibility", {"story": True, "design": True, "delivery": True, "partners": True})
     return projects
 
 
@@ -282,6 +283,7 @@ async def get_project(
         project["_preview_mode"] = True
     
     project.setdefault("media_visible", True)
+    project.setdefault("tab_visibility", {"story": True, "design": True, "delivery": True, "partners": True})
     return project
 
 
@@ -337,6 +339,34 @@ async def delete_project(slug: str, admin: dict = Depends(get_current_admin)):
     await log_audit(admin["admin_id"], admin["email"], "delete", "project", project["id"])
     
     return {"message": "Project deleted"}
+
+
+@api_router.post("/admin/projects/hide-photoless")
+async def hide_photoless_projects(admin: dict = Depends(get_current_admin)):
+    """Bulk: set media_visible=False on all projects that have no photos/media."""
+    projects = await db.projects.find({}, {"_id": 0}).to_list(1000)
+    affected = []
+    for p in projects:
+        media = p.get("media") or {}
+        has_photos = bool(
+            p.get("gallery")
+            or media.get("images")
+            or media.get("gallery")
+            or media.get("hero_video")
+            or media.get("model_3d")
+            or media.get("model_3d_url")
+            or media.get("plans")
+            or media.get("plan_drawings")
+        )
+        if not has_photos and p.get("media_visible", True) is not False:
+            await db.projects.update_one(
+                {"slug": p["slug"]},
+                {"$set": {"media_visible": False, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            affected.append(p["slug"])
+    if affected:
+        await log_audit(admin["admin_id"], admin["email"], "bulk_update", "project", ",".join(affected), {"media_visible": False})
+    return {"message": f"Hid media on {len(affected)} project(s)", "count": len(affected), "slugs": affected}
 
 
 # ============================================================================

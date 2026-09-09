@@ -71,13 +71,13 @@ export default function ServicesPage() {
   return (
     <div className="pt-16" data-testid="services-page">
       {/* Hero */}
-      <section className="bg-[#F3F0E8] py-16 md:py-24">
+      <section className="bg-[#F6F6F3] py-16 md:py-24">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3 reveal">Services</p>
-          <h1 className="text-4xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight max-w-2xl reveal reveal-delay-1">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3 reveal">Services</p>
+          <h1 className="text-4xl md:text-5xl font-sora font-light text-[#050505] tracking-tight leading-tight max-w-2xl reveal reveal-delay-1">
             Construction Delivery,<br />Not Just Contracting.
           </h1>
-          <p className="text-base font-inter font-light text-[#1F2328]/55 leading-relaxed max-w-xl mt-5 reveal reveal-delay-2">
+          <p className="text-base font-inter font-light text-[#050505]/55 leading-relaxed max-w-xl mt-5 reveal reveal-delay-2">
             Each service is built around Septa's process discipline — scope clarity, weekly reporting, quality checkpoints, and documented handover.
           </p>
         </div>
@@ -89,7 +89,7 @@ export default function ServicesPage() {
           {services.map((svc, i) => (
             <div key={svc.id}
               className={`border transition-colors reveal reveal-delay-${(i % 3) + 1} ${
-                expanded === svc.id ? 'border-[#0F5E5B]/30 bg-[#F3F0E8]/30' : 'border-[#A7ADB5]/15 hover:border-[#A7ADB5]/30'
+                expanded === svc.id ? 'border-[#606060]/30 bg-[#F6F6F3]/30' : 'border-[#8A8A8A]/15 hover:border-[#8A8A8A]/30'
               }`}
               data-testid={`service-${svc.id}`}
             >
@@ -99,32 +99,32 @@ export default function ServicesPage() {
                 data-testid={`service-toggle-${svc.id}`}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-xs font-inter text-[#A7ADB5] uppercase tracking-wider w-8">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="text-xs font-inter text-[#8A8A8A] uppercase tracking-wider w-8">{String(i + 1).padStart(2, '0')}</span>
                   <div>
-                    <h3 className="text-base md:text-lg font-sora font-medium text-[#1F2328]">{svc.title}</h3>
-                    <p className="text-sm font-inter font-light text-[#1F2328]/50 mt-0.5">{svc.summary}</p>
+                    <h3 className="text-base md:text-lg font-sora font-medium text-[#050505]">{svc.title}</h3>
+                    <p className="text-sm font-inter font-light text-[#050505]/50 mt-0.5">{svc.summary}</p>
                   </div>
                 </div>
-                <ChevronDown size={18} className={`text-[#A7ADB5] transition-transform flex-shrink-0 ml-4 ${expanded === svc.id ? 'rotate-180' : ''}`} />
+                <ChevronDown size={18} className={`text-[#8A8A8A] transition-transform flex-shrink-0 ml-4 ${expanded === svc.id ? 'rotate-180' : ''}`} />
               </button>
 
               {expanded === svc.id && (
-                <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-[#A7ADB5]/10 pt-6 ml-12">
+                <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-[#8A8A8A]/10 pt-6 ml-12">
                   <div>
-                    <p className="text-xs uppercase tracking-widest text-[#0F5E5B] font-inter mb-3">Best For</p>
+                    <p className="text-xs uppercase tracking-widest text-[#606060] font-inter mb-3">Best For</p>
                     <ul className="space-y-2">
                       {svc.bestFor.map(b => (
-                        <li key={b} className="flex items-start gap-2 text-sm font-inter text-[#1F2328]/60">
-                          <Check size={12} className="text-[#0F5E5B] mt-0.5 flex-shrink-0" />{b}
+                        <li key={b} className="flex items-start gap-2 text-sm font-inter text-[#050505]/60">
+                          <Check size={12} className="text-[#606060] mt-0.5 flex-shrink-0" />{b}
                         </li>
                       ))}
                     </ul>
                     {svc.notFor.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-2">Not For</p>
+                        <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-2">Not For</p>
                         <ul className="space-y-1">
                           {svc.notFor.map(n => (
-                            <li key={n} className="flex items-start gap-2 text-xs font-inter text-[#A7ADB5]">
+                            <li key={n} className="flex items-start gap-2 text-xs font-inter text-[#8A8A8A]">
                               <XIcon size={10} className="mt-0.5 flex-shrink-0" />{n}
                             </li>
                           ))}
@@ -133,23 +133,23 @@ export default function ServicesPage() {
                     )}
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-widest text-[#C6A15B] font-inter mb-3">Deliverables</p>
+                    <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-3">Deliverables</p>
                     <ul className="space-y-2">
                       {svc.deliverables.map(d => (
-                        <li key={d} className="flex items-start gap-2 text-sm font-inter text-[#1F2328]/60">
-                          <Check size={12} className="text-[#C6A15B] mt-0.5 flex-shrink-0" />{d}
+                        <li key={d} className="flex items-start gap-2 text-sm font-inter text-[#050505]/60">
+                          <Check size={12} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" />{d}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-3">Typical Timeline</p>
-                    <p className="text-sm font-inter font-medium text-[#1F2328]">{svc.timeline}</p>
+                    <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-3">Typical Timeline</p>
+                    <p className="text-sm font-inter font-medium text-[#050505]">{svc.timeline}</p>
                     {svc.relatedProject && (
                       <div className="mt-6">
-                        <p className="text-xs uppercase tracking-widest text-[#A7ADB5] font-inter mb-2">Related Project</p>
+                        <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-2">Related Project</p>
                         <Link to={`/projects/${svc.relatedProject.slug}`}
-                          className="text-sm font-inter text-[#0F5E5B] hover:text-[#C6A15B] transition-colors inline-flex items-center gap-1.5">
+                          className="text-sm font-inter text-[#606060] hover:text-[#8A8A8A] transition-colors inline-flex items-center gap-1.5">
                           {svc.relatedProject.name} <ArrowRight size={12} />
                         </Link>
                       </div>
@@ -164,26 +164,26 @@ export default function ServicesPage() {
 
       {/* Comparison Block */}
       {comparisons.length > 0 && (
-        <section className="py-16 md:py-20 bg-[#F3F0E8]" data-testid="services-comparison">
+        <section className="py-16 md:py-20 bg-[#F6F6F3]" data-testid="services-comparison">
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
             <div className="max-w-2xl mb-10 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">The Difference</p>
-              <h2 className="text-2xl md:text-3xl font-sora font-light text-[#1F2328] tracking-tight">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">The Difference</p>
+              <h2 className="text-2xl md:text-3xl font-sora font-light text-[#050505] tracking-tight">
                 Traditional Contractor vs Septa Delivery Studio
               </h2>
             </div>
-            <div className="bg-white border border-[#A7ADB5]/15 overflow-hidden reveal reveal-delay-1">
-              <div className="grid grid-cols-3 gap-0 border-b border-[#A7ADB5]/20 bg-[#1F2328]">
-                <div className="p-4 text-xs font-inter font-medium text-[#F3F0E8] uppercase tracking-wider">Aspect</div>
-                <div className="p-4 text-xs font-inter font-medium text-[#A7ADB5] uppercase tracking-wider border-l border-[#F3F0E8]/10">Traditional</div>
-                <div className="p-4 text-xs font-inter font-medium text-[#C6A15B] uppercase tracking-wider border-l border-[#F3F0E8]/10">Septa Standard</div>
+            <div className="bg-white border border-[#8A8A8A]/15 overflow-hidden reveal reveal-delay-1">
+              <div className="grid grid-cols-3 gap-0 border-b border-[#8A8A8A]/20 bg-[#050505]">
+                <div className="p-4 text-xs font-inter font-medium text-[#F6F6F3] uppercase tracking-wider">Aspect</div>
+                <div className="p-4 text-xs font-inter font-medium text-[#8A8A8A] uppercase tracking-wider border-l border-[#F6F6F3]/10">Traditional</div>
+                <div className="p-4 text-xs font-inter font-medium text-[#8A8A8A] uppercase tracking-wider border-l border-[#F6F6F3]/10">Septa Standard</div>
               </div>
               {comparisons.map((row, i) => (
-                <div key={row.id || i} className={`grid grid-cols-3 gap-0 ${i < comparisons.length - 1 ? 'border-b border-[#A7ADB5]/10' : ''}`}
+                <div key={row.id || i} className={`grid grid-cols-3 gap-0 ${i < comparisons.length - 1 ? 'border-b border-[#8A8A8A]/10' : ''}`}
                   data-testid={`comparison-row-${i}`}>
-                  <div className="p-4 text-sm font-inter font-medium text-[#1F2328]">{t(row.title)}</div>
-                  <div className="p-4 text-sm font-inter font-light text-[#1F2328]/45 border-l border-[#A7ADB5]/10">{row.metadata?.traditional || ''}</div>
-                  <div className="p-4 text-sm font-inter font-light text-[#0F5E5B] border-l border-[#A7ADB5]/10">{t(row.body)}</div>
+                  <div className="p-4 text-sm font-inter font-medium text-[#050505]">{t(row.title)}</div>
+                  <div className="p-4 text-sm font-inter font-light text-[#050505]/45 border-l border-[#8A8A8A]/10">{row.metadata?.traditional || ''}</div>
+                  <div className="p-4 text-sm font-inter font-light text-[#606060] border-l border-[#8A8A8A]/10">{t(row.body)}</div>
                 </div>
               ))}
             </div>
@@ -192,14 +192,14 @@ export default function ServicesPage() {
       )}
 
       {/* CTA */}
-      <section className="py-16 bg-[#1F2328]" data-testid="services-cta">
+      <section className="py-16 bg-[#050505]" data-testid="services-cta">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 text-center">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Not Sure Which Service?</p>
-          <h2 className="text-2xl md:text-3xl font-sora font-light text-[#F3F0E8] tracking-tight mb-6">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">Not Sure Which Service?</p>
+          <h2 className="text-2xl md:text-3xl font-sora font-light text-[#F6F6F3] tracking-tight mb-6">
             Tell us what you're building and we'll recommend the right approach.
           </h2>
           <Link to="/contact?ref=services" data-testid="services-contact-btn"
-            className="inline-flex items-center gap-2 h-12 px-8 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors">
+            className="inline-flex items-center gap-2 h-12 px-8 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors">
             Start a Conversation <ArrowRight size={14} strokeWidth={1.5} />
           </Link>
         </div>

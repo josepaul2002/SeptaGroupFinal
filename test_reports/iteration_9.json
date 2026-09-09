@@ -1,0 +1,42 @@
+{
+  "summary": "CRITICAL retest PASSED. The Admin ProjectForm 422 regression is fully resolved by the toBL() coercion in useState + updateProject-then-close pattern. End-to-end verified via UI: login → Projects → Edit 'harmony-business-centre-kottayam' → Media tab → toggle Design OFF → Save = HTTP 200, modal closes, public /projects/harmony-business-centre-kottayam correctly omits project-tab-design; toggle back ON → Save = HTTP 200, public page restores all 5 tabs (story/design/delivery/media/partners). Monochrome rebrand introduced NO functional regressions: all 7 public routes (Home, About, Services, Projects, CaseStudy, Ecosystem, Contact) return 200 with zero pageerror events, dark navbar renders with data-testid=navbar-desktop-nav and all 6 nav items present. Contact enquiry submit → POST /api/leads = 201, success UI (Enquiry Received) displayed. Backend phase6 pytest suite: 8/8 passed. Older phase2/3/4/5 test files fail only because they don't load frontend/.env (BASE_URL empty) — pre-existing test-scaffold issue, not a regression; every individual test passes when env is exported. No auth issues, no overlay issues, no console errors on public pages.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "backend/tests/test_phase2..5 & test_septa_api.py", "issue": "Do not call load_dotenv('/app/frontend/.env'); BASE_URL='' when running via bare pytest, producing MissingSchema errors. Only test_phase6 loads it correctly. Not a product bug — test-scaffold hygiene."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin dashboard tables", "issues": ["Legacy hydration warnings about <span data-ve-dynamic> being an invalid child of <thead>/<tr>/<tbody>/<select>/<option>. Non-functional (emergent instrumentation), pre-existing since iteration_7/8."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase6_tabvis_bulkhide_ml.py",
+    "/app/test_reports/pytest/pytest_iter9.xml",
+    "/app/test_reports/pytest/pytest_iter9_full.xml"
+  ],
+  "action_items": [
+    "(Optional/hygiene) Update legacy test files (test_phase2/3/4/5/septa_api.py) to include `from dotenv import load_dotenv; load_dotenv('/app/frontend/.env')` before reading REACT_APP_BACKEND_URL, matching the phase6 test file — so `pytest backend/tests/` works as a whole regression suite without needing manual env export.",
+    "(Optional) Investigate/suppress legacy <span data-ve-dynamic> instrumentation hydration warnings in admin tables (cosmetic console noise)."
+  ],
+  "critical_code_review_comments": [
+    "ProjectForm.jsx L20 toBL() correctly normalizes legacy string title/short_description/challenge to {en, ml:null}. Fix is minimal and correct.",
+    "ProjectsTab.jsx L126 uses updateProject(...).then(setEditing(null)) so the modal only closes on successful PUT — good; on 4xx the async chain rejects and the ProjectForm's alert('Error saving project') fires. Consider surfacing server error messages (422 detail) into the alert for better admin UX.",
+    "Backend ProjectUpdate schema still requires BilingualText for title/short_description/challenge. Frontend normalization handles it, but adding a Union[str, BilingualText] validator on backend would harden the API against any other callers/legacy imports.",
+    "Public site: monochrome rebrand is purely presentational (className remap + font swap); no functional/side-effect changes observed. Navbar data-testid attributes (navbar-desktop-nav, navbar-nav-item-{key}, navbar-get-quote-button, navbar-logo-link) present and stable for automation."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% on the relevant phase6 suite (8/8). Older suites pass individually; group-run failures are test-scaffold env loading, not product bugs.",
+    "frontend": "100% on the retested critical flows: admin edit+save (200), public tab visibility toggle end-to-end, all public pages loading with no JS errors, contact form submit (201)."
+  },
+  "test_credentials": {"admin_email": "admin@septa.group", "admin_password": "septa2024admin"},
+  "seed_data_creation": "Created 1 TEST lead (name='TEST Regression User', phone=+919999888877) via public /api/leads to verify submit flow — DELETED via DELETE /api/leads/{id} (status 200) after test. harmony-business-centre-kottayam tab_visibility.design was toggled OFF then restored to ON — final state is fully restored (all 5 tabs visible on public page).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration_8 blocking bug (Admin ProjectForm 422 on legacy bilingual strings) is fixed and re-verified in iteration_9. The monochrome rebrand is confirmed non-regressive. If regressions re-appear, first run: pytest /app/backend/tests/test_phase6_tabvis_bulkhide_ml.py (loads env correctly). For UI, use data-testid selectors: admin-email-input/admin-password-input/admin-login-btn → tab-projects → edit-project-{slug} → project-form-tab-media → project-tab-vis-{story|design|delivery|partners} → save-project-btn. Legacy phase2..5 tests need `load_dotenv('/app/frontend/.env')` prepended before BASE_URL read — main agent may batch-patch these for cleaner CI.",
+  "rca_of_the_issue": "N/A — critical bug from iteration_8 confirmed resolved. Root cause was: ProjectForm useState hydrated legacy DB string values (project.title, project.short_description, project.challenge) verbatim into form state, but ProjectUpdate Pydantic schema required BilingualText dicts → 422. Fix in place: `const toBL = (v) => (typeof v === 'string' ? { en: v, ml: null } : (v || { en: '', ml: null }));` applied to title/short_description/challenge in the state initializer (ProjectForm.jsx L20-35). Verified via UI PUT returning 200 and modal closing cleanly."
+}

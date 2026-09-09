@@ -47,7 +47,7 @@ const servicesTiles = [
 ];
 
 const typeColors = {
-  Institutional: 'bg-[#E8F0EF] text-[#0F5E5B]',
+  Institutional: 'bg-[#E8F0EF] text-[#606060]',
   Healthcare: 'bg-[#EEF0F7] text-[#3B4A8A]',
   Commercial: 'bg-[#F0EBE5] text-[#7A4E2D]',
   Residential: 'bg-[#EFF0E8] text-[#4A5C1F]',
@@ -104,31 +104,31 @@ export default function HomePage() {
   return (
     <div>
       {/* ——— HERO ——— */}
-      <section className="min-h-screen flex items-center bg-[#F3F0E8] pt-16 pb-0" data-testid="hero-section">
+      <section className="min-h-screen flex items-center bg-[#F6F6F3] pt-16 pb-0" data-testid="hero-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center py-20 lg:py-0 min-h-[85vh]">
             <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-[#A7ADB5] font-inter mb-7 reveal">
+              <p className="text-xs uppercase tracking-[0.28em] text-[#8A8A8A] font-inter mb-7 reveal">
                 Septa Group · Kerala · Est. 2004
               </p>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-sora font-light text-[#1F2328] tracking-tight leading-[1.08] mb-7 reveal reveal-delay-1">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-sora font-light text-[#050505] tracking-tight leading-[1.08] mb-7 reveal reveal-delay-1">
                 Built with<br />Clarity.
               </h1>
-              <p className="text-base md:text-lg text-[#1F2328]/60 font-inter font-light leading-relaxed max-w-md mb-10 reveal reveal-delay-2">
+              <p className="text-base md:text-lg text-[#050505]/60 font-inter font-light leading-relaxed max-w-md mb-10 reveal reveal-delay-2">
                 Bespoke construction and disciplined delivery for institutional, commercial, and premium residential projects in Kerala.
               </p>
               <div className="flex flex-wrap gap-4 mb-6 reveal reveal-delay-3">
                   <Link
                   to="/contact"
                   data-testid="hero-request-quote-btn"
-                  className="h-12 px-8 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors flex items-center gap-2"
+                  className="h-12 px-8 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors flex items-center gap-2"
                 >
                   Request a Quote <ArrowRight size={14} strokeWidth={1.5} />
                 </Link>
                 <Link
                   to="/projects"
                   data-testid="hero-view-projects-btn"
-                  className="h-12 px-8 border border-[#1F2328]/20 text-[#1F2328] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#1F2328] hover:text-[#F3F0E8] transition-all flex items-center gap-2"
+                  className="h-12 px-8 border border-[#050505]/20 text-[#050505] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#050505] hover:text-[#F6F6F3] transition-all flex items-center gap-2"
                 >
                   View Projects
                 </Link>
@@ -138,7 +138,7 @@ export default function HomePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="hero-whatsapp-btn"
-                className="inline-flex items-center gap-2 text-sm font-inter text-[#0F5E5B] hover:text-[#C6A15B] transition-colors reveal reveal-delay-4"
+                className="inline-flex items-center gap-2 text-sm font-inter text-[#606060] hover:text-[#8A8A8A] transition-colors reveal reveal-delay-4"
               >
                 <MessageCircle size={15} strokeWidth={1.5} />
                 WhatsApp Us
@@ -152,21 +152,21 @@ export default function HomePage() {
                 className="w-full h-full object-cover"
                 loading="eager"
               />
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#C6A15B]" />
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#8A8A8A]" />
             </div>
           </div>
         </div>
       </section>
 
       {/* ——— TRUST BAR ——— */}
-      <section className="border-y border-[#A7ADB5]/25 bg-white" data-testid="trust-bar">
+      <section className="border-y border-[#8A8A8A]/25 bg-white" data-testid="trust-bar">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
             {trustMetrics.map((m, i) => (
               <div key={i} className="text-center px-4" data-testid={`trust-metric-${i}`}>
-                <p className="text-xl md:text-2xl font-sora font-medium text-[#1F2328] leading-tight">{m.value}</p>
-                <p className="text-xs font-inter font-medium text-[#0F5E5B] mt-1 uppercase tracking-wider">{m.label}</p>
-                <p className="text-xs font-inter text-[#A7ADB5] mt-0.5">{m.sub}</p>
+                <p className="text-xl md:text-2xl font-sora font-medium text-[#050505] leading-tight">{m.value}</p>
+                <p className="text-xs font-inter font-medium text-[#606060] mt-1 uppercase tracking-wider">{m.label}</p>
+                <p className="text-xs font-inter text-[#8A8A8A] mt-0.5">{m.sub}</p>
               </div>
             ))}
           </div>
@@ -174,19 +174,19 @@ export default function HomePage() {
       </section>
 
       {/* ——— FEATURED PROJECTS ——— */}
-      <section className="py-20 md:py-32 bg-[#F3F0E8]" data-testid="featured-projects-section">
+      <section className="py-20 md:py-32 bg-[#F6F6F3]" data-testid="featured-projects-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
             <div className="reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Our Work</p>
-              <h2 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">Our Work</p>
+              <h2 className="text-3xl md:text-5xl font-sora font-light text-[#050505] tracking-tight leading-tight">
                 Selected Projects
               </h2>
             </div>
             <Link
               to="/projects"
               data-testid="view-all-projects-btn"
-              className="inline-flex items-center gap-2 text-sm font-inter font-medium text-[#0F5E5B] hover:text-[#C6A15B] transition-colors reveal"
+              className="inline-flex items-center gap-2 text-sm font-inter font-medium text-[#606060] hover:text-[#8A8A8A] transition-colors reveal"
             >
               View all projects <ArrowRight size={14} strokeWidth={1.5} />
             </Link>
@@ -194,7 +194,7 @@ export default function HomePage() {
 
           {loading ? (
             <div className="py-20 flex items-center justify-center">
-              <Loader2 className="animate-spin text-[#0F5E5B]" size={32} />
+              <Loader2 className="animate-spin text-[#606060]" size={32} />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="projects-grid">
@@ -205,37 +205,37 @@ export default function HomePage() {
                   data-testid={`project-card-${project.slug}`}
                   className={`group block reveal reveal-delay-${Math.min(i + 1, 5)}`}
                 >
-                  <div className="relative overflow-hidden aspect-[4/3] bg-[#E8E6E0]">
+                  <div className="relative overflow-hidden aspect-[4/3] bg-[#ECECEA]">
                     <img
                       src={project.image}
                       alt={getText(project.title)}
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-[#1F2328]/0 group-hover:bg-[#1F2328]/50 transition-all duration-400" />
+                    <div className="absolute inset-0 bg-[#050505]/0 group-hover:bg-[#050505]/50 transition-all duration-400" />
                     <div className="absolute inset-0 flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <p className="text-white text-xs font-inter uppercase tracking-wider mb-1">{project.type}</p>
                       <p className="text-white text-sm font-inter font-light">{getText(project.short_description)}</p>
                       <div className="flex items-center gap-1.5 mt-3">
-                        <span className="text-[#C6A15B] text-xs font-inter font-medium uppercase tracking-wider">View Case Study</span>
-                        <ArrowRight size={12} className="text-[#C6A15B]" strokeWidth={1.5} />
+                        <span className="text-[#8A8A8A] text-xs font-inter font-medium uppercase tracking-wider">View Case Study</span>
+                        <ArrowRight size={12} className="text-[#8A8A8A]" strokeWidth={1.5} />
                       </div>
                     </div>
                     {/* Status badge */}
                     {project.project_status === 'Ongoing' && (
-                      <div className="absolute top-4 right-4 bg-[#0F5E5B] text-white text-xs font-inter px-2.5 py-1 uppercase tracking-wider">
+                      <div className="absolute top-4 right-4 bg-[#050505] text-white text-xs font-inter px-2.5 py-1 uppercase tracking-wider">
                         Ongoing
                       </div>
                     )}
                   </div>
                   <div className="pt-4">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="text-base font-sora font-medium text-[#1F2328]">{getText(project.title)}</h3>
+                      <h3 className="text-base font-sora font-medium text-[#050505]">{getText(project.title)}</h3>
                       <span className={`text-xs font-inter px-2 py-0.5 ${typeColors[project.type] || 'bg-gray-100 text-gray-600'}`}>
                         {project.type}
                       </span>
                     </div>
-                    <p className="text-xs font-inter text-[#A7ADB5]">{project.location} · {project.sqft} sqft · {project.duration}</p>
+                    <p className="text-xs font-inter text-[#8A8A8A]">{project.location} · {project.sqft} sqft · {project.duration}</p>
                   </div>
                 </Link>
               ))}
@@ -248,11 +248,11 @@ export default function HomePage() {
       <section className="py-20 md:py-32 bg-white" data-testid="septa-standard-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="mb-16 reveal">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">How Septa Works</p>
-            <h2 className="text-3xl md:text-5xl font-sora font-light text-[#1F2328] tracking-tight leading-tight max-w-xl">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">How Septa Works</p>
+            <h2 className="text-3xl md:text-5xl font-sora font-light text-[#050505] tracking-tight leading-tight max-w-xl">
               The Septa Standard
             </h2>
-            <p className="text-base font-inter font-light text-[#1F2328]/55 mt-4 max-w-lg leading-relaxed">
+            <p className="text-base font-inter font-light text-[#050505]/55 mt-4 max-w-lg leading-relaxed">
               Our delivery methodology is not aspirational copy. It is a working protocol applied on every site, every week.
             </p>
           </div>
@@ -261,12 +261,12 @@ export default function HomePage() {
             {processSteps.map((step, i) => (
               <div
                 key={step.num}
-                className={`p-8 border border-[#1F2328]/8 hover:border-[#C6A15B]/60 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
+                className={`p-8 border border-[#050505]/8 hover:border-[#8A8A8A]/60 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
                 data-testid={`process-step-${i + 1}`}
               >
-                <p className="text-5xl font-sora font-light text-[#1F2328]/10 mb-4 leading-none">{step.num}</p>
-                <h3 className="text-base font-sora font-medium text-[#1F2328] mb-3 leading-snug">{step.title}</h3>
-                <p className="text-sm font-inter font-light text-[#1F2328]/60 leading-relaxed">{step.desc}</p>
+                <p className="text-5xl font-sora font-light text-[#050505]/10 mb-4 leading-none">{step.num}</p>
+                <h3 className="text-base font-sora font-medium text-[#050505] mb-3 leading-snug">{step.title}</h3>
+                <p className="text-sm font-inter font-light text-[#050505]/60 leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -274,21 +274,21 @@ export default function HomePage() {
       </section>
 
       {/* ——— SERVICES SNAPSHOT ——— */}
-      <section className="py-20 md:py-32 bg-[#F3F0E8]" data-testid="services-section">
+      <section className="py-20 md:py-32 bg-[#F6F6F3]" data-testid="services-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-4 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">What We Build</p>
-              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-5">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">What We Build</p>
+              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#050505] tracking-tight leading-tight mb-5">
                 Services
               </h2>
-              <p className="text-base font-inter font-light text-[#1F2328]/55 leading-relaxed mb-8">
+              <p className="text-base font-inter font-light text-[#050505]/55 leading-relaxed mb-8">
                 We work across sectors where execution discipline, material quality, and coordination are non-negotiable.
               </p>
               <Link
                 to="/services"
                 data-testid="view-services-btn"
-                className="inline-flex items-center gap-2 h-11 px-7 border border-[#1F2328]/20 text-[#1F2328] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#1F2328] hover:text-[#F3F0E8] transition-all"
+                className="inline-flex items-center gap-2 h-11 px-7 border border-[#050505]/20 text-[#050505] text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#050505] hover:text-[#F6F6F3] transition-all"
               >
                 Explore Services
               </Link>
@@ -298,11 +298,11 @@ export default function HomePage() {
               {servicesTiles.map((s, i) => (
                 <div
                   key={s.label}
-                  className={`flex items-center gap-4 p-6 bg-white border border-[#1F2328]/8 hover:border-[#C6A15B]/50 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
+                  className={`flex items-center gap-4 p-6 bg-white border border-[#050505]/8 hover:border-[#8A8A8A]/50 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
                   data-testid={`service-tile-${i}`}
                 >
-                  <span className="text-[#0F5E5B]">{s.icon}</span>
-                  <span className="text-sm font-inter font-medium text-[#1F2328]">{s.label}</span>
+                  <span className="text-[#606060]">{s.icon}</span>
+                  <span className="text-sm font-inter font-medium text-[#050505]">{s.label}</span>
                 </div>
               ))}
             </div>
@@ -312,11 +312,11 @@ export default function HomePage() {
 
       {/* ——— TESTIMONIALS ——— */}
       {testimonials.length > 0 && (
-        <section className="py-20 md:py-32 bg-[#1F2328]" data-testid="testimonials-section">
+        <section className="py-20 md:py-32 bg-[#050505]" data-testid="testimonials-section">
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
             <div className="mb-14 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Client Voices</p>
-              <h2 className="text-3xl md:text-5xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">Client Voices</p>
+              <h2 className="text-3xl md:text-5xl font-sora font-light text-[#F6F6F3] tracking-tight leading-tight">
                 What Clients Say
               </h2>
             </div>
@@ -324,20 +324,20 @@ export default function HomePage() {
               {testimonials.map((tst, i) => (
                 <div
                   key={tst.id}
-                  className={`p-8 border border-[#F3F0E8]/10 hover:border-[#C6A15B]/30 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
+                  className={`p-8 border border-[#F6F6F3]/10 hover:border-[#8A8A8A]/30 transition-colors duration-300 reveal reveal-delay-${i + 1}`}
                   data-testid={`testimonial-card-${i}`}
                 >
                   <div className="flex gap-0.5 mb-5">
                     {Array.from({ length: tst.rating }).map((_, j) => (
-                      <div key={j} className="w-1.5 h-1.5 bg-[#C6A15B]" />
+                      <div key={j} className="w-1.5 h-1.5 bg-[#8A8A8A]" />
                     ))}
                   </div>
-                  <p className="text-sm font-inter font-light text-[#F3F0E8]/80 leading-relaxed mb-6">
+                  <p className="text-sm font-inter font-light text-[#F6F6F3]/80 leading-relaxed mb-6">
                     "{getText(tst.content)}"
                   </p>
-                  <div className="border-t border-[#F3F0E8]/10 pt-4">
-                    <p className="text-sm font-sora font-medium text-[#F3F0E8]">{tst.client_name}</p>
-                    <p className="text-xs font-inter text-[#A7ADB5] mt-0.5">{tst.client_role}</p>
+                  <div className="border-t border-[#F6F6F3]/10 pt-4">
+                    <p className="text-sm font-sora font-medium text-[#F6F6F3]">{tst.client_name}</p>
+                    <p className="text-xs font-inter text-[#8A8A8A] mt-0.5">{tst.client_role}</p>
                   </div>
                 </div>
               ))}
@@ -347,21 +347,21 @@ export default function HomePage() {
       )}
 
       {/* ——— ECOSYSTEM TEASER ——— */}
-      <section className="py-20 md:py-32 bg-[#1F2328]" data-testid="ecosystem-teaser-section">
+      <section className="py-20 md:py-32 bg-[#050505]" data-testid="ecosystem-teaser-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Partner Network</p>
-              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#F3F0E8] tracking-tight leading-tight mb-5">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">Partner Network</p>
+              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#F6F6F3] tracking-tight leading-tight mb-5">
                 The ecosystem behind every project
               </h2>
-              <p className="text-base font-inter font-light text-[#F3F0E8]/50 leading-relaxed mb-8">
+              <p className="text-base font-inter font-light text-[#F6F6F3]/50 leading-relaxed mb-8">
                 Septa is a delivery studio. Behind each build is a curated network of architects, engineers, interiors, landscape, technology, and marketing partners — each selected for execution quality, not price.
               </p>
               <Link
                 to="/ecosystem"
                 data-testid="ecosystem-teaser-btn"
-                className="inline-flex items-center gap-2 h-11 px-7 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors"
+                className="inline-flex items-center gap-2 h-11 px-7 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors"
               >
                 Explore Ecosystem <ArrowRight size={14} strokeWidth={1.5} />
               </Link>
@@ -375,7 +375,7 @@ export default function HomePage() {
                       key={partner.slug}
                       to={`/ecosystem/${partner.slug}`}
                       data-testid={`ecosystem-preview-${partner.slug}`}
-                      className={`group block overflow-hidden border border-[#F3F0E8]/10 hover:border-[#C6A15B]/40 transition-colors duration-300 reveal reveal-delay-${Math.min(i + 1, 4)}`}
+                      className={`group block overflow-hidden border border-[#F6F6F3]/10 hover:border-[#8A8A8A]/40 transition-colors duration-300 reveal reveal-delay-${Math.min(i + 1, 4)}`}
                     >
                       {cardImg ? (
                         <div className="aspect-[16/9] overflow-hidden">
@@ -383,16 +383,16 @@ export default function HomePage() {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-70 group-hover:opacity-90" />
                         </div>
                       ) : (
-                        <div className="aspect-[16/9] bg-[#F3F0E8]/5 flex items-center justify-center">
-                          <span className="text-2xl font-sora font-light text-[#F3F0E8]/10">{getText(partner.name).charAt(0)}</span>
+                        <div className="aspect-[16/9] bg-[#F6F6F3]/5 flex items-center justify-center">
+                          <span className="text-2xl font-sora font-light text-[#F6F6F3]/10">{getText(partner.name).charAt(0)}</span>
                         </div>
                       )}
                       <div className="p-3">
-                        <p className="text-xs font-inter text-[#C6A15B] uppercase tracking-wider mb-1">{partner.category.split(' ')[0]}</p>
-                        <p className="text-sm font-sora font-medium text-[#F3F0E8] group-hover:text-[#C6A15B] transition-colors leading-snug">
+                        <p className="text-xs font-inter text-[#8A8A8A] uppercase tracking-wider mb-1">{partner.category.split(' ')[0]}</p>
+                        <p className="text-sm font-sora font-medium text-[#F6F6F3] group-hover:text-[#8A8A8A] transition-colors leading-snug">
                           {getText(partner.name)}
                         </p>
-                        <p className="text-[10px] font-inter text-[#A7ADB5] mt-0.5">{partner.relationship_type}</p>
+                        <p className="text-[10px] font-inter text-[#8A8A8A] mt-0.5">{partner.relationship_type}</p>
                       </div>
                     </Link>
                   );
@@ -400,12 +400,12 @@ export default function HomePage() {
                 <Link
                   to="/ecosystem"
                   data-testid="see-all-partners-btn"
-                  className="border border-[#F3F0E8]/10 p-4 hover:border-[#C6A15B]/40 transition-colors duration-300 flex flex-col justify-between reveal"
+                  className="border border-[#F6F6F3]/10 p-4 hover:border-[#8A8A8A]/40 transition-colors duration-300 flex flex-col justify-between reveal"
                 >
-                  <p className="text-xs font-inter text-[#A7ADB5] mb-2">And more</p>
+                  <p className="text-xs font-inter text-[#8A8A8A] mb-2">And more</p>
                   <div className="flex items-center gap-1.5 mt-auto">
-                    <span className="text-xs font-inter font-medium text-[#0F5E5B] uppercase tracking-wider">View all</span>
-                    <ArrowRight size={11} className="text-[#0F5E5B]" strokeWidth={1.5} />
+                    <span className="text-xs font-inter font-medium text-[#606060] uppercase tracking-wider">View all</span>
+                    <ArrowRight size={11} className="text-[#606060]" strokeWidth={1.5} />
                   </div>
                 </Link>
               </div>
@@ -415,25 +415,25 @@ export default function HomePage() {
       </section>
 
       {/* ——— CTA + QUICK FORM ——— */}
-      <section className="py-20 md:py-32 bg-[#F3F0E8]" data-testid="cta-section">
+      <section className="py-20 md:py-32 bg-[#F6F6F3]" data-testid="cta-section">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
             {/* Copy */}
             <div className="lg:col-span-5 reveal">
-              <p className="text-xs uppercase tracking-[0.25em] text-[#C6A15B] font-inter mb-3">Start a Conversation</p>
-              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#1F2328] tracking-tight leading-tight mb-5">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">Start a Conversation</p>
+              <h2 className="text-3xl md:text-4xl font-sora font-light text-[#050505] tracking-tight leading-tight mb-5">
                 Compare contractors on risk, not just price.
               </h2>
-              <p className="text-base font-inter font-light text-[#1F2328]/55 leading-relaxed mb-8">
+              <p className="text-base font-inter font-light text-[#050505]/55 leading-relaxed mb-8">
                 Send us a brief summary of your project. We will respond within 24 hours with a clear scope of how we would approach it.
               </p>
               <div className="flex flex-col gap-3">
                 <a
                   href="tel:+919876543210"
                   data-testid="cta-call-btn"
-                  className="inline-flex items-center gap-3 text-sm font-inter font-medium text-[#1F2328]"
+                  className="inline-flex items-center gap-3 text-sm font-inter font-medium text-[#050505]"
                 >
-                  <div className="w-9 h-9 bg-[#0F5E5B] flex items-center justify-center">
+                  <div className="w-9 h-9 bg-[#050505] flex items-center justify-center">
                     <Phone size={14} className="text-white" strokeWidth={1.5} />
                   </div>
                   +91 XXXXX XXXXX — Placeholder
@@ -457,7 +457,7 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">
                       Your Name *
                     </label>
                     <input
@@ -471,7 +471,7 @@ export default function HomePage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">
+                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">
                       Phone Number *
                     </label>
                     <input
@@ -487,7 +487,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">
+                  <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">
                     Project Type
                   </label>
                   <select
@@ -508,7 +508,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">
+                  <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">
                     Brief Message
                   </label>
                   <textarea
@@ -522,7 +522,7 @@ export default function HomePage() {
                 </div>
 
                 {formStatus === 'success' && (
-                  <div className="flex items-center gap-2 text-[#0F5E5B] text-sm font-inter" data-testid="form-success-msg">
+                  <div className="flex items-center gap-2 text-[#606060] text-sm font-inter" data-testid="form-success-msg">
                     <CheckCircle2 size={15} strokeWidth={1.5} />
                     Enquiry received. We will contact you within 24 hours.
                   </div>
@@ -537,7 +537,7 @@ export default function HomePage() {
                   type="submit"
                   disabled={submitting}
                   data-testid="form-submit-btn"
-                  className="h-12 px-10 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#0D4E4C] transition-colors disabled:opacity-60 flex items-center gap-2"
+                  className="h-12 px-10 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors disabled:opacity-60 flex items-center gap-2"
                 >
                   {submitting ? 'Sending...' : 'Send Enquiry'}
                   {!submitting && <ArrowRight size={14} strokeWidth={1.5} />}

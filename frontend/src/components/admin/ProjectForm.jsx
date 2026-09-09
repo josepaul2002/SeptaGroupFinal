@@ -8,7 +8,7 @@ const PROJECT_STATUSES = ['Completed', 'Ongoing'];
 function FormField({ label, required, children }) {
   return (
     <div>
-      <label className="text-xs uppercase tracking-widest text-[#1F2328]/50 font-inter block mb-2">
+      <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">
         {label} {required && '*'}
       </label>
       {children}
@@ -17,9 +17,10 @@ function FormField({ label, required, children }) {
 }
 
 export default function ProjectForm({ project, token, onSave, onClose }) {
+  const toBL = (v) => (typeof v === 'string' ? { en: v, ml: null } : (v || { en: '', ml: null }));
   const [form, setForm] = useState({
     slug: project?.slug || '',
-    title: project?.title || { en: '', ml: null },
+    title: toBL(project?.title),
     location: project?.location || '',
     type: project?.type || 'Commercial',
     project_status: project?.project_status || 'Completed',
@@ -30,11 +31,17 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
     client_lens: project?.client_lens || 'Commercial',
     image: project?.image || '',
     gallery: project?.gallery || [],
-    short_description: project?.short_description || { en: '', ml: null },
-    challenge: project?.challenge || { en: '', ml: null },
+    short_description: toBL(project?.short_description),
+    challenge: toBL(project?.challenge),
     status: project?.status || 'draft',
     media: project?.media || { hero_video: null, images: [], model_3d: null, plans: [] },
     media_visible: project?.media_visible !== false,
+    tab_visibility: {
+      story: project?.tab_visibility?.story !== false,
+      design: project?.tab_visibility?.design !== false,
+      delivery: project?.tab_visibility?.delivery !== false,
+      partners: project?.tab_visibility?.partners !== false,
+    },
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -81,17 +88,17 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-[#A7ADB5]/20 flex items-center justify-between">
-          <h2 className="text-lg font-sora font-medium text-[#1F2328]">
+        <div className="p-6 border-b border-[#8A8A8A]/20 flex items-center justify-between">
+          <h2 className="text-lg font-sora font-medium text-[#050505]">
             {project ? 'Edit Project' : 'New Project'}
           </h2>
-          <button onClick={onClose} className="text-[#A7ADB5] hover:text-[#1F2328]" data-testid="close-project-form">
+          <button onClick={onClose} className="text-[#8A8A8A] hover:text-[#050505]" data-testid="close-project-form">
             <X size={20} />
           </button>
         </div>
 
         {/* Form Tabs */}
-        <div className="border-b border-[#A7ADB5]/20 flex">
+        <div className="border-b border-[#8A8A8A]/20 flex">
           {formTabs.map(tab => (
             <button
               key={tab.id}
@@ -99,8 +106,8 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
               data-testid={`project-form-tab-${tab.id}`}
               className={`px-6 py-3 text-xs font-inter uppercase tracking-wider transition-colors ${
                 activeFormTab === tab.id
-                  ? 'text-[#0F5E5B] border-b-2 border-[#0F5E5B] font-medium'
-                  : 'text-[#A7ADB5] hover:text-[#1F2328]'
+                  ? 'text-[#606060] border-b-2 border-[#606060] font-medium'
+                  : 'text-[#8A8A8A] hover:text-[#050505]'
               }`}
             >
               {tab.label}
@@ -199,17 +206,45 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
           {activeFormTab === 'media' && (
             <>
               {/* Media visibility toggle */}
-              <div className="flex items-start justify-between p-4 bg-[#F3F0E8] border border-[#A7ADB5]/30" data-testid="project-media-visible-row">
+              <div className="flex items-start justify-between p-4 bg-[#F6F6F3] border border-[#8A8A8A]/30" data-testid="project-media-visible-row">
                 <div className="pr-4">
-                  <p className="text-sm font-inter font-medium text-[#1F2328]">Show media & gallery on project page</p>
-                  <p className="text-xs text-[#A7ADB5] mt-0.5">Turn off for projects without proper photos. The Media tab and gallery are hidden; the story and details still show.</p>
+                  <p className="text-sm font-inter font-medium text-[#050505]">Show media & gallery on project page</p>
+                  <p className="text-xs text-[#8A8A8A] mt-0.5">Turn off for projects without proper photos. The Media tab and gallery are hidden; the story and details still show.</p>
                 </div>
                 <button type="button" onClick={() => setForm({ ...form, media_visible: !form.media_visible })}
                   data-testid="project-media-visible-toggle"
                   role="switch" aria-checked={form.media_visible}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 ${form.media_visible ? 'bg-[#0F5E5B]' : 'bg-[#A7ADB5]/40'}`}>
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 ${form.media_visible ? 'bg-[#050505]' : 'bg-[#8A8A8A]/40'}`}>
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.media_visible ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
+              </div>
+
+              {/* Page section (tab) visibility */}
+              <div className="p-4 bg-[#F6F6F3] border border-[#8A8A8A]/30 space-y-3" data-testid="project-tab-visibility">
+                <div>
+                  <p className="text-sm font-inter font-medium text-[#050505]">Page Sections</p>
+                  <p className="text-xs text-[#8A8A8A] mt-0.5">Hide sections (tabs) that aren't ready. Hidden sections won't appear on the project page.</p>
+                </div>
+                {[
+                  { key: 'story', label: 'Story' },
+                  { key: 'design', label: 'Design' },
+                  { key: 'delivery', label: 'Delivery' },
+                  { key: 'partners', label: 'Partners' },
+                ].map(s => {
+                  const on = form.tab_visibility[s.key];
+                  return (
+                    <div key={s.key} className="flex items-center justify-between" data-testid={`project-tab-vis-row-${s.key}`}>
+                      <span className="text-sm font-inter text-[#050505]/80">{s.label}</span>
+                      <button type="button"
+                        onClick={() => setForm({ ...form, tab_visibility: { ...form.tab_visibility, [s.key]: !on } })}
+                        data-testid={`project-tab-vis-${s.key}`}
+                        role="switch" aria-checked={on}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${on ? 'bg-[#050505]' : 'bg-[#8A8A8A]/40'}`}>
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${on ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Hero Image */}
@@ -217,7 +252,7 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
                 <div className="flex gap-3 items-end">
                   <input type="url" className="form-input flex-1" placeholder="Image URL" value={form.image}
                     onChange={(e) => setForm({ ...form, image: e.target.value })} />
-                  <label className="flex items-center gap-2 px-4 py-2 bg-[#F3F0E8] text-[#1F2328] text-xs font-inter cursor-pointer hover:bg-[#E8E6E0] transition-colors border border-[#A7ADB5]/30">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
                     <Upload size={14} /> Upload
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'image')} />
                   </label>
@@ -231,7 +266,7 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
                   <input type="url" className="form-input flex-1" placeholder="Video URL (mp4, webm)"
                     value={form.media?.hero_video || ''}
                     onChange={(e) => setForm({ ...form, media: { ...form.media, hero_video: e.target.value || null } })} />
-                  <label className="flex items-center gap-2 px-4 py-2 bg-[#F3F0E8] text-[#1F2328] text-xs font-inter cursor-pointer hover:bg-[#E8E6E0] transition-colors border border-[#A7ADB5]/30">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
                     <Upload size={14} /> Upload
                     <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileUpload(e, 'hero_video')} />
                   </label>
@@ -251,7 +286,7 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
                     </div>
                   ))}
                 </div>
-                <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F3F0E8] text-[#1F2328] text-xs font-inter cursor-pointer hover:bg-[#E8E6E0] transition-colors border border-[#A7ADB5]/30">
+                <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
                   <Plus size={14} /> Add Image
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'gallery')} />
                 </label>
@@ -265,7 +300,7 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
               </FormField>
 
               {uploading && (
-                <div className="flex items-center gap-2 text-sm text-[#0F5E5B]">
+                <div className="flex items-center gap-2 text-sm text-[#606060]">
                   <Loader2 className="animate-spin" size={14} /> Uploading...
                 </div>
               )}
@@ -273,13 +308,13 @@ export default function ProjectForm({ project, token, onSave, onClose }) {
           )}
 
           {/* Save Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#A7ADB5]/20">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#8A8A8A]/20">
             <button type="button" onClick={onClose}
-              className="px-4 py-2 text-sm font-inter text-[#1F2328]/60 hover:text-[#1F2328]">
+              className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">
               Cancel
             </button>
             <button type="submit" disabled={saving} data-testid="save-project-btn"
-              className="flex items-center gap-2 px-4 py-2 bg-[#0F5E5B] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#0D4E4C] disabled:opacity-60">
+              className="flex items-center gap-2 px-4 py-2 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] disabled:opacity-60">
               {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
               Save
             </button>
