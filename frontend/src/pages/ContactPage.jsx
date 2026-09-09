@@ -78,10 +78,10 @@ export default function ContactPage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             {/* Sidebar */}
-            <div className="lg:col-span-4 space-y-8 reveal">
+            <div className="lg:col-span-4 flex flex-col gap-10 reveal">
               <div>
                 <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-5">Get in Touch</p>
-                <div className="space-y-5">
+                <div className="flex flex-col gap-5">
                   <ContactItem icon={<Phone size={16} strokeWidth={1.5} />} label="Phone"
                     value={contact.phone_display || '+91 XXXXX XXXXX'}
                     href={contact.phone_link} tid="contact-phone" />
@@ -207,11 +207,11 @@ function ContactItem({ icon, label, value, href, tid, external }) {
   const Tag = href ? 'a' : 'div';
   const linkProps = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
   return (
-    <Tag {...linkProps} className="flex items-start gap-3 group" data-testid={tid}>
-      <div className="w-8 h-8 bg-[#ECECEA] flex items-center justify-center flex-shrink-0 text-[#606060]">{icon}</div>
-      <div>
-        <p className="text-xs font-inter text-[#8A8A8A] uppercase tracking-wider">{label}</p>
-        <p className={`text-sm font-inter text-[#050505] mt-0.5 ${href ? 'group-hover:text-[#606060] transition-colors' : ''}`}>{value}</p>
+    <Tag {...linkProps} className="flex items-center gap-4 group" data-testid={tid}>
+      <div className="w-9 h-9 bg-[#ECECEA] flex items-center justify-center flex-shrink-0 text-[#606060]">{icon}</div>
+      <div className="min-w-0">
+        <p className="text-[10px] leading-none font-inter text-[#8A8A8A] uppercase tracking-wider mb-1.5">{label}</p>
+        <p className={`text-sm leading-snug font-inter text-[#050505] ${href ? 'group-hover:text-[#606060] transition-colors' : ''}`}>{value}</p>
       </div>
     </Tag>
   );
