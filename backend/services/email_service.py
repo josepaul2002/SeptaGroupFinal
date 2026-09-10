@@ -8,13 +8,22 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 import resend
+from dotenv import load_dotenv
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Initialize Resend
-resend.api_key = os.environ.get("RESEND_API_KEY", "")
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
-FROM_EMAIL = os.environ.get("FROM_EMAIL", "noreply@septa.group")
+
+def _configure_resend() -> str:
+    """Read the API key at call time so .env load order doesn't matter."""
+    key = os.environ.get("RESEND_API_KEY", "")
+    resend.api_key = key
+    return key
+
+
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "onboarding@resend.dev")
 ADMIN_NOTIFY_EMAILS = os.environ.get("ADMIN_NOTIFY_EMAIL", "jose@septa.group,info@septa.group").split(",")
 
 # Database reference (will be set from server.py)
@@ -330,7 +339,7 @@ async def send_admin_notification(lead_data: dict, max_retries: int = 3) -> dict
     subject = f"New Septa Lead - {project_type} - {location} - {name} - {phone}"
     recipients = [email.strip() for email in ADMIN_NOTIFY_EMAILS]
     
-    if not resend.api_key or resend.api_key.startswith("re_placeholder"):
+    if not _configure_resend():
         logger.warning("Resend API key not configured - skipping admin notification")
         await log_email_attempt(
             "admin_notification", ",".join(recipients), subject,
@@ -381,7 +390,7 @@ async def send_user_confirmation(email: str, name: str, lead_id: str = "", max_r
         logger.info("No user email provided - skipping confirmation")
         return {"success": False, "error": "No email provided", "skipped": True}
     
-    if not resend.api_key or resend.api_key.startswith("re_placeholder"):
+    if not _configure_resend():
         logger.warning("Resend API key not configured - skipping user confirmation")
         await log_email_attempt(
             "user_confirmation", email, subject,

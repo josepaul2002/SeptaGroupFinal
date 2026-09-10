@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Lock, AlertCircle, Loader2, MessageSquare, Folder, Users, FileText, Settings, History, LayoutDashboard } from 'lucide-react';
+import { LogOut, Lock, AlertCircle, Loader2, MessageSquare, Folder, Users, FileText, Settings, History, LayoutDashboard, KeyRound } from 'lucide-react';
 import { useAdminAuth } from '../hooks/useApi';
 import LeadsTab from '../components/admin/LeadsTab';
 import ProjectsTab from '../components/admin/ProjectsTab';
@@ -8,6 +8,7 @@ import TestimonialsTab from '../components/admin/TestimonialsTab';
 import SettingsTab from '../components/admin/SettingsTab';
 import AuditLogTab from '../components/admin/AuditLogTab';
 import PageContentTab from '../components/admin/PageContentTab';
+import AccountTab from '../components/admin/AccountTab';
 
 const TABS = [
   { id: 'leads', label: 'Leads', icon: MessageSquare },
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'testimonials', label: 'Testimonials', icon: FileText },
   { id: 'audit', label: 'Audit Log', icon: History },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'account', label: 'Account', icon: KeyRound },
 ];
 
 export default function AdminPage() {
@@ -117,6 +119,7 @@ export default function AdminPage() {
             {activeTab === 'testimonials' && <TestimonialsTab token={token} />}
             {activeTab === 'audit' && <AuditLogTab token={token} />}
             {activeTab === 'settings' && <SettingsTab token={token} />}
+            {activeTab === 'account' && <AccountTab token={token} email={admin?.email} />}
           </main>
         </div>
       </div>

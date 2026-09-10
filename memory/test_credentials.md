@@ -1,18 +1,14 @@
-# Test Credentials — Septa Group CMS
+# Test Credentials
 
-## Admin
-- URL: /admin
-- Email: admin@septa.group
-- Password: septa2024admin
+## Admin Panel (`/admin`) — password only (Google login removed June 2026)
+- Email: `admin@septa.group`
+- Password: `septa2024admin`
 
-## Google Login (admin)
-- "Sign in with Google" on /admin (Emergent-managed Google Auth)
-- Allowlist env: ADMIN_ALLOWED_GOOGLE_EMAILS=paul@septa.one,admin@septa.group
-- Non-allowlisted Google accounts are rejected (403)
-
-Login endpoint: POST /api/admin/login → returns { access_token }
-Use header: Authorization: Bearer <access_token>
+Password can now be changed in-app: Admin Panel → Account → Change Password
+(min 8 characters, requires current password).
 
 ## Notes
-- Preview: https://septa-cms-preview.preview.emergentagent.com
-- Bootstrap admin seeded from backend/.env (BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_ADMIN_PASSWORD)
+- Google sign-in for admin has been REMOVED (frontend button, hook, and `/api/admin/google-session` endpoint).
+- Resend email is LIVE. Sender is currently `onboarding@resend.dev`; switch `FROM_EMAIL` in
+  `/app/backend/.env` to `noreply@septa.one` once the `septa.one` domain is verified in Resend.
+- Admin notifications go to `paul@septa.one` (`ADMIN_NOTIFY_EMAIL`).

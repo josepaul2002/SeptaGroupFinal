@@ -166,14 +166,16 @@ export default function ProjectCaseStudyPage() {
 
       {/* Tab Navigation */}
       <div className="sticky top-16 z-30 bg-white border-b border-[#8A8A8A]/20" data-testid="project-tabs">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="flex overflow-x-auto gap-0">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 relative">
+          {/* Right-edge fade hints that more tabs exist when scrolled horizontally */}
+          <div className="pointer-events-none absolute top-0 right-0 h-full w-10 bg-gradient-to-l from-white to-transparent md:hidden" />
+          <div className="tab-scroll flex md:flex-wrap -mx-1">
             {visibleTabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 data-testid={`project-tab-${tab.id}`}
-                className={`flex items-center gap-2 px-5 py-4 text-xs font-inter uppercase tracking-wider whitespace-nowrap transition-colors border-b-2 ${
+                className={`flex items-center gap-2 mx-1 px-4 md:px-5 py-4 text-xs font-inter uppercase tracking-wider whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${
                   effectiveTab === tab.id
                     ? 'text-[#606060] border-[#606060] font-medium'
                     : 'text-[#8A8A8A] border-transparent hover:text-[#050505] hover:border-[#8A8A8A]/40'

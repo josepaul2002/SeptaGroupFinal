@@ -179,6 +179,20 @@ textarea.form-input {
 ::-webkit-scrollbar-track { background: #F6F6F3; }
 ::-webkit-scrollbar-thumb { background: #8A8A8A; border-radius: 0; }
 
+/* Horizontal tab strips: no visible scrollbar, snap to tabs */
+.tab-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+}
+.tab-scroll::-webkit-scrollbar { display: none; height: 0; }
+.tab-scroll > * { scroll-snap-align: start; }
+
+
 @layer base {
   [data-debug-wrapper="true"] { display: contents !important; }
   [data-debug-wrapper="true"] > * {

@@ -144,3 +144,19 @@ June 2026 — Phase 7 monochrome rebrand complete (site-wide incl. admin)
 
 ## Last Updated (latest)
 June 2026 — Phase 10: Google admin login live; visibility toggles verified; placeholders reformatted
+
+## Phase 11 — Password-only admin, iPhone wordmark, LIVE Resend email, change-password screen (June 2026) — tested ✓
+- **Google admin login REMOVED** (user request): frontend button + hash handler removed from AdminPage, `loginWithGoogle` removed from useApi, backend `POST /api/admin/google-session` endpoint deleted. Admin is email + password only (verified login still returns JWT).
+- **iPhone navbar fix**: "SEPTA GROUP" wordmark was `hidden sm:flex` (invisible below 640px). Now always visible with mobile-tuned size/tracking; logo mark h-7 on mobile. No overflow at 390px.
+- **Contact page alignment fix**: sidebar contact items no longer overlap (flex-col gap instead of collapsing space-y; icon tile vertically centred with label/value).
+- **LIVE EMAIL (Resend) ON**: RESEND_API_KEY set in backend/.env. Root cause of "not configured" was import order — `email_service` was imported before `load_dotenv()` in server.py, so the key read as empty. Fixed by calling `load_dotenv()` inside email_service.py and reading the key at call time via `_configure_resend()`. Verified: admin notification + user confirmation both sent (Resend IDs returned).
+  - FROM_EMAIL = `onboarding@resend.dev` because `septa.one` is NOT yet verified in Resend. Once the user verifies septa.one at resend.com/domains, change FROM_EMAIL to `noreply@septa.one`. Until then, Resend test mode restricts recipients.
+- **Change Password screen**: new admin tab "Account" → `/app/frontend/src/components/admin/AccountTab.jsx` (data-testids: current-password-input, new-password-input, confirm-password-input, change-password-btn, change-password-message). Uses existing `POST /api/admin/change-password`; backend `AdminPasswordChange.new_password` now enforces min_length=8. Verified: short pw 422, wrong current 400, valid change + login with new password 200, reverted to septa2024admin.
+
+## PENDING
+- Verify septa.one in Resend, then switch FROM_EMAIL to noreply@septa.one.
+- Cloudflare R2 credentials for persistent media storage (still local-disk fallback).
+- Content upload: real project photos + partner logos via admin.
+
+## Last Updated (latest)
+June 2026 — Phase 11: password-only admin, live Resend email, Account/change-password tab
