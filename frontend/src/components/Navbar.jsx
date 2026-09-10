@@ -42,11 +42,11 @@ export default function Navbar() {
       data-testid="navbar"
     >
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 h-16 md:h-[76px] flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 group" data-testid="navbar-logo-link">
-          <img src="/septa-logo.png" alt="Septa Group" className="h-8 md:h-9 w-auto" />
-          <span className="hidden sm:flex items-baseline gap-2 font-display uppercase tracking-[0.16em] text-white">
-            <span className="text-[15px] font-semibold">SEPTA</span>
-            <span className="text-[15px] font-light text-[#C6A15B]">GROUP</span>
+        <Link to="/" className="flex items-center gap-2 md:gap-3 group min-w-0" data-testid="navbar-logo-link">
+          <img src="/septa-logo.png" alt="Septa Group" className="h-7 md:h-9 w-auto flex-shrink-0" />
+          <span className="flex items-baseline gap-1.5 sm:gap-2 font-display uppercase tracking-[0.14em] sm:tracking-[0.16em] text-white whitespace-nowrap">
+            <span className="text-[13px] sm:text-[15px] font-semibold">SEPTA</span>
+            <span className="text-[13px] sm:text-[15px] font-light text-[#C6A15B]">GROUP</span>
           </span>
         </Link>
 
