@@ -6,12 +6,12 @@ const checklist = [
   {
     category: 'Company Details',
     items: [
-      { item: 'Real phone number (replace +91 XXXXX XXXXX)', done: false },
-      { item: 'Real email address (replace info@septagroup.in)', done: false },
+      { item: 'Verified business phone number', done: false },
+      { item: 'Verified business email address', done: false },
       { item: 'Real office address', done: false },
       { item: 'Exact establishment year (if different from 2004)', done: false },
       { item: 'Operating districts — confirm the list', done: false },
-      { item: 'WhatsApp number (replace 919876543210 in WhatsAppButton.jsx)', done: false },
+      { item: 'Verified WhatsApp number in Site Settings', done: false },
     ],
   },
   {
@@ -58,13 +58,13 @@ const checklist = [
     items: [
       { item: 'Replace "SEPTA GROUP" text logo with actual logo file (if available)', done: false },
       { item: 'Confirm hero image (replace stock photo with actual project photo)', done: false },
-      { item: 'Confirm brand color is correct (#606060 for teal, #8A8A8A for bronze)', done: false },
+      { item: 'Confirm the final brand colour tokens', done: false },
     ],
   },
   {
     category: 'Admin Panel',
     items: [
-      { item: 'Change default admin password (septa2024) in backend/.env', done: false },
+      { item: 'Set a unique bootstrap owner password in the deployment environment', done: false },
       { item: 'Test lead submissions from Contact form', done: false },
       { item: 'Test Admin login at /admin', done: false },
     ],

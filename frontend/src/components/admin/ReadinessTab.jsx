@@ -1,0 +1,9 @@
+import {useEffect,useState} from 'react';
+import axios from 'axios';
+import {API,auth,errorMessage} from '../../lib/cms';
+export default function ReadinessTab({token}){
+ const [data,setData]=useState(null),[error,setError]=useState('');
+ useEffect(()=>{axios.get(`${API}/admin/readiness`,auth(token)).then(r=>setData(r.data)).catch(e=>setError(errorMessage(e)));},[token]);
+ if(error)return <p role="alert">{error}</p>;if(!data)return <p>Checking launch configuration…</p>;
+ return <section className="bg-white p-6 space-y-8"><h2 className="text-2xl">Launch readiness</h2><p>{data.environment} · {data.site_url||'Production domain not configured'}</p><div className="grid sm:grid-cols-3 gap-4">{[['New enquiries',data.new_leads],['Failed notifications',data.failed_notifications],['Overdue follow-ups',data.overdue_followups]].map(([k,v])=><div key={k} className="border p-4"><p>{k}</p><strong className="text-3xl">{v}</strong></div>)}</div><dl className="divide-y">{[['Production frontend built',data.frontend_build_present],['Persistent media storage configured',data.persistent_storage_configured],['Email credentials and recipients configured',data.email_configured],['Search indexing enabled',data.indexing_enabled]].map(([k,v])=><div key={k} className="flex justify-between gap-4 py-3"><dt>{k}</dt><dd className={v?'text-green-700':'text-amber-800'}>{v?'Configured':'Needs attention'}</dd></div>)}</dl><p className="text-sm">Configuration checks do not test delivery. Send a test enquiry on staging and verify email delivery before launch. Keep indexing disabled until the domain and content are approved.</p><table className="w-full text-left"><thead><tr><th>Content</th><th>Published and reviewed</th><th>Awaiting review</th></tr></thead><tbody>{Object.entries(data.content).map(([k,v])=><tr key={k} className="border-t"><td className="py-3">{k}</td><td>{v.published}</td><td>{v.needs_review}</td></tr>)}</tbody></table></section>;
+}

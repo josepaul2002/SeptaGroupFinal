@@ -3,6 +3,7 @@ Storage service for media uploads
 Supports Cloudflare R2 / AWS S3 with local fallback
 """
 import os
+from config import PRODUCTION, UPLOADS_DIR
 import io
 import uuid
 import shutil
@@ -32,7 +33,7 @@ SECRET_KEY = os.environ.get("R2_SECRET_KEY") or os.environ.get("AWS_SECRET_ACCES
 ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL") or os.environ.get("S3_ENDPOINT_URL", "")
 
 # Local storage config
-LOCAL_UPLOAD_DIR = Path(os.environ.get("LOCAL_UPLOAD_DIR", "/app/uploads"))
+LOCAL_UPLOAD_DIR = UPLOADS_DIR
 LOCAL_UPLOAD_URL_PREFIX = "/uploads"
 
 # Allowed file types
@@ -48,7 +49,7 @@ ALLOWED_EXTENSIONS = {
     ".glb", ".gltf",  # 3D models
 }
 
-MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB for videos
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB upload limit; large videos should be delivered from a dedicated media host.
 
 
 def is_cloud_storage_configured() -> bool:
@@ -60,6 +61,8 @@ def is_cloud_storage_configured() -> bool:
     if not SECRET_KEY or SECRET_KEY == "placeholder":
         return False
     if STORAGE_PROVIDER not in ["R2", "S3"]:
+        return False
+    if not PUBLIC_CDN_BASE_URL.startswith("https://") or (STORAGE_PROVIDER == "R2" and not ENDPOINT_URL):
         return False
     return True
 
@@ -244,7 +247,9 @@ async def upload_file(
             return result
         logger.warning("Cloud upload failed, falling back to local")
     
-    # Fallback to local storage
+    if PRODUCTION:
+        return None
+    # Local storage is development-only.
     return await upload_file_local(file_content, filename, content_type)
 
 

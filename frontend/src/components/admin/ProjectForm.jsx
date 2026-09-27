@@ -1,326 +1,39 @@
-import { useState } from 'react';
-import { X, Save, Loader2, Upload, Trash2, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { uploadFile } from '../../hooks/useApi';
-
-const PROJECT_TYPES = ['Institutional', 'Healthcare', 'Commercial', 'Residential', 'Mixed-use'];
-const PROJECT_STATUSES = ['Completed', 'Ongoing'];
-
-function FormField({ label, required, children }) {
-  return (
-    <div>
-      <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">
-        {label} {required && '*'}
-      </label>
-      {children}
-    </div>
-  );
-}
+import { API, auth, bl, media, errorMessage } from '../../lib/cms';
+import { Field, BilingualField, PublicationFields, SEOFields } from './Fields';
 
 export default function ProjectForm({ project, token, onSave, onClose }) {
-  const toBL = (v) => (typeof v === 'string' ? { en: v, ml: null } : (v || { en: '', ml: null }));
-  const [form, setForm] = useState({
-    slug: project?.slug || '',
-    title: toBL(project?.title),
-    location: project?.location || '',
-    type: project?.type || 'Commercial',
-    project_status: project?.project_status || 'Completed',
-    sqft: project?.sqft || '',
-    duration: project?.duration || '',
-    year: project?.year || new Date().getFullYear().toString(),
-    client_type: project?.client_type || '',
-    client_lens: project?.client_lens || 'Commercial',
-    image: project?.image || '',
-    gallery: project?.gallery || [],
-    short_description: toBL(project?.short_description),
-    challenge: toBL(project?.challenge),
-    status: project?.status || 'draft',
-    media: project?.media || { hero_video: null, images: [], model_3d: null, plans: [] },
-    media_visible: project?.media_visible !== false,
-    tab_visibility: {
-      story: project?.tab_visibility?.story !== false,
-      design: project?.tab_visibility?.design !== false,
-      delivery: project?.tab_visibility?.delivery !== false,
-      partners: project?.tab_visibility?.partners !== false,
-    },
-  });
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [activeFormTab, setActiveFormTab] = useState('basic');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await onSave(form);
-    } catch {
-      alert('Error saving project');
-    }
-    setSaving(false);
+  const [form, setForm] = useState(() => ({ slug: '', location: '', type: 'Commercial', project_status: 'Completed', sqft: '', duration: '', year: '', client_type: '', client_lens: 'Commercial', image: '', gallery: [], status: 'draft', credits: [], ...project,
+    title: bl(project?.title), scope: bl(project?.scope), short_description: bl(project?.short_description), challenge: bl(project?.challenge), challenge_detail: bl(project?.challenge_detail), approach_detail: bl(project?.approach_detail), outcome_detail: bl(project?.outcome_detail), media: media(project?.media),
+    story: { paragraphs: [], ...project?.story }, design: { intent: bl(project?.design?.intent), tags: project?.design?.tags || [] }, delivery: { highlights: [], ...project?.delivery }, tab_visibility: { story: true, design: true, delivery: true, partners: true, ...project?.tab_visibility } }));
+  const [tab, setTab] = useState('Details');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [people, setPeople] = useState([]);
+  const [revisions, setRevisions] = useState([]);
+  const patch = data => setForm(f => ({ ...f, ...data }));
+  useEffect(() => {
+    let active = true;
+    Promise.all([axios.get(`${API}/partners?published_only=false`, auth(token)), axios.get(`${API}/leaders?published_only=false`, auth(token))]).then(([p,l]) => { if (active) setPeople([...p.data.map(x => ({ ...x, entity_type: 'partner' })), ...l.data.map(x => ({ ...x, entity_type: 'leader' }))]); }).catch(e => active && setError(errorMessage(e)));
+    if (project?.slug) axios.get(`${API}/admin/revisions/projects/${project.slug}`, auth(token)).then(r => active && setRevisions(r.data)).catch(() => {});
+    return () => { active = false; };
+  }, [token, project?.slug]);
+  const save = async e => { e.preventDefault(); setBusy(true); setError(''); try { await onSave(form); } catch (err) { setError(errorMessage(err)); } finally { setBusy(false); } };
+  const upload = async (files, key) => {
+    setBusy(true); setError('');
+    try { for (const file of files) { const result = await uploadFile(token, file); setForm(f => key === 'image' ? { ...f, image: result.url } : { ...f, media: { ...f.media, [key]: [...(f.media[key] || []), { url: result.url, caption: bl(''), alt: '', credit: '', kind: key === 'plans' ? 'plan' : 'photograph', approved: false }] } }); } }
+    catch (err) { setError(errorMessage(err)); } finally { setBusy(false); }
   };
-
-  const handleFileUpload = async (e, field) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const result = await uploadFile(token, file);
-      if (field === 'image') {
-        setForm({ ...form, image: result.url });
-      } else if (field === 'hero_video') {
-        setForm({ ...form, media: { ...form.media, hero_video: result.url } });
-      } else if (field === 'gallery') {
-        setForm({ ...form, gallery: [...form.gallery, result.url] });
-      } else if (field === 'media_images') {
-        setForm({ ...form, media: { ...form.media, images: [...(form.media.images || []), { url: result.url, caption: { en: '', ml: null } }] } });
-      }
-    } catch {
-      alert('Upload failed. Files are stored locally (placeholder storage).');
-    }
-    setUploading(false);
-  };
-
-  const formTabs = [
-    { id: 'basic', label: 'Basic Info' },
-    { id: 'content', label: 'Content' },
-    { id: 'media', label: 'Media' },
-  ];
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-[#8A8A8A]/20 flex items-center justify-between">
-          <h2 className="text-lg font-sora font-medium text-[#050505]">
-            {project ? 'Edit Project' : 'New Project'}
-          </h2>
-          <button onClick={onClose} className="text-[#8A8A8A] hover:text-[#050505]" data-testid="close-project-form">
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Form Tabs */}
-        <div className="border-b border-[#8A8A8A]/20 flex">
-          {formTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveFormTab(tab.id)}
-              data-testid={`project-form-tab-${tab.id}`}
-              className={`px-6 py-3 text-xs font-inter uppercase tracking-wider transition-colors ${
-                activeFormTab === tab.id
-                  ? 'text-[#606060] border-b-2 border-[#606060] font-medium'
-                  : 'text-[#8A8A8A] hover:text-[#050505]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* BASIC INFO TAB */}
-          {activeFormTab === 'basic' && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField label="Slug" required>
-                  <input type="text" required disabled={!!project} className="form-input" value={form.slug}
-                    onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} />
-                </FormField>
-                <FormField label="Title (English)" required>
-                  <input type="text" required className="form-input"
-                    value={typeof form.title === 'object' ? form.title.en : form.title}
-                    onChange={(e) => setForm({ ...form, title: { ...form.title, en: e.target.value } })} />
-                </FormField>
-              </div>
-              <FormField label="Title (Malayalam)">
-                <input type="text" className="form-input"
-                  value={typeof form.title === 'object' ? (form.title.ml || '') : ''}
-                  onChange={(e) => setForm({ ...form, title: { ...form.title, ml: e.target.value || null } })} />
-              </FormField>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField label="Type">
-                  <select className="form-input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                    {PROJECT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </FormField>
-                <FormField label="Project Status">
-                  <select className="form-input" value={form.project_status} onChange={(e) => setForm({ ...form, project_status: e.target.value })}>
-                    {PROJECT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </FormField>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <FormField label="Location">
-                  <input type="text" className="form-input" value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })} />
-                </FormField>
-                <FormField label="Sq.ft">
-                  <input type="text" className="form-input" value={form.sqft}
-                    onChange={(e) => setForm({ ...form, sqft: e.target.value })} />
-                </FormField>
-                <FormField label="Duration">
-                  <input type="text" className="form-input" value={form.duration}
-                    onChange={(e) => setForm({ ...form, duration: e.target.value })} />
-                </FormField>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField label="Client Lens">
-                  <select className="form-input" value={form.client_lens}
-                    onChange={(e) => setForm({ ...form, client_lens: e.target.value })}>
-                    <option value="Residential">Residential</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Institutional">Institutional</option>
-                  </select>
-                </FormField>
-                <FormField label="Publish Status">
-                  <select className="form-input" value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                  </select>
-                </FormField>
-              </div>
-            </>
-          )}
-
-          {/* CONTENT TAB */}
-          {activeFormTab === 'content' && (
-            <>
-              <FormField label="Short Description (English)">
-                <textarea rows={2} className="form-input resize-none"
-                  value={typeof form.short_description === 'object' ? form.short_description.en : form.short_description}
-                  onChange={(e) => setForm({ ...form, short_description: { ...form.short_description, en: e.target.value } })} />
-              </FormField>
-              <FormField label="Short Description (Malayalam)">
-                <textarea rows={2} className="form-input resize-none"
-                  value={typeof form.short_description === 'object' ? (form.short_description.ml || '') : ''}
-                  onChange={(e) => setForm({ ...form, short_description: { ...form.short_description, ml: e.target.value || null } })} />
-              </FormField>
-              <FormField label="Challenge (English)">
-                <textarea rows={2} className="form-input resize-none"
-                  value={typeof form.challenge === 'object' ? form.challenge.en : form.challenge}
-                  onChange={(e) => setForm({ ...form, challenge: { ...form.challenge, en: e.target.value } })} />
-              </FormField>
-            </>
-          )}
-
-          {/* MEDIA TAB */}
-          {activeFormTab === 'media' && (
-            <>
-              {/* Media visibility toggle */}
-              <div className="flex items-start justify-between p-4 bg-[#F6F6F3] border border-[#8A8A8A]/30" data-testid="project-media-visible-row">
-                <div className="pr-4">
-                  <p className="text-sm font-inter font-medium text-[#050505]">Show media & gallery on project page</p>
-                  <p className="text-xs text-[#8A8A8A] mt-0.5">Turn off for projects without proper photos. The Media tab and gallery are hidden; the story and details still show.</p>
-                </div>
-                <button type="button" onClick={() => setForm(prev => ({ ...prev, media_visible: !prev.media_visible }))}
-                  data-testid="project-media-visible-toggle"
-                  role="switch" aria-checked={form.media_visible}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 ${form.media_visible ? 'bg-[#050505]' : 'bg-[#8A8A8A]/40'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.media_visible ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
-              </div>
-
-              {/* Page section (tab) visibility */}
-              <div className="p-4 bg-[#F6F6F3] border border-[#8A8A8A]/30 space-y-3" data-testid="project-tab-visibility">
-                <div>
-                  <p className="text-sm font-inter font-medium text-[#050505]">Page Sections</p>
-                  <p className="text-xs text-[#8A8A8A] mt-0.5">Hide sections (tabs) that aren't ready. Hidden sections won't appear on the project page.</p>
-                </div>
-                {[
-                  { key: 'story', label: 'Story' },
-                  { key: 'design', label: 'Design' },
-                  { key: 'delivery', label: 'Delivery' },
-                  { key: 'partners', label: 'Partners' },
-                ].map(s => {
-                  const on = form.tab_visibility[s.key];
-                  return (
-                    <div key={s.key} className="flex items-center justify-between" data-testid={`project-tab-vis-row-${s.key}`}>
-                      <span className="text-sm font-inter text-[#050505]/80">{s.label}</span>
-                      <button type="button"
-                        onClick={() => setForm(prev => ({ ...prev, tab_visibility: { ...prev.tab_visibility, [s.key]: !prev.tab_visibility[s.key] } }))}
-                        data-testid={`project-tab-vis-${s.key}`}
-                        role="switch" aria-checked={on}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${on ? 'bg-[#050505]' : 'bg-[#8A8A8A]/40'}`}>
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${on ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Hero Image */}
-              <FormField label="Hero Image">
-                <div className="flex gap-3 items-end">
-                  <input type="url" className="form-input flex-1" placeholder="Image URL" value={form.image}
-                    onChange={(e) => setForm({ ...form, image: e.target.value })} />
-                  <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
-                    <Upload size={14} /> Upload
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'image')} />
-                  </label>
-                </div>
-                {form.image && <img src={form.image} alt="Hero preview" className="mt-2 h-24 object-cover border" />}
-              </FormField>
-
-              {/* Hero Video */}
-              <FormField label="Hero Video URL">
-                <div className="flex gap-3 items-end">
-                  <input type="url" className="form-input flex-1" placeholder="Video URL (mp4, webm)"
-                    value={form.media?.hero_video || ''}
-                    onChange={(e) => setForm({ ...form, media: { ...form.media, hero_video: e.target.value || null } })} />
-                  <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
-                    <Upload size={14} /> Upload
-                    <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileUpload(e, 'hero_video')} />
-                  </label>
-                </div>
-              </FormField>
-
-              {/* Gallery Images */}
-              <FormField label="Gallery Images">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {form.gallery?.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <img src={img} alt={`Gallery ${i + 1}`} className="h-20 w-28 object-cover border" />
-                      <button type="button" onClick={() => setForm({ ...form, gallery: form.gallery.filter((_, j) => j !== i) })}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X size={10} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
-                  <Plus size={14} /> Add Image
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'gallery')} />
-                </label>
-              </FormField>
-
-              {/* 3D Model URL */}
-              <FormField label="3D Model URL (GLB/GLTF)">
-                <input type="url" className="form-input" placeholder="https://... .glb"
-                  value={form.media?.model_3d || ''}
-                  onChange={(e) => setForm({ ...form, media: { ...form.media, model_3d: e.target.value || null } })} />
-              </FormField>
-
-              {uploading && (
-                <div className="flex items-center gap-2 text-sm text-[#606060]">
-                  <Loader2 className="animate-spin" size={14} /> Uploading...
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Save Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#8A8A8A]/20">
-            <button type="button" onClick={onClose}
-              className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">
-              Cancel
-            </button>
-            <button type="submit" disabled={saving} data-testid="save-project-btn"
-              className="flex items-center gap-2 px-4 py-2 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] disabled:opacity-60">
-              {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+  const changeItem = (key, index, change) => setForm(f => ({ ...f, media: { ...f.media, [key]: f.media[key].map((item,i) => i === index ? { ...item, ...change } : item) } }));
+  return <div className="fixed inset-0 bg-black/60 z-50 p-3 md:p-8 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Project editor"><div className="max-w-4xl mx-auto bg-white p-5 md:p-8"><div className="flex justify-between gap-6"><h2 className="text-2xl">{project ? 'Edit project' : 'New project'}</h2><button onClick={onClose} aria-label="Close project editor">Close</button></div><div className="flex flex-wrap gap-2 my-6">{['Details','Story','Media','Credits','Publishing'].map(t => <button key={t} className={`px-4 py-2 border ${tab === t ? 'bg-black text-white' : ''}`} onClick={() => setTab(t)}>{t}</button>)}</div>
+    <form onSubmit={save} className="space-y-5">
+      {tab === 'Details' && <><Field label="URL slug"><input required disabled={!!project} value={form.slug} onChange={e => patch({ slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} pattern="[a-z0-9]+(-[a-z0-9]+)*" /></Field><BilingualField label="Project name" value={form.title} onChange={title => patch({ title })} rows={1} /><div className="grid md:grid-cols-2 gap-4">{[['location','Location / district'],['sqft','Area (sq ft)'],['duration','Construction duration'],['year','Completion year'],['client_type','Client type']].map(([key,label]) => <Field key={key} label={label}><input value={form[key]} onChange={e => patch({ [key]: e.target.value })} /></Field>)}<Field label="Sector"><select value={form.type} onChange={e => patch({ type: e.target.value })}>{['Commercial','Institutional','Healthcare','Residential','Mixed-use'].map(t => <option key={t}>{t}</option>)}</select></Field><Field label="Project status"><select value={form.project_status} onChange={e => patch({ project_status: e.target.value })}><option>Completed</option><option>Ongoing</option></select></Field></div><BilingualField label="Septa’s scope of work" value={form.scope} onChange={scope => patch({ scope })} /><BilingualField label="Summary" value={form.short_description} onChange={short_description => patch({ short_description })} /></>}
+      {tab === 'Story' && <>{[['challenge','Challenge summary'],['challenge_detail','Challenge detail'],['approach_detail','Approach'],['outcome_detail','Documented outcome']].map(([key,label]) => <BilingualField key={key} label={label} value={form[key]} onChange={v => patch({ [key]: v })} />)}<BilingualField label="Design intent" value={form.design.intent} onChange={intent => patch({ design: { ...form.design, intent } })} /><Field label="Story paragraphs · English (blank line between paragraphs)"><textarea rows={6} value={form.story.paragraphs.map(p => bl(p).en).join('\n\n')} onChange={e => patch({ story: { ...form.story, paragraphs: e.target.value.split('\n\n').map((en,i) => ({ ...bl(form.story.paragraphs[i]), en })) } })} /></Field><Field label="Delivery highlights · English (one per line)"><textarea rows={4} value={form.delivery.highlights.map(p => bl(p).en).join('\n')} onChange={e => patch({ delivery: { ...form.delivery, highlights: e.target.value.split('\n').map((en,i) => ({ ...bl(form.delivery.highlights[i]), en })) } })} /></Field></>}
+      {tab === 'Media' && <><Field label="Cover image URL"><input value={form.image} onChange={e => patch({ image: e.target.value })} /></Field><label className="block text-sm">Upload cover<input className="block mt-2" type="file" accept="image/*" disabled={busy} onChange={e => upload(Array.from(e.target.files), 'image')} /></label>{form.image && <img src={form.image} alt="Cover preview" className="max-h-52" />}<Field label="Hero video URL"><input value={form.media.hero_video || ''} onChange={e => patch({ media: { ...form.media, hero_video: e.target.value || null } })} /></Field><Field label="3D model URL"><input value={form.media.model_3d || ''} onChange={e => patch({ media: { ...form.media, model_3d: e.target.value || null } })} /></Field>{['images','plans'].map(key => <section key={key} className="space-y-4 border-t pt-5"><h3 className="text-lg">{key === 'images' ? 'Gallery' : 'Approved public drawings'}</h3><p className="text-xs text-neutral-500">Upload only files cleared for public hosting. A hidden section does not make a hosted file private.</p><input aria-label={`Upload ${key}`} type="file" multiple accept={key === 'plans' ? 'application/pdf,image/*' : 'image/*'} disabled={busy} onChange={e => upload(Array.from(e.target.files), key)} />{form.media[key].map((item,i) => <div key={`${key}-${i}`} className="p-4 border space-y-3"><div className="flex gap-3"><span>{i+1}</span><button type="button" disabled={i === 0} onClick={() => { const items = [...form.media[key]]; [items[i-1],items[i]] = [items[i],items[i-1]]; patch({ media: { ...form.media, [key]: items } }); }}>Move up</button><button type="button" onClick={() => patch({ media: { ...form.media, [key]: form.media[key].filter((_,n) => n !== i) } })}>Remove from project</button></div><Field label="URL"><input value={item.url} onChange={e => changeItem(key,i,{ url: e.target.value })} /></Field><Field label="Alt text"><input value={item.alt || ''} onChange={e => changeItem(key,i,{ alt: e.target.value })} /></Field><Field label="Photographer / owner credit"><input value={item.credit || ''} onChange={e => changeItem(key,i,{ credit: e.target.value })} /></Field><BilingualField label="Caption" value={item.caption} onChange={caption => changeItem(key,i,{ caption })} rows={1} /><Field label="Media type"><select value={item.kind || 'photograph'} onChange={e => changeItem(key,i,{ kind: e.target.value })}>{['photograph','render','concept','plan','video'].map(k => <option key={k}>{k}</option>)}</select></Field><label className="flex gap-2 text-sm"><input type="checkbox" checked={!!item.approved} onChange={e => changeItem(key,i,{ approved: e.target.checked })} />Publication permission confirmed</label></div>)}</section>)}<label className="flex gap-2"><input type="checkbox" checked={form.media.plans_public} onChange={e => patch({ media: { ...form.media, plans_public: e.target.checked } })} />Display approved drawings publicly</label></>}
+      {tab === 'Credits' && <><p className="text-sm text-neutral-500">Credit the actual role on this project. People and firms must be reviewed and published before this project can be published.</p>{form.credits.map((credit,i) => <div key={i} className="border p-4 space-y-3"><Field label="Person or organisation"><select value={`${credit.entity_type}:${credit.entity_slug}`} onChange={e => { const [entity_type,entity_slug] = e.target.value.split(':'); patch({ credits: form.credits.map((c,n) => n === i ? { ...c, entity_type, entity_slug } : c) }); }}><option value=":">Choose a contributor</option>{people.map(p => <option key={`${p.entity_type}:${p.slug}`} value={`${p.entity_type}:${p.slug}`}>{bl(p.name).en} · {p.status}</option>)}</select></Field><Field label="Role on this project"><input value={credit.role} onChange={e => patch({ credits: form.credits.map((c,n) => n === i ? { ...c, role: e.target.value } : c) })} /></Field><BilingualField label="Contribution" value={credit.contribution} onChange={contribution => patch({ credits: form.credits.map((c,n) => n === i ? { ...c, contribution } : c) })} /><Field label="Firm / affiliation at time of project"><input value={credit.affiliation_at_time || ''} onChange={e => patch({ credits: form.credits.map((c,n) => n === i ? { ...c, affiliation_at_time: e.target.value } : c) })} /></Field><label className="flex gap-2 text-sm"><input type="checkbox" checked={credit.verified} onChange={e => patch({ credits: form.credits.map((c,n) => n === i ? { ...c, verified: e.target.checked } : c) })} />Credit verified</label><button type="button" onClick={() => patch({ credits: form.credits.filter((_,n) => i !== n) })}>Remove credit</button></div>)}<button type="button" className="border px-4 py-2" onClick={() => patch({ credits: [...form.credits, { entity_type: 'partner', entity_slug: '', role: '', contribution: bl(''), verified: false }] })}>Add project credit</button></>}
+      {tab === 'Publishing' && <><PublicationFields value={form} onChange={patch} /><SEOFields value={form.seo} onChange={seo => patch({ seo })} /><h3>Visible sections</h3>{Object.keys(form.tab_visibility).map(key => <label key={key} className="flex gap-2"><input type="checkbox" checked={form.tab_visibility[key]} onChange={e => patch({ tab_visibility: { ...form.tab_visibility, [key]: e.target.checked } })} />{key}</label>)}<label className="flex gap-2"><input type="checkbox" checked={form.media_visible !== false} onChange={e => patch({ media_visible: e.target.checked })} />Show media</label>{project && <><h3>Revision history</h3>{revisions.map(r => <div key={r.id} className="flex gap-4 text-sm"><time>{new Date(r.created_at).toLocaleString()}</time><button type="button" onClick={async () => { if (!window.confirm('Restore this revision as a draft? Current changes will be discarded.')) return; try { await axios.post(`${API}/admin/revisions/${r.id}/restore`, {}, auth(token)); window.location.reload(); } catch(e) { setError(errorMessage(e)); } }}>Restore draft</button></div>)}</>}</>}
+      {error && <p role="alert" className="text-red-700">{error}</p>}<div className="flex justify-end gap-4 border-t pt-4"><button type="button" onClick={onClose}>Cancel</button><button className="bg-black text-white px-6 py-3 disabled:opacity-50" disabled={busy} type="submit">{busy ? 'Working…' : 'Save project'}</button></div>
+    </form></div></div>;
 }

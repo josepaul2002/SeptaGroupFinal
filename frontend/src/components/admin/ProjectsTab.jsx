@@ -4,7 +4,7 @@ import { useAdminProjects, getText } from '../../hooks/useApi';
 import axios from 'axios';
 import ProjectForm from './ProjectForm';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 export default function ProjectsTab({ token }) {
   const { projects, loading, createProject, updateProject, deleteProject, setProjects } = useAdminProjects(token);

@@ -84,7 +84,7 @@ export default function PartnersTab({ token }) {
         <PartnerForm
           partner={editing}
           token={token}
-          onSave={(updates) => { updatePartner(editing.slug, updates); setEditing(null); }}
+          onSave={async (updates) => { await updatePartner(editing.slug, updates); setEditing(null); }}
           onClose={() => setEditing(null)}
         />
       )}

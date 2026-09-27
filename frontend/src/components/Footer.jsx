@@ -75,24 +75,10 @@ export default function Footer() {
           <div className="md:col-span-3">
             <p className="tech-label text-[11px] text-[#8A8A8A] mb-5">Contact</p>
             <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <Phone size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                <a href={contact.phone_link || '#'} className="text-sm font-inter text-[#F6F6F3]/70 hover:text-[#F6F6F3] transition-colors" data-testid="footer-phone">
-                  {contact.phone_display || '+91 XXXXX XXXXX'}
-                </a>
-              </li>
-              <li className="flex items-start gap-3">
-                <Mail size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                <a href={`mailto:${contact.email || ''}`} className="text-sm font-inter text-[#F6F6F3]/70 hover:text-[#F6F6F3] transition-colors" data-testid="footer-email">
-                  {contact.email || 'info@septagroup.in'}
-                </a>
-              </li>
-              <li className="flex items-start gap-3">
-                <MapPin size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                <span className="text-sm font-inter text-[#F6F6F3]/70" data-testid="footer-address">
-                  {contact.office_address || 'Kerala, India'}
-                </span>
-              </li>
+              {contact.phone_display && <li className="flex items-start gap-3"><Phone size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} /><a href={contact.phone_link || undefined} className="text-sm font-inter text-[#F6F6F3]/70 hover:text-[#F6F6F3] transition-colors" data-testid="footer-phone">{contact.phone_display}</a></li>}
+              {contact.email && <li className="flex items-start gap-3"><Mail size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} /><a href={`mailto:${contact.email}`} className="text-sm font-inter text-[#F6F6F3]/70 hover:text-[#F6F6F3] transition-colors" data-testid="footer-email">{contact.email}</a></li>}
+              {contact.office_address && <li className="flex items-start gap-3"><MapPin size={14} className="text-[#8A8A8A] mt-0.5 flex-shrink-0" strokeWidth={1.5} /><span className="text-sm font-inter text-[#F6F6F3]/70" data-testid="footer-address">{contact.office_address}</span></li>}
+              {!contact.phone_display && !contact.email && !contact.office_address && <li className="text-sm text-[#8A8A8A]">Contact details will be added before launch.</li>}
             </ul>
             <Link
               to="/contact"

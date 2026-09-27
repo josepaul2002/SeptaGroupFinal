@@ -4,8 +4,10 @@ import { Phone, Mail, MapPin, MessageCircle, ArrowRight, CheckCircle2, Loader2, 
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useSiteSettings } from '../hooks/useApi';
 import axios from 'axios';
+import {enquiryContext,errorMessage} from '../lib/cms';
+import {useApiData,getText} from '../hooks/useApi';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 export default function ContactPage() {
   useScrollReveal();
@@ -13,11 +15,15 @@ export default function ContactPage() {
   const [searchParams] = useSearchParams();
   const partnerRef = searchParams.get('partner') || '';
   const serviceRef = searchParams.get('ref') || '';
+  const leaderRef = searchParams.get('leader') || '';
+  const projectRef = searchParams.get('project') || '';
+  const {data:referredEntity} = useApiData(partnerRef ? `/partners/${partnerRef}` : leaderRef ? `/leaders/${leaderRef}` : '/settings',null);
+  const [submissionId] = useState(() => crypto.randomUUID());
 
   const [form, setForm] = useState({
     name: '', phone: '', email: '', project_type: '', project_location: '',
     budget_range: '', timeline: '', message: '', honeypot: '',
-    partner_ref: partnerRef, service_ref: serviceRef, page_source: 'contact'
+    partner_ref: partnerRef, leader_ref: leaderRef, project_ref: projectRef, service_ref: serviceRef, page_source: 'contact', enquiry_type: ['introduction','collaboration'].includes(searchParams.get('enquiry_type')) ? searchParams.get('enquiry_type') : 'project'
   });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -33,10 +39,10 @@ export default function ContactPage() {
     if (form.honeypot) return; // spam trap
     setSending(true); setError('');
     try {
-      await axios.post(`${API}/leads`, form);
+      await axios.post(`${API}/leads`, {...form,...enquiryContext(),submission_id:submissionId});
       setSent(true);
     } catch (err) {
-      setError(err.response?.status === 429 ? 'Too many requests. Please wait a moment.' : 'Something went wrong. Please try again.');
+      setError(err.response?.status === 429 ? 'Too many requests. Please wait a moment.' : errorMessage(err));
     }
     setSending(false);
   };
@@ -50,7 +56,7 @@ export default function ContactPage() {
           </div>
           <h1 className="text-2xl font-sora font-light text-[#050505] mb-3">Enquiry Received</h1>
           <p className="text-sm font-inter font-light text-[#050505]/55 leading-relaxed mb-6">
-            Thank you, {form.name}. Our team will review your enquiry and get back to you within 24 hours.
+            Thank you, {form.name}. Our team will review your enquiry and contact you about the next steps.
           </p>
           <a href="/" className="text-sm font-inter text-[#606060] hover:underline">Back to Home</a>
         </div>
@@ -83,13 +89,13 @@ export default function ContactPage() {
                 <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-5">Get in Touch</p>
                 <div className="flex flex-col gap-5">
                   <ContactItem icon={<Phone size={16} strokeWidth={1.5} />} label="Phone"
-                    value={contact.phone_display || '+91 XXXXX XXXXX'}
+                    value={contact.phone_display || ''}
                     href={contact.phone_link} tid="contact-phone" />
                   <ContactItem icon={<Mail size={16} strokeWidth={1.5} />} label="Email"
-                    value={contact.email || 'info@septagroup.in'}
-                    href={`mailto:${contact.email || 'info@septagroup.in'}`} tid="contact-email" />
+                    value={contact.email || ''}
+                    href={`mailto:${contact.email || ''}`} tid="contact-email" />
                   <ContactItem icon={<MapPin size={16} strokeWidth={1.5} />} label="Office"
-                    value={contact.office_address || 'Kerala, India'} tid="contact-address" />
+                    value={contact.office_address || ''} tid="contact-address" />
                   {contact.whatsapp_link && (
                     <ContactItem icon={<MessageCircle size={16} strokeWidth={1.5} />} label="WhatsApp"
                       value="Chat with us"
@@ -115,6 +121,7 @@ export default function ContactPage() {
             {/* Form */}
             <div className="lg:col-span-8 reveal reveal-delay-1">
               <form onSubmit={handleSubmit} className="space-y-5" data-testid="enquiry-form">
+                <label className="block text-xs uppercase tracking-wider">Enquiry type<select className="form-input mt-2" value={form.enquiry_type} onChange={e=>setForm({...form,enquiry_type:e.target.value})}><option value="project">Discuss a project</option><option value="introduction">Request an introduction</option><option value="collaboration">Collaborate with Septa</option></select></label>
                 {/* Honeypot */}
                 <div className="absolute -left-[9999px]" aria-hidden="true">
                   <input type="text" name="website" tabIndex={-1} autoComplete="off"
@@ -123,53 +130,53 @@ export default function ContactPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Full Name *</label>
-                    <input type="text" required className="form-input" value={form.name}
-                      onChange={e => setForm({ ...form, name: e.target.value })} data-testid="input-name" />
+                    <label htmlFor="contact-name" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Full Name *</label>
+                    <input type="text" required className="form-input" minLength={2} maxLength={120} autoComplete="name" value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })} id="contact-name" data-testid="input-name" />
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Phone *</label>
-                    <input type="tel" required className="form-input" value={form.phone}
-                      onChange={e => setForm({ ...form, phone: e.target.value })} data-testid="input-phone" />
+                    <label htmlFor="contact-phone" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Phone *</label>
+                    <input type="tel" required className="form-input" minLength={8} maxLength={32} autoComplete="tel" value={form.phone}
+                      onChange={e => setForm({ ...form, phone: e.target.value })} id="contact-phone" data-testid="input-phone" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Email</label>
-                  <input type="email" className="form-input" value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })} data-testid="input-email" />
+                  <label htmlFor="contact-email" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Email</label>
+                  <input type="email" className="form-input" maxLength={254} autoComplete="email" value={form.email}
+                    onChange={e => setForm({ ...form, email: e.target.value })} id="contact-email" data-testid="input-email" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Type</label>
+                    <label htmlFor="contact-project-type" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Type</label>
                     <select className="form-input" value={form.project_type}
-                      onChange={e => setForm({ ...form, project_type: e.target.value })} data-testid="input-project-type">
+                      onChange={e => setForm({ ...form, project_type: e.target.value })} id="contact-project-type" data-testid="input-project-type">
                       <option value="">Select...</option>
                       {(enquiry.project_types || []).map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Location</label>
+                    <label htmlFor="contact-location" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Location</label>
                     <input type="text" className="form-input" placeholder="City / District"
                       value={form.project_location}
-                      onChange={e => setForm({ ...form, project_location: e.target.value })} data-testid="input-location" />
+                      onChange={e => setForm({ ...form, project_location: e.target.value })} id="contact-location" data-testid="input-location" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Budget Range</label>
+                    <label htmlFor="contact-budget" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Budget Range</label>
                     <select className="form-input" value={form.budget_range}
-                      onChange={e => setForm({ ...form, budget_range: e.target.value })} data-testid="input-budget">
+                      onChange={e => setForm({ ...form, budget_range: e.target.value })} id="contact-budget" data-testid="input-budget">
                       <option value="">Select...</option>
                       {(enquiry.budget_ranges || []).map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Expected Timeline</label>
+                    <label htmlFor="contact-timeline" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Expected Timeline</label>
                     <select className="form-input" value={form.timeline}
-                      onChange={e => setForm({ ...form, timeline: e.target.value })} data-testid="input-timeline">
+                      onChange={e => setForm({ ...form, timeline: e.target.value })} id="contact-timeline" data-testid="input-timeline">
                       <option value="">Select...</option>
                       {(enquiry.timeline_ranges || []).map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -177,19 +184,20 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Message</label>
+                  <label htmlFor="contact-message" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Message</label>
                   <textarea rows={4} className="form-input resize-none" placeholder="Tell us about your project..."
-                    value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} data-testid="input-message" />
+                    maxLength={5000} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} id="contact-message" data-testid="input-message" />
                 </div>
 
-                {partnerRef && (
+                {(partnerRef || leaderRef) && referredEntity?.name && (
                   <p className="text-xs font-inter text-[#606060] bg-[#ECECEA] px-3 py-2">
-                    Referred from partner: <strong>{partnerRef}</strong>
+                    Enquiry about: <strong>{getText(referredEntity.name)}</strong>
                   </p>
                 )}
 
-                {error && <p className="text-sm text-red-500 font-inter" data-testid="form-error">{error}</p>}
+                {error && <p className="text-sm text-red-500 font-inter" role="alert" data-testid="form-error">{error}</p>}
 
+                <p className="text-xs text-neutral-600">By submitting, you ask Septa to contact you about this enquiry. <a href="/privacy" className="underline">How we use your details</a></p>
                 <button type="submit" disabled={sending} data-testid="submit-enquiry-btn"
                   className="h-12 px-8 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors flex items-center gap-2 disabled:opacity-60">
                   {sending ? <Loader2 className="animate-spin" size={16} /> : <><Send size={14} /> Submit Enquiry</>}
@@ -204,6 +212,7 @@ export default function ContactPage() {
 }
 
 function ContactItem({ icon, label, value, href, tid, external }) {
+  if (!value) return null;
   const Tag = href ? 'a' : 'div';
   const linkProps = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
   return (

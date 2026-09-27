@@ -7,7 +7,7 @@ import { useLanguage } from '../components/LanguageToggle';
 import PreviewBanner from '../components/PreviewBanner';
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 const relationshipLabels = {
   'Group Company': { color: 'bg-[#050505] text-white', desc: 'Part of the Septa Group family' },
@@ -30,11 +30,11 @@ export default function PartnerProfilePage() {
   useEffect(() => {
     window.scrollTo(0, 0);
     setLoading(true);
-    axios.get(`${API}/partners/${slug}${isPreview ? '?preview=true' : ''}`)
+    axios.get(`${API}/partners/${slug}${isPreview ? '?preview=true' : ''}`, isPreview ? {headers:{Authorization:`Bearer ${sessionStorage.getItem('septa-admin-token')}`}} : {})
       .then(res => {
         setPartner(res.data);
         document.title = `${getText(res.data.name)} — Septa Ecosystem`;
-        return axios.get(`${API}/partners/${slug}/projects`);
+        return axios.get(`${API}/credits/partner/${slug}/projects`).catch(()=>({data:[]}));
       })
       .then(res => setPartnerProjects(res.data || []))
       .catch(() => setPartner(null))

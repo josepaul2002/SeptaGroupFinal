@@ -2,7 +2,8 @@
 Septa Group API Server
 Full CMS with Admin Panel, Email Notifications, and Media Storage
 """
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query
+from config import PRODUCTION, SITE_URL, INDEXABLE, CORS_ORIGINS, UPLOADS_DIR
+from fastapi import FastAPI, BackgroundTasks, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -12,6 +13,9 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import os
+import asyncio
+from contextlib import suppress
+from pymongo.errors import DuplicateKeyError
 import logging
 import json
 import httpx
@@ -31,8 +35,10 @@ from models.schemas import (
     SiteSettings, SiteContactSettings, EnquiryFormSettings,
     PageContent, ContentBlock
 )
+from services.content import PUBLIC_QUERY, public_document, publication_check
+from services.notifications import deliver, worker
 from services.email_service import send_admin_notification, send_user_confirmation, set_email_logs_collection
-from services.storage_service import upload_file, delete_file, get_presigned_upload_url, validate_file, get_storage_status
+from services.storage_service import upload_file, delete_file, get_presigned_upload_url, validate_file, get_storage_status, MAX_FILE_SIZE
 from utils.auth import (
     verify_password, get_password_hash, create_access_token,
     set_auth_cookie, clear_auth_cookie, get_current_admin, get_optional_admin
@@ -51,11 +57,11 @@ limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="Septa Group API", version="2.0")
 app.state.limiter = limiter
+app.state.db = db
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Local uploads directory
-UPLOADS_DIR = Path("/app/uploads")
-UPLOADS_DIR.mkdir(exist_ok=True)
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 api_router = APIRouter(prefix="/api")
 
@@ -108,7 +114,7 @@ async def log_audit(
 
 @api_router.post("/leads", status_code=201)
 @limiter.limit("5/minute")
-async def create_lead(request: Request, lead: LeadCreate):
+async def create_lead(request: Request, lead: LeadCreate, background_tasks: BackgroundTasks):
     """
     Create new lead with email notifications
     Always saves to DB even if email fails
@@ -132,43 +138,28 @@ async def create_lead(request: Request, lead: LeadCreate):
     doc["email_sent"] = False
     doc["admin_notified"] = False
     
-    # ALWAYS save to DB first
-    await db.leads.insert_one(doc)
-    logger.info(f"Lead saved: {doc['id']}")
-    
-    # Send emails (non-blocking, failures don't affect response)
+    doc.update(notification_status="pending", notification_attempts=0)
+    if not doc.get("submission_id"):
+        doc.pop("submission_id", None)
     try:
-        # Admin notification
-        admin_result = await send_admin_notification(doc)
-        if admin_result.get("success"):
-            await db.leads.update_one(
-                {"id": doc["id"]},
-                {"$set": {"admin_notified": True}}
-            )
-        
-        # User confirmation
-        if lead.email:
-            user_result = await send_user_confirmation(lead.email, lead.name, lead_id=doc["id"])
-            if user_result.get("success"):
-                await db.leads.update_one(
-                    {"id": doc["id"]},
-                    {"$set": {"email_sent": True}}
-                )
-    except Exception as e:
-        logger.error(f"Email send error (lead still saved): {str(e)}")
-    
-    return {"message": "Enquiry received. We will contact you within 24 hours.", "id": doc["id"]}
+        await db.leads.insert_one(doc)
+    except DuplicateKeyError:
+        # Same browser submission retried after a connection failure; do not send twice.
+        existing = await db.leads.find_one({"submission_id": doc.get("submission_id")})
+        return {"message": "Enquiry received.", "id": existing["id"]}
+    background_tasks.add_task(deliver, db, doc["id"])
+    return {"message": "Enquiry received. Our team will review your message.", "id": doc["id"]}
 
 
 @api_router.get("/leads")
 async def get_leads(
-    skip: int = Query(0),
-    limit: int = Query(50, le=200),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     status: Optional[str] = None,
     admin: dict = Depends(get_current_admin)
 ):
     """Get leads with pagination and filtering (admin only)"""
-    query = {}
+    query = {"status": {"$ne": "archived"}}
     if status and status != "all":
         query["status"] = status
     total = await db.leads.count_documents(query)
@@ -183,9 +174,7 @@ async def update_lead_status(
     admin: dict = Depends(get_current_admin)
 ):
     """Update lead status"""
-    update_data = {"status": update.status}
-    if update.notes is not None:
-        update_data["notes"] = update.notes
+    update_data = update.model_dump(exclude_unset=True)
     
     result = await db.leads.update_one(
         {"id": lead_id},
@@ -209,7 +198,7 @@ async def export_leads_csv(admin: dict = Depends(get_current_admin)):
     writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
     writer.writeheader()
     for lead in leads:
-        writer.writerow(lead)
+        writer.writerow({k: ("\'" + v if isinstance(v, str) and v.startswith(("=", "+", "-", "@", "\t", "\r")) else v) for k, v in lead.items()})
     
     csv_content = output.getvalue()
     return Response(
@@ -222,8 +211,8 @@ async def export_leads_csv(admin: dict = Depends(get_current_admin)):
 @api_router.delete("/leads/{lead_id}")
 async def delete_lead(lead_id: str, admin: dict = Depends(get_current_admin)):
     """Delete lead"""
-    result = await db.leads.delete_one({"id": lead_id})
-    if result.deleted_count == 0:
+    result = await db.leads.update_one({"id": lead_id}, {"$set": {"status": "archived"}})
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Lead not found")
     
     await log_audit(admin["admin_id"], admin["email"], "delete", "lead", lead_id)
@@ -249,14 +238,14 @@ async def get_projects(
         query["project_status"] = status
     
     # Only show published unless admin
-    if published_only and not admin:
-        query["status"] = "published"
+    if published_only or not admin:
+        query.update(PUBLIC_QUERY)
     
     projects = await db.projects.find(query, {"_id": 0}).to_list(200)
     for p in projects:
         p.setdefault("media_visible", True)
         p.setdefault("tab_visibility", {"story": True, "design": True, "delivery": True, "partners": True})
-    return projects
+    return projects if admin and not published_only else [public_document(p) for p in projects]
 
 
 @api_router.get("/projects/{slug}")
@@ -272,8 +261,8 @@ async def get_project(
     is_preview = preview and admin
     
     # Only show published unless admin or valid preview
-    if not admin and not is_preview:
-        query["status"] = "published"
+    if not is_preview:
+        query.update(PUBLIC_QUERY)
     
     project = await db.projects.find_one(query, {"_id": 0})
     if not project:
@@ -285,7 +274,7 @@ async def get_project(
     
     project.setdefault("media_visible", True)
     project.setdefault("tab_visibility", {"story": True, "design": True, "delivery": True, "partners": True})
-    return project
+    return project if is_preview else public_document(project)
 
 
 @api_router.post("/projects", status_code=201)
@@ -299,6 +288,7 @@ async def create_project(
         raise HTTPException(status_code=400, detail="Slug already exists")
     
     doc = project.model_dump()
+    await publication_check(db, doc, "project", admin)
     doc["id"] = str(uuid.uuid4())
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["updated_at"] = doc["created_at"]
@@ -316,9 +306,14 @@ async def update_project(
     admin: dict = Depends(get_current_admin)
 ):
     """Update project"""
-    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data = {k: v for k, v in update.model_dump(exclude_unset=True).items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
+    existing = await db.projects.find_one({"slug": slug}, {"_id": 0})
+    if not existing:
+        raise HTTPException(404, "Record not found")
+    await publication_check(db, {**existing, **update_data}, "project", admin)
+    await db.revisions.insert_one({"id": str(uuid.uuid4()), "collection": "projects", "slug": slug, "snapshot": existing, "created_at": datetime.now(timezone.utc).isoformat()})
     result = await db.projects.update_one({"slug": slug}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -332,11 +327,13 @@ async def update_project(
 @api_router.delete("/projects/{slug}")
 async def delete_project(slug: str, admin: dict = Depends(get_current_admin)):
     """Delete project"""
+    if admin.get("role") == "editor":
+        raise HTTPException(403, "Editors cannot archive published records.")
     project = await db.projects.find_one({"slug": slug}, {"_id": 0, "id": 1})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    await db.projects.delete_one({"slug": slug})
+    await db.projects.update_one({"slug": slug}, {"$set": {"status": "archived"}})
     await log_audit(admin["admin_id"], admin["email"], "delete", "project", project["id"])
     
     return {"message": "Project deleted"}
@@ -386,13 +383,13 @@ async def get_partners(
     if category:
         query["category"] = category
     if featured is not None:
-        query["featured"] = featured
+        query["is_featured"] = featured
     
-    if published_only and not admin:
-        query["status"] = "published"
+    if published_only or not admin:
+        query.update(PUBLIC_QUERY)
     
     partners = await db.partners.find(query, {"_id": 0}).sort("sort_order", 1).to_list(200)
-    return partners
+    return partners if admin and not published_only else [public_document(p) for p in partners]
 
 
 @api_router.get("/partners/{slug}")
@@ -407,8 +404,8 @@ async def get_partner(
     # Preview mode: allow viewing draft with valid preview token
     is_preview = preview and admin
     
-    if not admin and not is_preview:
-        query["status"] = "published"
+    if not is_preview:
+        query.update(PUBLIC_QUERY)
     
     partner = await db.partners.find_one(query, {"_id": 0})
     if not partner:
@@ -418,7 +415,7 @@ async def get_partner(
     if is_preview and partner.get("status") == "draft":
         partner["_preview_mode"] = True
     
-    return partner
+    return partner if is_preview else public_document(partner)
 
 
 @api_router.post("/partners", status_code=201)
@@ -432,6 +429,7 @@ async def create_partner(
         raise HTTPException(status_code=400, detail="Slug already exists")
     
     doc = partner.model_dump()
+    await publication_check(db, doc, "partner", admin)
     doc["id"] = str(uuid.uuid4())
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["updated_at"] = doc["created_at"]
@@ -449,9 +447,14 @@ async def update_partner(
     admin: dict = Depends(get_current_admin)
 ):
     """Update partner"""
-    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data = {k: v for k, v in update.model_dump(exclude_unset=True).items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
+    existing = await db.partners.find_one({"slug": slug}, {"_id": 0})
+    if not existing:
+        raise HTTPException(404, "Record not found")
+    await publication_check(db, {**existing, **update_data}, "partner", admin)
+    await db.revisions.insert_one({"id": str(uuid.uuid4()), "collection": "partners", "slug": slug, "snapshot": existing, "created_at": datetime.now(timezone.utc).isoformat()})
     result = await db.partners.update_one({"slug": slug}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Partner not found")
@@ -465,11 +468,13 @@ async def update_partner(
 @api_router.delete("/partners/{slug}")
 async def delete_partner(slug: str, admin: dict = Depends(get_current_admin)):
     """Delete partner"""
+    if admin.get("role") == "editor":
+        raise HTTPException(403, "Editors cannot archive published records.")
     partner = await db.partners.find_one({"slug": slug}, {"_id": 0, "id": 1})
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
     
-    await db.partners.delete_one({"slug": slug})
+    await db.partners.update_one({"slug": slug}, {"$set": {"status": "archived"}})
     await log_audit(admin["admin_id"], admin["email"], "delete", "partner", partner["id"])
     
     return {"message": "Partner deleted"}
@@ -480,9 +485,9 @@ async def delete_partner(slug: str, admin: dict = Depends(get_current_admin)):
 # ============================================================================
 
 @api_router.get("/testimonials")
-async def get_testimonials():
+async def get_testimonials(published_only: bool = True, admin: Optional[dict] = Depends(get_optional_admin)):
     """Get all testimonials"""
-    testimonials = await db.testimonials.find({}, {"_id": 0}).to_list(50)
+    testimonials = await db.testimonials.find(PUBLIC_QUERY if published_only or not admin else {}, {"_id": 0}).to_list(50)
     return testimonials
 
 
@@ -493,6 +498,7 @@ async def create_testimonial(
 ):
     """Create testimonial"""
     doc = testimonial.model_dump()
+    await publication_check(db, doc, "testimonial", admin)
     doc["id"] = str(uuid.uuid4())
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     
@@ -509,6 +515,10 @@ async def update_testimonial(
     admin: dict = Depends(get_current_admin)
 ):
     """Update testimonial"""
+    existing = await db.testimonials.find_one({"id": testimonial_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Testimonial not found")
+    await publication_check(db, {**existing, **testimonial.model_dump()}, "testimonial", admin)
     result = await db.testimonials.update_one(
         {"id": testimonial_id},
         {"$set": testimonial.model_dump()}
@@ -526,8 +536,10 @@ async def delete_testimonial(
     admin: dict = Depends(get_current_admin)
 ):
     """Delete testimonial"""
-    result = await db.testimonials.delete_one({"id": testimonial_id})
-    if result.deleted_count == 0:
+    if admin.get("role") == "editor":
+        raise HTTPException(403, "Editors cannot archive published records.")
+    result = await db.testimonials.update_one({"id": testimonial_id}, {"$set": {"status": "archived"}})
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Testimonial not found")
     
     await log_audit(admin["admin_id"], admin["email"], "delete", "testimonial", testimonial_id)
@@ -543,11 +555,11 @@ async def delete_testimonial(
 async def admin_login(request: Request, response: Response, auth: AdminLoginRequest):
     """Admin login with JWT"""
     admin = await db.admins.find_one({"email": auth.email}, {"_id": 0})
-    if not admin or not verify_password(auth.password, admin["password_hash"]):
+    if not admin or admin.get("disabled") or not verify_password(auth.password, admin["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Create token
-    token = create_access_token({"sub": admin["id"], "email": admin["email"]})
+    token = create_access_token({"sub": admin["id"], "email": admin["email"], "auth_version": admin.get("auth_version", 0)})
     
     # Set cookie
     set_auth_cookie(response, token)
@@ -563,13 +575,15 @@ async def admin_login(request: Request, response: Response, auth: AdminLoginRequ
     return AdminLoginResponse(
         access_token=token,
         admin_id=admin["id"],
-        email=admin["email"]
+        email=admin["email"],
+        role=admin.get("role", "owner")
     )
 
 
 @api_router.post("/admin/logout")
 async def admin_logout(response: Response, admin: dict = Depends(get_current_admin)):
     """Admin logout"""
+    await db.admins.update_one({"id": admin["admin_id"]}, {"$inc": {"auth_version": 1}})
     clear_auth_cookie(response)
     return {"message": "Logged out"}
 
@@ -599,7 +613,7 @@ async def change_admin_password(
     new_hash = get_password_hash(data.new_password)
     await db.admins.update_one(
         {"id": admin["admin_id"]},
-        {"$set": {"password_hash": new_hash}}
+        {"$set": {"password_hash": new_hash}, "$inc": {"auth_version": 1}}
     )
     
     await log_audit(admin["admin_id"], admin["email"], "password_change", "admin", admin["admin_id"])
@@ -613,7 +627,7 @@ async def change_admin_password(
 async def admin_auth_legacy(request: Request, response: Response, auth: dict):
     """Legacy admin auth - redirects to new login"""
     password = auth.get("password", "")
-    bootstrap_email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@septa.group")
+    bootstrap_email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "owner@example.com")
     
     # Try with bootstrap email
     return await admin_login(
@@ -632,7 +646,7 @@ async def upload_media(
     admin: dict = Depends(get_current_admin)
 ):
     """Upload media file"""
-    content = await file.read()
+    content = await file.read(MAX_FILE_SIZE + 1)
     
     # Validate
     is_valid, error = validate_file(file.filename, file.content_type, len(content))
@@ -656,6 +670,7 @@ async def get_upload_url(
     admin: dict = Depends(get_current_admin)
 ):
     """Get presigned URL for direct upload"""
+    raise HTTPException(409, "Use the validated /api/upload endpoint.")
     result = await get_presigned_upload_url(filename, content_type)
     if not result:
         raise HTTPException(status_code=500, detail="Could not generate upload URL")
@@ -687,7 +702,7 @@ async def export_content(admin: dict = Depends(get_current_admin)):
 @api_router.get("/audit-logs")
 async def get_audit_logs(
     limit: int = Query(50, le=500),
-    skip: int = Query(0),
+    skip: int = Query(0, ge=0),
     resource_type: Optional[str] = None,
     admin: dict = Depends(get_current_admin)
 ):
@@ -704,7 +719,7 @@ async def get_audit_logs(
 async def get_partner_projects(slug: str):
     """Get projects where this partner is in the partner_stack"""
     projects = await db.projects.find(
-        {"partner_stack.partner_id": slug, "status": "published"},
+        {**PUBLIC_QUERY, "credits": {"$elemMatch": {"entity_type": "partner", "entity_slug": slug, "verified": True}}},
         {"_id": 0, "slug": 1, "title": 1, "type": 1, "location": 1, "image": 1, "sqft": 1, "year": 1}
     ).to_list(50)
     return projects
@@ -714,12 +729,12 @@ async def get_partner_projects(slug: str):
 async def get_featured_partners():
     """Get featured partners for homepage spotlight"""
     featured = await db.partners.find(
-        {"status": "published", "is_featured": True},
+        {**PUBLIC_QUERY, "is_featured": True},
         {"_id": 0}
     ).sort("sort_order", 1).to_list(10)
     if len(featured) < 3:
         extras = await db.partners.find(
-            {"status": "published", "slug": {"$nin": [p["slug"] for p in featured]}},
+            {**PUBLIC_QUERY, "slug": {"$nin": [p["slug"] for p in featured]}},
             {"_id": 0}
         ).sort("sort_order", 1).to_list(6 - len(featured))
         featured.extend(extras)
@@ -768,14 +783,14 @@ async def get_project_categories():
 @api_router.get("/solution-packs")
 async def get_solution_packs():
     """Get all solution packs"""
-    packs = await db.solution_packs.find({"status": "published"}, {"_id": 0}).to_list(50)
+    packs = await db.solution_packs.find(PUBLIC_QUERY, {"_id": 0}).to_list(50)
     return packs
 
 
 @api_router.get("/solution-packs/{slug}")
 async def get_solution_pack(slug: str):
     """Get single solution pack"""
-    pack = await db.solution_packs.find_one({"slug": slug}, {"_id": 0})
+    pack = await db.solution_packs.find_one({"slug": slug, **PUBLIC_QUERY}, {"_id": 0})
     if not pack:
         raise HTTPException(status_code=404, detail="Solution pack not found")
     return pack
@@ -807,7 +822,7 @@ async def update_solution_pack(slug: str, updates: dict, admin: dict = Depends(g
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Solution pack not found")
     
-    pack = await db.solution_packs.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    pack = await db.solution_packs.find_one({"slug": slug, **PUBLIC_QUERY}, {"_id": 0, "id": 1})
     await log_audit(admin["admin_id"], admin["email"], "update", "solution_pack", pack["id"])
     
     return {"message": "Solution pack updated"}
@@ -816,7 +831,7 @@ async def update_solution_pack(slug: str, updates: dict, admin: dict = Depends(g
 @api_router.delete("/solution-packs/{slug}")
 async def delete_solution_pack(slug: str, admin: dict = Depends(get_current_admin)):
     """Delete solution pack"""
-    pack = await db.solution_packs.find_one({"slug": slug}, {"_id": 0, "id": 1})
+    pack = await db.solution_packs.find_one({"slug": slug, **PUBLIC_QUERY}, {"_id": 0, "id": 1})
     if not pack:
         raise HTTPException(status_code=404, detail="Solution pack not found")
     
@@ -857,17 +872,17 @@ async def get_storage_config(admin: dict = Depends(get_current_admin)):
 DEFAULT_SETTINGS = {
     "id": "site_settings",
     "contact": {
-        "phone_display": "+91 94009 39936",
-        "phone_link": "tel:+919400939936",
-        "whatsapp_number": "919400939936",
-        "whatsapp_link": "https://wa.me/919400939936",
-        "email": "info@septagroup.in",
-        "office_address": "Septa Group, Kerala, India",
-        "office_address_short": "Kerala, India",
+        "phone_display": "",
+        "phone_link": "",
+        "whatsapp_number": "",
+        "whatsapp_link": "",
+        "email": "",
+        "office_address": "",
+        "office_address_short": "",
         "map_link": "",
-        "contact_person": "Paul Jose",
-        "contact_person_role": "Managing Director",
-        "operating_districts": ["Ernakulam", "Thrissur", "Kozhikode", "Trivandrum", "Kottayam"],
+        "contact_person": "",
+        "contact_person_role": "",
+        "operating_districts": [],
     },
     "enquiry": {
         "project_types": [
@@ -893,7 +908,7 @@ DEFAULT_SETTINGS = {
             "1–2 years",
             "2+ years",
         ],
-        "lead_notification_email": os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@septa.group"),
+        "lead_notification_email": "",
     },
     "content_language_mode": "english_only",
     "footer_tagline": "Built with Clarity. Delivered with Discipline.",
@@ -915,6 +930,11 @@ async def get_site_settings():
         return DEFAULT_SETTINGS
     if "nav_visibility" not in settings:
         settings["nav_visibility"] = DEFAULT_SETTINGS["nav_visibility"]
+    enquiry = settings.get("enquiry") or {}
+    enquiry.pop("lead_notification_email", None)
+    settings["enquiry"] = enquiry
+    for key in ("admin_email", "lead_notification_email", "resend_api_key"):
+        settings.pop(key, None)
     return settings
 
 
@@ -943,11 +963,13 @@ async def update_site_settings(
 # ============================================================================
 
 @api_router.get("/pages/{page_id}")
-async def get_page_content(page_id: str):
-    """Get CMS content blocks for a page"""
+async def get_page_content(page_id: str, admin: Optional[dict] = Depends(get_optional_admin)):
+    """Return only approved page content to visitors; editors can manage drafts."""
     page = await db.page_content.find_one({"page_id": page_id}, {"_id": 0})
     if not page:
         return {"page_id": page_id, "blocks": []}
+    if not admin and not (page.get("status") == "published" and page.get("publication_reviewed") is True):
+        return {"page_id": page_id, "blocks": [], "status": page.get("status", "draft")}
     return page
 
 
@@ -960,6 +982,8 @@ async def update_page_content(
     """Update page content blocks"""
     content.pop("_id", None)
     content["page_id"] = page_id
+    content.setdefault("status", "draft")
+    content.setdefault("publication_reviewed", False)
     content["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     await db.page_content.update_one(
@@ -984,6 +1008,10 @@ async def root():
 @api_router.get("/health")
 async def health_check():
     """Health check"""
+    try:
+        await db.command("ping")
+    except Exception:
+        raise HTTPException(503, "Database unavailable")
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
@@ -995,13 +1023,23 @@ async def bootstrap_admin():
     """Create admin from env vars if none exists"""
     admin_count = await db.admins.count_documents({})
     if admin_count == 0:
-        email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@septa.group")
-        password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "septa2024admin")
+        email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "owner@example.com")
+        password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "")
+        if PRODUCTION and (not email or email.lower().strip() == "owner@example.com"):
+            raise RuntimeError("Set BOOTSTRAP_ADMIN_EMAIL to the real owner account before production startup.")
+        if len(password) < 12 or password.lower().startswith("use-a-unique-password"):
+            if PRODUCTION:
+                raise RuntimeError("Set BOOTSTRAP_ADMIN_PASSWORD (12+ characters) for initial owner setup.")
+            logger.warning("No admin created: configure BOOTSTRAP_ADMIN_PASSWORD.")
+            return
         
         admin = {
             "id": str(uuid.uuid4()),
-            "email": email,
+            "email": email.lower().strip(),
             "password_hash": get_password_hash(password),
+            "role": "owner",
+            "disabled": False,
+            "auth_version": 0,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "last_login": None
         }
@@ -1317,11 +1355,17 @@ async def startup_event():
     set_email_logs_collection(db.email_logs)
     
     await bootstrap_admin()
-    await migrate_json_to_db()
-    await seed_solution_packs()
-    await migrate_partners_schema()
+    await db.projects.create_index("slug", unique=True)
+    await db.partners.create_index("slug", unique=True)
+    await db.leaders.create_index("slug", unique=True)
+    await db.admins.create_index("email", unique=True)
+    await db.leads.create_index("submission_id", unique=True, sparse=True)
+    if not PRODUCTION and os.getenv("SEED_DEMO_DATA") == "true":
+        await migrate_json_to_db()
+        await seed_solution_packs()
+        await seed_page_content()
     await seed_site_settings()
-    await seed_page_content()
+    app.state.notification_worker = asyncio.create_task(worker(db))
     logger.info("Septa API started successfully")
 
 
@@ -1329,7 +1373,23 @@ async def startup_event():
 # APP SETUP
 # ============================================================================
 
+from release_api import attach_release_routes
+attach_release_routes(api_router, db, log_audit)
 app.include_router(api_router)
+
+@app.middleware("http")
+async def response_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    if PRODUCTION:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
+    if not INDEXABLE or request.url.path.startswith(("/api", "/admin", "/content-checklist")) or "preview" in request.query_params:
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    if request.url.path.startswith("/api"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 # Mount static files for local uploads
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
@@ -1337,7 +1397,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -1346,4 +1406,13 @@ app.add_middleware(
 @app.on_event("shutdown")
 async def shutdown_db_client():
     """Cleanup on shutdown"""
+    task = getattr(app.state, "notification_worker", None)
+    if task:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
     client.close()
+
+# Register after API and uploads so they are never swallowed by the frontend.
+from public_site import attach_public_site
+attach_public_site(app, db)

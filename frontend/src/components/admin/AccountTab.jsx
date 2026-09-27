@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyRound, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 export default function AccountTab({ token, email }) {
   const [form, setForm] = useState({ current_password: '', new_password: '', confirm: '' });
@@ -12,8 +12,8 @@ export default function AccountTab({ token, email }) {
   const submit = async (e) => {
     e.preventDefault();
     setMsg(null);
-    if (form.new_password.length < 8) {
-      setMsg({ ok: false, text: 'New password must be at least 8 characters' });
+    if (form.new_password.length < 12) {
+      setMsg({ ok: false, text: 'New password must be at least 12 characters' });
       return;
     }
     if (form.new_password !== form.confirm) {
@@ -25,7 +25,8 @@ export default function AccountTab({ token, email }) {
       await axios.post(`${API}/admin/change-password`,
         { current_password: form.current_password, new_password: form.new_password },
         { headers: { Authorization: `Bearer ${token}` } });
-      setMsg({ ok: true, text: 'Password changed. Use it on your next login.' });
+      sessionStorage.removeItem('septa-admin-token');
+      window.location.assign('/admin');
       setForm({ current_password: '', new_password: '', confirm: '' });
     } catch (err) {
       setMsg({ ok: false, text: err.response?.data?.detail || 'Could not change password' });
@@ -60,7 +61,7 @@ export default function AccountTab({ token, email }) {
             value={form.new_password}
             onChange={e => setForm({ ...form, new_password: e.target.value })}
             data-testid="new-password-input" />
-          <p className="text-[11px] font-inter text-[#8A8A8A] mt-1.5">Minimum 8 characters</p>
+          <p className="text-[11px] font-inter text-[#8A8A8A] mt-1.5">Minimum 12 characters</p>
         </div>
         <div>
           <label className={labelCls}>Confirm New Password</label>

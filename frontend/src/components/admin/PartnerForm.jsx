@@ -1,3 +1,5 @@
+import { PublicationFields, SEOFields } from './Fields';
+import { errorMessage } from '../../lib/cms';
 import { useState } from 'react';
 import { X, Save, Loader2, Upload, Plus, AlertTriangle } from 'lucide-react';
 import { uploadFile } from '../../hooks/useApi';
@@ -12,6 +14,8 @@ const RELATIONSHIP_TYPES = ['Group Company', 'Core Partner', 'Project Partner', 
 
 export default function PartnerForm({ partner, token, onSave, onClose }) {
   const [form, setForm] = useState({
+    publication_reviewed: partner?.publication_reviewed || false,
+    seo: partner?.seo || {},
     slug: partner?.slug || '',
     name: partner?.name || { en: '', ml: null },
     category: partner?.category || PARTNER_CATEGORIES[0],
@@ -42,7 +46,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
       if (!window.confirm('Publishing without a card image is not recommended. Cards will appear with a placeholder. Continue?')) return;
     }
     setSaving(true);
-    try { await onSave(form); } catch { alert('Error saving'); }
+    try { await onSave(form); } catch(e) { alert(errorMessage(e)); }
     setSaving(false);
   };
 
@@ -57,7 +61,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
       } else {
         setForm({ ...form, media: { ...form.media, [field]: result.url } });
       }
-    } catch { alert('Upload failed (using local storage fallback).'); }
+    } catch { alert('Upload failed. Check storage configuration and file size.'); }
     setUploading(false);
   };
 
@@ -223,6 +227,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
             </>
           )}
 
+          <PublicationFields form={form} setForm={setForm} /><SEOFields value={form.seo} onChange={seo=>setForm({...form,seo})} />
           <div className="flex justify-end gap-3 pt-4 border-t border-[#8A8A8A]/20">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">Cancel</button>
             <button type="submit" disabled={saving} data-testid="save-partner-btn"

@@ -15,7 +15,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 logger = logging.getLogger(__name__)
 
 # Configuration
-SECRET_KEY = os.environ.get("SECRET_KEY", "septa-secret-key-change-in-production")
+from config import SECRET_KEY, PRODUCTION, CORS_ORIGINS
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 REFRESH_TOKEN_EXPIRE_DAYS = 7
@@ -75,7 +75,7 @@ def set_auth_cookie(response: Response, token: str, name: str = "septa_auth"):
         key=name,
         value=token,
         httponly=True,
-        secure=True,  # HTTPS only
+        secure=PRODUCTION,
         samesite="lax",
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/api"
@@ -121,7 +121,22 @@ async def get_current_admin(
     if not admin_id or not email:
         raise HTTPException(status_code=401, detail="Invalid token payload")
     
-    return {"admin_id": admin_id, "email": email}
+    db = request.app.state.db
+    account = await db.admins.find_one({"id": admin_id, "disabled": {"$ne": True}})
+    if not account or payload.get("auth_version", 0) != account.get("auth_version", 0):
+        raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
+    if not credentials and request.method not in {"GET", "HEAD", "OPTIONS"}:
+        origin = request.headers.get("origin")
+        if not origin or origin.rstrip("/") not in CORS_ORIGINS:
+            raise HTTPException(status_code=403, detail="Untrusted request origin")
+    role = account.get("role", "owner")
+    path = request.url.path
+    if role == "editor" and any(x in path for x in ("/leads", "/email-logs", "/settings", "/export", "/audit-logs", "/admin/users", "/admin/readiness", "/admin/revisions", "/admin/restore")):
+        raise HTTPException(status_code=403, detail="This action requires an owner or publisher.")
+    if path.startswith("/api/admin/users") and role != "owner":
+        raise HTTPException(status_code=403, detail="Only the owner can manage accounts.")
+    return {"admin_id": admin_id, "email": account["email"], "role": role}
+
 
 
 async def get_optional_admin(

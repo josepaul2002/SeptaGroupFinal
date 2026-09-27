@@ -8,9 +8,14 @@ import TestimonialsTab from '../components/admin/TestimonialsTab';
 import SettingsTab from '../components/admin/SettingsTab';
 import AuditLogTab from '../components/admin/AuditLogTab';
 import PageContentTab from '../components/admin/PageContentTab';
+import LeadersTab from '../components/admin/LeadersTab';
+import ReadinessTab from '../components/admin/ReadinessTab';
+import UsersTab from '../components/admin/UsersTab';
 import AccountTab from '../components/admin/AccountTab';
 
 const TABS = [
+  {id:'readiness',label:'Launch readiness',icon:LayoutDashboard},
+  {id:'leaders',label:'Project leaders',icon:Users},
   { id: 'leads', label: 'Leads', icon: MessageSquare },
   { id: 'projects', label: 'Projects', icon: Folder },
   { id: 'partners', label: 'Partners', icon: Users },
@@ -18,12 +23,13 @@ const TABS = [
   { id: 'testimonials', label: 'Testimonials', icon: FileText },
   { id: 'audit', label: 'Audit Log', icon: History },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'users', label: 'Admin accounts', icon: Users },
   { id: 'account', label: 'Account', icon: KeyRound },
 ];
 
 export default function AdminPage() {
   const { token, admin, loading: authLoading, login, logout, isAuthenticated } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState('leads');
+  const [activeTab, setActiveTab] = useState('projects');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
@@ -97,10 +103,10 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex gap-8">
-          <aside className="w-48 flex-shrink-0">
+        <div className="flex flex-col md:flex-row gap-8">
+          <aside className="w-full md:w-48 flex-shrink-0">
             <nav className="space-y-1">
-              {TABS.map(tab => (
+              {TABS.filter(tab => admin?.role !== 'editor' || ['projects','partners','leaders','testimonials','account','users'].includes(tab.id)).map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-testid={`tab-${tab.id}`}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-inter rounded transition-colors ${
                     activeTab === tab.id ? 'bg-[#050505] text-white' : 'text-[#050505]/70 hover:bg-[#050505]/10'
@@ -112,6 +118,8 @@ export default function AdminPage() {
           </aside>
 
           <main className="flex-1 min-w-0">
+            {activeTab === 'leaders' && <LeadersTab token={token} />}
+            {activeTab === 'readiness' && <ReadinessTab token={token} />}
             {activeTab === 'leads' && <LeadsTab token={token} />}
             {activeTab === 'projects' && <ProjectsTab token={token} />}
             {activeTab === 'partners' && <PartnersTab token={token} />}
@@ -119,6 +127,7 @@ export default function AdminPage() {
             {activeTab === 'testimonials' && <TestimonialsTab token={token} />}
             {activeTab === 'audit' && <AuditLogTab token={token} />}
             {activeTab === 'settings' && <SettingsTab token={token} />}
+            {activeTab === 'users' && <UsersTab token={token} admin={admin} />}
             {activeTab === 'account' && <AccountTab token={token} email={admin?.email} />}
           </main>
         </div>

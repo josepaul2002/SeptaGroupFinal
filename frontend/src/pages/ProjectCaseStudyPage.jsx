@@ -8,6 +8,7 @@ import PreviewBanner from '../components/PreviewBanner';
 import ImageGallery from '../components/ImageGallery';
 import VideoPlayer from '../components/VideoPlayer';
 import Model3DViewer from '../components/Model3DViewer';
+import ProjectCredits from '../components/ProjectCredits';
 import PlanDrawings from '../components/PlanDrawings';
 
 const typeColors = {
@@ -164,6 +165,7 @@ export default function ProjectCaseStudyPage() {
         </div>
       </section>
 
+      <ProjectCredits slug={slug} scope={project.scope} />
       {/* Tab Navigation */}
       <div className="sticky top-16 z-30 bg-white border-b border-[#8A8A8A]/20" data-testid="project-tabs">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 relative">
@@ -391,13 +393,13 @@ export default function ProjectCaseStudyPage() {
                     <span className="ml-2 text-xs font-inter text-[#606060] uppercase tracking-wider">Construction Delivery</span>
                   </div>
                 </div>
-                {project.partner_stack?.map(ps => {
-                  const partner = getPartner(ps.partner_id);
+                {(project.credits || []).filter(c => c.entity_type === 'partner' && c.verified).map(ps => {
+                  const partner = getPartner(ps.entity_slug);
                   return (
                     <div key={ps.partner_id} className="flex items-start gap-4 py-3.5 border-b border-[#F6F6F3]/10"
-                      data-testid={`stack-row-${ps.partner_id}`}>
+                      data-testid={`stack-row-${ps.entity_slug}`}>
                       <span className="text-xs font-inter text-[#8A8A8A] w-28 flex-shrink-0 uppercase tracking-wider pt-0.5">
-                        {ps.role_label}
+                        {ps.role}
                       </span>
                       <div className="flex-1">
                         {partner ? (
@@ -407,7 +409,7 @@ export default function ProjectCaseStudyPage() {
                             <ArrowRight size={11} strokeWidth={1.5} />
                           </Link>
                         ) : (
-                          <span className="text-sm font-inter font-medium text-[#F6F6F3]">{ps.partner_id}</span>
+                          <span className="text-sm font-inter font-medium text-[#F6F6F3]">{ps.entity_slug}</span>
                         )}
                         <p className="text-xs font-inter font-light text-[#F6F6F3]/45 mt-0.5 leading-relaxed">{t(ps.contribution)}</p>
                       </div>

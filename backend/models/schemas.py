@@ -2,8 +2,8 @@
 Enhanced Pydantic models for Septa Group CMS
 Includes bilingual support, partner media, site settings, page content
 """
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict
+from typing import List, Optional, Dict, Any, Literal
 from enum import Enum
 
 
@@ -11,7 +11,9 @@ from enum import Enum
 
 class PublishStatus(str, Enum):
     draft = "draft"
+    review = "review"
     published = "published"
+    archived = "archived"
 
 
 class RelationshipType(str, Enum):
@@ -31,24 +33,71 @@ class BilingualText(BaseModel):
 # --- Media Models ---
 
 class MediaItem(BaseModel):
-    id: Optional[str] = None
+    model_config = ConfigDict(extra="allow")
     url: str
-    thumbnail_url: Optional[str] = None
-    poster_url: Optional[str] = None
-    type: str = "image"
     caption: Optional[BilingualText] = None
+    alt: str = ""
+    credit: str = ""
+    kind: Literal["photograph", "render", "concept", "plan", "video"] = "photograph"
+    approved: bool = False
     order: int = 0
+
+    @model_validator(mode="before")
+    @classmethod
+    def legacy(cls, value):
+        return {"url": value} if isinstance(value, str) else value
 
 
 class ProjectMedia(BaseModel):
-    hero_video: Optional[MediaItem] = None
+    hero_video: Optional[str] = None
     hero_poster: Optional[str] = None
-    owner_testimonial_video: Optional[MediaItem] = None
-    gallery: List[MediaItem] = []
-    plan_drawings: List[MediaItem] = []
-    renders_3d: List[MediaItem] = []
-    model_3d_url: Optional[str] = None
+    owner_testimonial_video: Optional[str] = None
+    images: List[MediaItem] = Field(default_factory=list)
+    plans: List[MediaItem] = Field(default_factory=list)
+    renders_3d: List[MediaItem] = Field(default_factory=list)
+    model_3d: Optional[str] = None
     plans_public: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalise_legacy(cls, value):
+        value = dict(value or {})
+        for old, new in [("gallery", "images"), ("plan_drawings", "plans"), ("model_3d_url", "model_3d")]:
+            if old in value and new not in value:
+                value[new] = value[old]
+        for field in ["hero_video", "owner_testimonial_video", "model_3d"]:
+            if isinstance(value.get(field), dict):
+                value[field] = value[field].get("url")
+        return value
+
+
+class SEOSettings(BaseModel):
+    title: str = Field(default="", max_length=180)
+    description: str = Field(default="", max_length=400)
+    image: str = ""
+    noindex: bool = False
+
+
+class ProjectCredit(BaseModel):
+    entity_type: Literal["partner", "leader"]
+    entity_slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    role: str = Field(min_length=2, max_length=120)
+    contribution: BilingualText = Field(default_factory=BilingualText)
+    affiliation_at_time: str = ""
+    verified: bool = False
+
+
+class LeaderCreate(BaseModel):
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    name: BilingualText = Field(default_factory=BilingualText)
+    title: BilingualText = Field(default_factory=BilingualText)
+    bio: BilingualText = Field(default_factory=BilingualText)
+    photo: str = ""
+    expertise: List[str] = Field(default_factory=list)
+    qualifications: List[str] = Field(default_factory=list)
+    status: PublishStatus = PublishStatus.draft
+    publication_reviewed: bool = False
+    seo: SEOSettings = Field(default_factory=SEOSettings)
 
 
 # --- Partner Stack ---
@@ -86,23 +135,45 @@ class ProjectTabVisibility(BaseModel):
 # --- Lead Model ---
 
 class LeadCreate(BaseModel):
-    name: str
-    phone: str
-    email: str = ""
+    name: str = Field(min_length=2, max_length=120)
+    phone: str = Field(min_length=8, max_length=32)
+    email: str = Field(default="", max_length=254)
     project_location: Optional[str] = ""
     project_type: Optional[str] = ""
     budget_range: Optional[str] = ""
     timeline: Optional[str] = ""
-    message: Optional[str] = ""
+    message: Optional[str] = Field(default="", max_length=5000)
     honeypot: Optional[str] = ""
     page_source: Optional[str] = ""
     partner_ref: Optional[str] = ""
     service_ref: Optional[str] = ""
+    leader_ref: str = Field(default="", max_length=160)
+    project_ref: str = Field(default="", max_length=160)
+    enquiry_type: Literal["project", "introduction", "collaboration"] = "project"
+    submission_id: Optional[str] = Field(default=None, pattern=r"^[a-zA-Z0-9-]{16,80}$")
+    landing_page: str = Field(default="", max_length=500)
+    submission_page: str = Field(default="", max_length=500)
+    referral_source: str = Field(default="", max_length=250)
+    utm_source: str = Field(default="", max_length=150)
+    utm_medium: str = Field(default="", max_length=150)
+    utm_campaign: str = Field(default="", max_length=150)
+
+    @field_validator("email")
+    @classmethod
+    def valid_email(cls, value):
+        if not value:
+            return ""
+        from email_validator import validate_email
+        return validate_email(value, check_deliverability=False).normalized
+
 
 
 class LeadStatusUpdate(BaseModel):
-    status: str
-    notes: Optional[str] = None
+    status: Literal["new", "contacted", "qualified", "closed", "archived"] = "new"
+    notes: Optional[str] = Field(default=None, max_length=10000)
+    owner: Optional[str] = Field(default=None, max_length=120)
+    next_action: Optional[str] = Field(default=None, max_length=500)
+    follow_up_at: Optional[str] = Field(default=None, max_length=40)
 
 
 class LeadResponse(BaseModel):
@@ -131,7 +202,9 @@ class PartnerMedia(BaseModel):
 
 
 class PartnerBase(BaseModel):
-    slug: str
+    publication_reviewed: bool = False
+    seo: SEOSettings = Field(default_factory=SEOSettings)
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     name: BilingualText
     category: str
     specialties: List[str] = []
@@ -155,6 +228,8 @@ class PartnerCreate(PartnerBase):
 
 
 class PartnerUpdate(BaseModel):
+    publication_reviewed: Optional[bool] = None
+    seo: Optional[SEOSettings] = None
     name: Optional[BilingualText] = None
     category: Optional[str] = None
     specialties: Optional[List[str]] = None
@@ -184,7 +259,11 @@ class PartnerResponse(PartnerBase):
 # --- Project Model ---
 
 class ProjectBase(BaseModel):
-    slug: str
+    publication_reviewed: bool = False
+    scope: BilingualText = Field(default_factory=BilingualText)
+    credits: List[ProjectCredit] = Field(default_factory=list)
+    seo: SEOSettings = Field(default_factory=SEOSettings)
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     title: BilingualText
     location: str
     type: str
@@ -198,9 +277,9 @@ class ProjectBase(BaseModel):
     gallery: List[str] = []
     short_description: BilingualText
     challenge: BilingualText
-    challenge_detail: BilingualText
-    approach_detail: BilingualText
-    outcome_detail: BilingualText
+    challenge_detail: BilingualText = Field(default_factory=BilingualText)
+    approach_detail: BilingualText = Field(default_factory=BilingualText)
+    outcome_detail: BilingualText = Field(default_factory=BilingualText)
     partner_stack: List[PartnerStackItem] = []
     story: Optional[StoryModule] = None
     design: Optional[DesignModule] = None
@@ -215,6 +294,10 @@ class ProjectCreate(ProjectBase):
 
 
 class ProjectUpdate(BaseModel):
+    publication_reviewed: Optional[bool] = None
+    scope: Optional[BilingualText] = None
+    credits: Optional[List[ProjectCredit]] = None
+    seo: Optional[SEOSettings] = None
     title: Optional[BilingualText] = None
     location: Optional[str] = None
     type: Optional[str] = None
@@ -251,6 +334,9 @@ class ProjectResponse(ProjectBase):
 # --- Testimonial Model ---
 
 class TestimonialBase(BaseModel):
+    status: PublishStatus = PublishStatus.draft
+    publication_reviewed: bool = False
+    project_ref: str = ""
     client_name: str
     client_role: str
     project_type: str
@@ -279,11 +365,12 @@ class AdminLoginResponse(BaseModel):
     token_type: str = "bearer"
     admin_id: str
     email: str
+    role: str = "owner"
 
 
 class AdminPasswordChange(BaseModel):
     current_password: str
-    new_password: str = Field(min_length=8)
+    new_password: str = Field(min_length=12, max_length=72)
 
 
 class AdminUser(BaseModel):

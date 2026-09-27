@@ -1,44 +1,10 @@
-import { Trash2, Loader2 } from 'lucide-react';
-import { useAdminTestimonials, getText } from '../../hooks/useApi';
-
-export default function TestimonialsTab({ token }) {
-  const { testimonials, loading, deleteTestimonial } = useAdminTestimonials(token);
-
-  if (loading) {
-    return (
-      <div className="bg-white border border-[#8A8A8A]/20 p-12 flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#606060]" size={24} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white border border-[#8A8A8A]/20 p-6" data-testid="testimonials-tab">
-      <h2 className="text-lg font-sora font-medium text-[#050505] mb-6">Testimonials ({testimonials.length})</h2>
-
-      {testimonials.length === 0 ? (
-        <p className="text-sm text-[#8A8A8A] py-8 text-center">No testimonials yet</p>
-      ) : (
-        <div className="space-y-4">
-          {testimonials.map(t => (
-            <div key={t.id} className="p-4 border border-[#8A8A8A]/20" data-testid={`testimonial-row-${t.id}`}>
-              <p className="text-sm font-inter text-[#050505]/80 italic mb-3">"{getText(t.content)}"</p>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-inter font-medium text-[#050505]">{t.client_name}</p>
-                  <p className="text-xs text-[#8A8A8A]">{t.client_role}</p>
-                </div>
-                <button
-                  onClick={() => { if (window.confirm('Delete this testimonial?')) deleteTestimonial(t.id); }}
-                  className="text-red-400 hover:text-red-600 p-1"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+import {useState} from 'react';
+import axios from 'axios';
+import {useAdminTestimonials,getText} from '../../hooks/useApi';
+import {API,auth,errorMessage,bl} from '../../lib/cms';
+import {Field,BilingualField,PublicationFields} from './Fields';
+export default function TestimonialsTab({token}){
+ const {testimonials,loading,setTestimonials}=useAdminTestimonials(token),[form,setForm]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const save=async e=>{e.preventDefault();setBusy(true);setError('');try{const {data}=await axios[form.id?'put':'post'](`${API}/testimonials${form.id?'/'+form.id:''}`,form,auth(token));setTestimonials(list=>form.id?list.map(t=>t.id===form.id?form:t):[...list,{...form,id:data.id}]);setForm(null);}catch(e){setError(errorMessage(e));}finally{setBusy(false);}};
+ return <section className="bg-white p-6 space-y-5"><div className="flex justify-between"><h2 className="text-xl">Testimonials</h2><button onClick={()=>setForm({content:bl(),client_name:'',client_role:'',project_ref:'',status:'draft',publication_reviewed:false})}>Add testimonial</button></div><p>Use the client’s approved words and confirm permission before publication.</p>{error&&<p role="alert">{error}</p>}{form?<form onSubmit={save} className="space-y-5">{['client_name','client_role','project_ref'].map(k=><Field key={k} label={k.replaceAll('_',' ')}><input required={k==='client_name'} value={form[k]||''} onChange={e=>setForm({...form,[k]:e.target.value})}/></Field>)}<BilingualField label="Client’s words" value={form.content} onChange={content=>setForm({...form,content})}/><PublicationFields value={form} onChange={v=>setForm({...form,...v})}/><button disabled={busy} className="bg-black text-white p-3 mr-5">Save</button><button type="button" onClick={()=>setForm(null)}>Cancel</button></form>:loading?<p>Loading…</p>:testimonials.map(t=><button key={t.id} onClick={()=>setForm({...t,content:bl(t.content)})} className="block w-full text-left border p-4"><p>{getText(t.content)}</p><p className="text-sm mt-2">{t.client_name} · {t.status||'Unreviewed'}</p></button>)}</section>;
 }

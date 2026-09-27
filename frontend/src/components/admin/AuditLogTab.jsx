@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Clock, User, Filter } from 'lucide-react';
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 const actionColors = {
   create: 'bg-[#050505] text-white',

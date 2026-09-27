@@ -1,0 +1,11 @@
+.git
+.gitignore
+frontend/node_modules
+frontend/build
+backend/__pycache__
+backend/uploads
+.env
+.env.*
+*.log
+memory
+test_reports

@@ -3,7 +3,7 @@ import { Download, Loader2, Save } from 'lucide-react';
 import { exportContent } from '../../hooks/useApi';
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 export default function SettingsTab({ token }) {
   const [settings, setSettings] = useState(null);
@@ -70,6 +70,7 @@ export default function SettingsTab({ token }) {
   const sections = [
     { id: 'contact', label: 'Contact Info' },
     { id: 'enquiry', label: 'Enquiry Form' },
+    { id: 'proof', label: 'Proof & Metrics' },
     { id: 'navigation', label: 'Navigation' },
     { id: 'language', label: 'Language Mode' },
     { id: 'export', label: 'Export / Backup' },
@@ -134,7 +135,7 @@ export default function SettingsTab({ token }) {
         <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4">
           <h3 className="text-sm font-sora font-medium text-[#050505] mb-2">Enquiry Form Options</h3>
           <p className="text-xs text-[#8A8A8A] mb-4">Customize dropdowns in the contact form.</p>
-          <Field label="Lead Notification Email" val={settings.enquiry.lead_notification_email || ''} set={v => updateEnquiry('lead_notification_email', v)} tid="notif-email" />
+          <p className="text-xs text-amber-800 border border-amber-200 bg-amber-50 p-3">Lead email delivery is configured with the deployment environment variable ADMIN_NOTIFY_EMAIL. It is never saved in public site settings.</p>
           <div>
             <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Types (one per line)</label>
             <textarea rows={6} className="form-input resize-none" data-testid="project-types-list"
@@ -153,6 +154,15 @@ export default function SettingsTab({ token }) {
               value={(settings.enquiry.timeline_ranges || []).join('\n')}
               onChange={e => updateListField('enquiry', 'timeline_ranges', e.target.value)} />
           </div>
+        </div>
+      )}
+
+      {/* PROOF & METRICS */}
+      {activeSection === 'proof' && (
+        <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4">
+          <h3 className="text-sm font-sora font-medium text-[#050505]">Verified homepage metrics</h3>
+          <p className="text-xs text-[#8A8A8A]">Only enter numbers and claims that Septa can substantiate. One metric per line in the format: value | label | supporting line.</p>
+          <textarea rows={8} className="form-input resize-none" value={(settings.trust_metrics || []).map(m => `${m.value || ''} | ${m.label || ''} | ${m.sub || ''}`).join('\n')} onChange={e => setSettings({...settings,trust_metrics:e.target.value.split('\n').filter(Boolean).map(line=>{const [value,label,sub]=line.split('|').map(v=>v.trim());return {value,label,sub};})})} placeholder="e.g. 20+ | Years delivering projects | Confirm exact basis" />
         </div>
       )}
 

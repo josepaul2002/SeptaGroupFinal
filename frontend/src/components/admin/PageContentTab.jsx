@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Save, Plus, Trash2, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 const BLOCK_TYPES = {
   about: [
@@ -24,19 +24,21 @@ export default function PageContentTab({ token }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [status, setStatus] = useState('draft');
+  const [reviewed, setReviewed] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    axios.get(`${API}/pages/${activePage}`)
-      .then(r => setBlocks(r.data.blocks || []))
+    axios.get(`${API}/pages/${activePage}`, {headers: {Authorization: `Bearer ${token}`}})
+      .then(r => { setBlocks(r.data.blocks || []); setStatus(r.data.status || 'draft'); setReviewed(!!r.data.publication_reviewed); })
       .catch(() => setBlocks([]))
       .finally(() => setLoading(false));
-  }, [activePage]);
+  }, [activePage, token]);
 
   const save = async () => {
     setSaving(true); setMsg('');
     try {
-      await axios.put(`${API}/pages/${activePage}`, { page_id: activePage, blocks }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API}/pages/${activePage}`, { page_id: activePage, blocks, status, publication_reviewed: reviewed }, { headers: { Authorization: `Bearer ${token}` } });
       setMsg('Saved');
     } catch { setMsg('Error'); }
     setSaving(false);
@@ -101,6 +103,11 @@ export default function PageContentTab({ token }) {
               activePage === p ? 'text-[#606060] border-[#606060] font-medium' : 'text-[#8A8A8A] border-transparent'
             }`}>{p}</button>
         ))}
+      </div>
+
+      <div className="bg-white border p-4 flex flex-wrap items-center gap-4">
+        <label className="text-xs uppercase tracking-wider">Status <select className="form-input ml-2" value={status} onChange={e=>setStatus(e.target.value)}>{['draft','review','published','archived'].map(s=><option key={s}>{s}</option>)}</select></label>
+        <label className="text-sm"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)} className="mr-2"/>Facts and permissions reviewed</label>
       </div>
 
       {loading ? (

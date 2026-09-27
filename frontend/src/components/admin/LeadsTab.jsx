@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trash2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
+import LeadDetails from './LeadDetails';
+import {errorMessage} from '../../lib/cms';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 const statusColors = {
   new: 'bg-[#262626] text-white',
@@ -12,6 +14,8 @@ const statusColors = {
 };
 
 export default function LeadsTab({ token }) {
+  const [selected,setSelected]=useState(null);
+  const [error,setError]=useState('');
   const [leads, setLeads] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -19,17 +23,17 @@ export default function LeadsTab({ token }) {
   const [filter, setFilter] = useState('all');
   const limit = 25;
 
-  const fetchLeads = () => {
+  const fetchLeads = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({ skip: page * limit, limit });
     if (filter !== 'all') params.set('status', filter);
     axios.get(`${API}/leads?${params}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => { setLeads(r.data.leads || r.data); setTotal(r.data.total || 0); })
-      .catch(() => {})
+      .catch(e => setError(errorMessage(e)))
       .finally(() => setLoading(false));
-  };
+  }, [token, page, filter]);
 
-  useEffect(() => { fetchLeads(); }, [token, page, filter]);
+  useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
   const updateStatus = async (id, status) => {
     await axios.patch(`${API}/leads/${id}`, { status }, { headers: { Authorization: `Bearer ${token}` } });
@@ -47,8 +51,8 @@ export default function LeadsTab({ token }) {
     <div className="bg-white border border-[#8A8A8A]/20 p-6" data-testid="leads-tab">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-sora font-medium text-[#050505]">Leads ({total})</h2>
-        <div className="flex gap-2">
-          {['all', 'new', 'contacted', 'qualified', 'closed'].map(s => (
+        <div className="flex flex-wrap gap-2">
+          {['all', 'new', 'contacted', 'qualified', 'closed', 'archived'].map(s => (
             <button key={s} onClick={() => { setFilter(s); setPage(0); }} data-testid={`leads-filter-${s}`}
               className={`px-3 py-1 text-xs font-inter border transition-colors ${
                 filter === s ? 'bg-[#050505] text-white border-[#606060]' : 'border-[#8A8A8A]/30 text-[#050505]/60'
@@ -57,6 +61,8 @@ export default function LeadsTab({ token }) {
         </div>
       </div>
 
+      {error && <p role="alert">{error}</p>}
+      {selected && <LeadDetails lead={selected} token={token} onClose={()=>setSelected(null)} onSaved={fetchLeads}/>}
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#606060]" size={24} /></div>
       ) : leads.length === 0 ? (
@@ -75,7 +81,7 @@ export default function LeadsTab({ token }) {
               {leads.map(lead => (
                 <tr key={lead.id} className="border-b border-[#8A8A8A]/10 hover:bg-[#F6F6F3]/50" data-testid={`lead-row-${lead.id}`}>
                   <td className="py-3 px-2">
-                    <p className="font-inter font-medium text-[#050505]">{lead.name}</p>
+                    <button className="font-inter font-medium text-[#050505] underline" onClick={()=>setSelected(lead)}>{lead.name}</button>
                     {lead.message && <p className="text-xs text-[#8A8A8A] mt-0.5 truncate max-w-[180px]">{lead.message}</p>}
                     {lead.partner_ref && <p className="text-[10px] text-[#606060]">via {lead.partner_ref}</p>}
                   </td>
@@ -92,16 +98,16 @@ export default function LeadsTab({ token }) {
                     <p className="text-[10px] text-[#8A8A8A]">{lead.timeline || ''}</p>
                   </td>
                   <td className="py-3 px-2">
-                    <select value={lead.status} onChange={(e) => updateStatus(lead.id, e.target.value)}
+                    <select value={lead.status} onChange={(e) => updateStatus(lead.id, e.target.value).catch(e=>setError(errorMessage(e)))}
                       className={`text-xs font-inter px-2 py-1 border-0 outline-none cursor-pointer ${statusColors[lead.status] || 'bg-[#ECECEA] text-[#666666]'}`}
                       data-testid={`lead-status-${lead.id}`}>
                       <option value="new">New</option><option value="contacted">Contacted</option>
-                      <option value="qualified">Qualified</option><option value="closed">Closed</option>
+                      <option value="archived">Archived</option><option value="qualified">Qualified</option><option value="closed">Closed</option>
                     </select>
                   </td>
                   <td className="py-3 px-2 text-xs text-[#8A8A8A]">{new Date(lead.created_at).toLocaleDateString()}</td>
                   <td className="py-3 px-2 text-right">
-                    <button onClick={() => { if (window.confirm('Delete?')) deleteLead(lead.id); }}
+                    <button onClick={() => { if (window.confirm('Archive this enquiry? It can be restored from the archived filter.')) deleteLead(lead.id).catch(e=>setError(errorMessage(e))); }}
                       className="text-red-400 hover:text-red-600 p-1" data-testid={`delete-lead-${lead.id}`}><Trash2 size={14} /></button>
                   </td>
                 </tr>
@@ -114,7 +120,7 @@ export default function LeadsTab({ token }) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#8A8A8A]/10">
           <p className="text-xs text-[#8A8A8A]">Page {page + 1} of {totalPages}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
               className="flex items-center gap-1 px-3 py-1 text-xs border border-[#8A8A8A]/30 disabled:opacity-30" data-testid="leads-prev">
               <ChevronLeft size={12} /> Prev</button>

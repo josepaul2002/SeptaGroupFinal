@@ -73,7 +73,7 @@ Transform the Septa Group Kerala construction company website from a brochure si
 - **Cloudflare R2**: placeholder keys — local fallback at /app/uploads
 
 ## Key Credentials
-- Admin: admin@septa.group / septa2024admin
+- Admin: owner account configured through deployment environment
 - Preview: https://septa-cms-preview.preview.emergentagent.com
 
 ## Remaining Backlog
@@ -114,7 +114,7 @@ June 2026 — Phase 7 monochrome rebrand complete (site-wide incl. admin)
 ## Phase 8 — Homepage rhythm, transparent logo, contact details, admin link (June 2026) — tested ✓ (visual, desktop+mobile)
 - Homepage rebuilt to the exact architectural section rhythm: HERO(black) → TRUST(off-white) → SELECTED PROJECTS(white) → SEPTA STANDARD/process(black) → SERVICES(off-white) → TESTIMONIALS(white) → ECOSYSTEM(off-white) → CTA(black) → FOOTER(#050505). Oversized Space Grotesk statement headings ("From idea / to infrastructure.", "Building starts before construction.", "One partner. / The entire project."), grayscale imagery (colour on hover), mono section numbers, 1px plan-grid dividers, architectural arrow buttons, dark-section enquiry form (.input-underline-dark added to index.css).
 - Transparent logo: generated + alpha-processed grey mark at /app/frontend/public/septa-mark.png (used in Navbar + Footer; works on any background). Original at /septa-logo.png retained.
-- Contact details wired to live settings: WhatsApp/phone = +91 94009 39936, contact_person = "Paul Jose", contact_person_role = "Managing Director" (added to SiteContactSettings schema + DEFAULT_SETTINGS + pushed to DB). Hero/CTA WhatsApp + call now pull from settings (no more hardcoded 919876543210).
+- Contact details wired to live settings: WhatsApp/phone = verified business phone, contact_person = "Paul Jose", contact_person_role = "Managing Director" (added to SiteContactSettings schema + DEFAULT_SETTINGS + pushed to DB). Hero/CTA WhatsApp + call now pull from settings (no more hardcoded contact number).
 - Admin Portal link added to Footer bottom (data-testid=footer-admin-link → /admin).
 - All remaining colourful type-badge hexes neutralised to monochrome across all pages.
 
@@ -126,20 +126,20 @@ June 2026 — Phase 7 monochrome rebrand complete (site-wide incl. admin)
 - Original logo (/septa-logo.png) restored in navbar + footer (transparent /septa-mark.png no longer used).
 - Removed grayscale filter from all photos — full-colour imagery now.
 - Added GOLD accent (#C6A15B, tailwind `septa-gold`): active nav link, "GROUP" wordmark (nav + footer), homepage section eyebrows + process numbers, hero image accent bar.
-- Contact: WhatsApp/phone +91 94009 39936, Paul Jose (Managing Director). Enquiry notifications set to paul@septa.one (backend ADMIN_NOTIFY_EMAIL). Footer has Admin Portal link.
+- Contact: WhatsApp/phone verified business phone, Paul Jose (Managing Director). Enquiry notifications set to approved owner email (backend ADMIN_NOTIFY_EMAIL). Footer has Admin Portal link.
 
 ## PENDING
-- Google login for admin (Emergent Google Auth) — user chose it; playbook fetched. Allowlist: paul@septa.one, admin@septa.group. NOT yet built.
-- Live email sending needs a Resend API key (user will add) + verified sender domain (paul@septa.one / septa.one).
+- Google login for admin (Emergent Google Auth) — user chose it; playbook fetched. Allowlist: approved owner email, approved owner email. NOT yet built.
+- Live email sending needs a Resend API key (user will add) + verified sender domain (approved owner email / septa.one).
 
 ## Phase 10 — Google admin login + visibility verification + placeholder reformat (June 2026) — tested ✓ (iteration_10, 100%)
-- **Google Login for admin**: POST /api/admin/google-session (Emergent Google Auth via session_id → session-data), allowlist ADMIN_ALLOWED_GOOGLE_EMAILS (paul@septa.one, admin@septa.group). Mints the same JWT as password login so all admin routes work unchanged. /admin has "Sign in with Google" button (data-testid=admin-google-login-btn) + hash session_id handler. Password login still works.
+- **Google Login for admin**: POST /api/admin/google-session (Emergent Google Auth via session_id → session-data), allowlist ADMIN_ALLOWED_GOOGLE_EMAILS (approved owner email, approved owner email). Mints the same JWT as password login so all admin routes work unchanged. /admin has "Sign in with Google" button (data-testid=admin-google-login-btn) + hash session_id handler. Password login still works.
 - **Verified the media_visible + tab_visibility toggles work end-to-end** (was reported as maybe-broken; confirmed working — earlier glitch was test timing). Hardened with functional setForm updates to avoid rapid-click stale state.
 - **No-photo reformat**: removed gradient/dotted "wallpaper" placeholders. No-hero case study = clean solid #050505 header (title + gold type). No-image grid/related tiles = clean solid #050505 tile with gold type label.
 - ADMIN_ALLOWED_GOOGLE_EMAILS added to backend/.env.
 
 ## PENDING
-- Live email sending: user will add Resend API key + verify septa.one (FROM_EMAIL); ADMIN_NOTIFY_EMAIL already = paul@septa.one.
+- Live email sending: user will add Resend API key + verify septa.one (FROM_EMAIL); ADMIN_NOTIFY_EMAIL already = approved owner email.
 - Content upload: user to add real project photos + partner logos via admin.
 
 ## Last Updated (latest)
@@ -151,7 +151,7 @@ June 2026 — Phase 10: Google admin login live; visibility toggles verified; pl
 - **Contact page alignment fix**: sidebar contact items no longer overlap (flex-col gap instead of collapsing space-y; icon tile vertically centred with label/value).
 - **LIVE EMAIL (Resend) ON**: RESEND_API_KEY set in backend/.env. Root cause of "not configured" was import order — `email_service` was imported before `load_dotenv()` in server.py, so the key read as empty. Fixed by calling `load_dotenv()` inside email_service.py and reading the key at call time via `_configure_resend()`. Verified: admin notification + user confirmation both sent (Resend IDs returned).
   - FROM_EMAIL = `onboarding@resend.dev` because `septa.one` is NOT yet verified in Resend. Once the user verifies septa.one at resend.com/domains, change FROM_EMAIL to `noreply@septa.one`. Until then, Resend test mode restricts recipients.
-- **Change Password screen**: new admin tab "Account" → `/app/frontend/src/components/admin/AccountTab.jsx` (data-testids: current-password-input, new-password-input, confirm-password-input, change-password-btn, change-password-message). Uses existing `POST /api/admin/change-password`; backend `AdminPasswordChange.new_password` now enforces min_length=8. Verified: short pw 422, wrong current 400, valid change + login with new password 200, reverted to septa2024admin.
+- **Change Password screen**: new admin tab "Account" → `/app/frontend/src/components/admin/AccountTab.jsx` (data-testids: current-password-input, new-password-input, confirm-password-input, change-password-btn, change-password-message). Uses existing `POST /api/admin/change-password`; backend `AdminPasswordChange.new_password` now enforces min_length=8. Verified: short pw 422, wrong current 400, valid change + login with new password 200, reverted to a unique deployment password.
 
 ## PENDING
 - Verify septa.one in Resend, then switch FROM_EMAIL to noreply@septa.one.

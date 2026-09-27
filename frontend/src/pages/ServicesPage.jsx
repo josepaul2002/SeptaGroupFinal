@@ -14,7 +14,6 @@ const services = [
     notFor: ['Small-scale residential renovations'],
     deliverables: ['Phased construction plan', 'Weekly progress reporting', 'MEP coordination', 'Quality checkpoint documentation', 'Snag-free handover'],
     timeline: '12–24 months typical',
-    relatedProject: { slug: 'st-thomas-school-thrissur', name: 'St. Thomas School of Excellence' },
   },
   {
     id: 'healthcare',
@@ -24,7 +23,6 @@ const services = [
     notFor: ['Small clinic fit-outs under 1000 sqft'],
     deliverables: ['Regulatory-compliant construction', 'MEP systems integration', 'Infection control protocols', 'Equipment coordination', 'Health dept. liaison support'],
     timeline: '12–18 months typical',
-    relatedProject: { slug: 'lakeview-medical-centre-ernakulam', name: 'Lakeview Medical Centre' },
   },
   {
     id: 'commercial',
@@ -34,7 +32,6 @@ const services = [
     notFor: ['Small shop interiors'],
     deliverables: ['Value engineering', 'Tenant coordination', 'Timeline-driven delivery', 'Cost tracking & forecasting', 'Leasing-ready handover'],
     timeline: '8–18 months typical',
-    relatedProject: { slug: 'prestige-business-square-kochi', name: 'Prestige Business Square' },
   },
   {
     id: 'residential',

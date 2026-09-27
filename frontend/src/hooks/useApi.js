@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+axios.defaults.withCredentials = true;
+localStorage.removeItem('septa-admin-token');
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 // Helper to get text from bilingual object
 export function getText(bilingual, lang = 'en') {
@@ -11,8 +13,8 @@ export function getText(bilingual, lang = 'en') {
 }
 
 // Generic fetch hook
-function useApiData(endpoint, defaultValue = []) {
-  const [data, setData] = useState(defaultValue);
+export function useApiData(endpoint, defaultValue = []) {
+  const [data, setData] = useState(() => { try { return JSON.parse(document.getElementById('septa-bootstrap')?.textContent || '{}')[endpoint] ?? defaultValue; } catch { return defaultValue; } });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -22,7 +24,7 @@ function useApiData(endpoint, defaultValue = []) {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await axios.get(`${API}${endpoint}`);
+        const res = await axios.get(`${API}${endpoint}`, endpoint.includes('preview=true') && sessionStorage.getItem('septa-admin-token') ? {headers:{Authorization:`Bearer ${sessionStorage.getItem('septa-admin-token')}`}} : {});
         if (!cancelled) {
           setData(res.data);
           setError(null);
@@ -113,7 +115,7 @@ export function useProjectCategories() {
 
 // Admin hooks
 export function useAdminAuth() {
-  const [token, setToken] = useState(() => localStorage.getItem('septa-admin-token'));
+  const [token, setToken] = useState(() => sessionStorage.getItem('septa-admin-token'));
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -131,7 +133,7 @@ export function useAdminAuth() {
         setAdmin(res.data);
       } catch {
         // Token invalid/expired
-        localStorage.removeItem('septa-admin-token');
+        sessionStorage.removeItem('septa-admin-token');
         setToken(null);
       }
       setLoading(false);
@@ -143,9 +145,9 @@ export function useAdminAuth() {
   const login = async (email, password) => {
     const res = await axios.post(`${API}/admin/login`, { email, password });
     const newToken = res.data.access_token;
-    localStorage.setItem('septa-admin-token', newToken);
+    sessionStorage.setItem('septa-admin-token', newToken);
     setToken(newToken);
-    setAdmin({ id: res.data.admin_id, email: res.data.email });
+    setAdmin({ id: res.data.admin_id, email: res.data.email, role: res.data.role });
     return res.data;
   };
 
@@ -155,7 +157,7 @@ export function useAdminAuth() {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch {}
-    localStorage.removeItem('septa-admin-token');
+    sessionStorage.removeItem('septa-admin-token');
     setToken(null);
     setAdmin(null);
   };
@@ -308,9 +310,7 @@ export function useAdminTestimonials(token) {
     
     async function fetch() {
       try {
-        const res = await axios.get(`${API}/testimonials`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await axios.get(`${API}/testimonials?published_only=false`, { headers: { Authorization: `Bearer ${token}` } });
         setTestimonials(res.data);
       } catch (err) {
         console.error('Failed to fetch testimonials:', err);

@@ -4,16 +4,12 @@ import axios from 'axios';
 import { ArrowRight, ArrowUpRight, Phone, MessageCircle, CheckCircle2, Building2, Stethoscope, Home, Layers, ClipboardList, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useProjects, usePartners, useTestimonials, useSiteSettings, getText } from '../hooks/useApi';
+import { enquiryContext } from '../lib/cms';
 import { useLanguage } from '../components/LanguageToggle';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
-const trustMetrics = [
-  { value: '20+', label: 'Years Legacy', sub: 'Est. 2004, Kerala' },
-  { value: 'Institutional + Commercial', label: 'Delivery Focus', sub: 'Schools, Hospitals, Offices' },
-  { value: '30+', label: 'Projects Delivered', sub: 'Residential & Commercial' },
-  { value: 'Weekly', label: 'Site Reporting', sub: 'Quality Checkpoints' },
-];
+const trustMetrics = [];
 
 const processSteps = [
   { num: '01', title: 'Scope Clarity & Estimation', desc: 'We document every assumption before the first figure is signed. Scope boundaries, exclusions, and material grades are defined upfront — so there are no surprises mid-build.' },
@@ -38,11 +34,12 @@ export default function HomePage() {
   const { data: partners, loading: partnersLoading } = usePartners();
   const { data: testimonials } = useTestimonials();
   const { settings } = useSiteSettings();
+  const configuredMetrics = settings?.trust_metrics || trustMetrics;
   const { t, lang } = useLanguage();
 
   const contact = settings?.contact || {};
-  const waHref = contact.whatsapp_link || (contact.whatsapp_number ? `https://wa.me/${contact.whatsapp_number}` : '#');
-  const telHref = contact.phone_link || '#';
+  const waHref = contact.whatsapp_link || (contact.whatsapp_number ? `https://wa.me/${contact.whatsapp_number}` : '');
+  const telHref = contact.phone_link || '';
 
   const [form, setForm] = useState({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
   const [formStatus, setFormStatus] = useState(null);
@@ -64,7 +61,7 @@ export default function HomePage() {
       await axios.post(`${API}/leads`, {
         name: form.name, phone: form.phone, email: '', project_type: form.project_type,
         message: form.message, project_location: '', budget_range: '', timeline: '',
-        honeypot: form.honeypot, page_source: 'Home Page'
+        honeypot: form.honeypot, page_source: 'Home Page', ...enquiryContext(), submission_id: crypto.randomUUID()
       });
       setFormStatus('success');
       setForm({ name: '', phone: '', project_type: '', message: '', honeypot: '' });
@@ -113,7 +110,7 @@ export default function HomePage() {
                   View Projects
                 </Link>
               </div>
-              <a
+              {waHref && <a
                 href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -122,16 +119,16 @@ export default function HomePage() {
               >
                 <MessageCircle size={15} strokeWidth={1.5} />
                 WhatsApp {contact.contact_person ? contact.contact_person : 'Us'}
-              </a>
+              </a>}
             </div>
 
             <div className="lg:col-span-5 relative h-[360px] md:h-[480px] lg:h-[600px] overflow-hidden reveal reveal-delay-2 border border-white/10">
-              <img
-                src="https://images.pexels.com/photos/5524237/pexels-photo-5524237.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750"
-                alt="Modern construction architecture"
+              {featuredProjects[0]?.image ? <img
+                src={featuredProjects[0].image}
+                alt={getText(featuredProjects[0].title)}
                 className="w-full h-full object-cover"
                 loading="eager"
-              />
+              /> : <div className="w-full h-full bg-[#151515] flex items-end p-8"><p className="text-white/50 text-xs uppercase tracking-[0.25em]">Approved project media will appear here</p></div>}
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#C6A15B]" />
             </div>
           </div>
@@ -142,7 +139,7 @@ export default function HomePage() {
       <section className="border-b border-[#DADAD7] bg-[#F6F6F3]" data-testid="trust-bar">
         <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 divide-x divide-[#DADAD7]">
-            {trustMetrics.map((m, i) => (
+            {configuredMetrics.map((m, i) => (
               <div key={i} className="px-4 md:px-8" data-testid={`trust-metric-${i}`}>
                 <p className="text-xl md:text-2xl font-display font-medium text-[#050505] leading-tight tracking-tight">{m.value}</p>
                 <p className="tech-label text-[11px] text-[#666666] mt-2">{m.label}</p>
@@ -373,15 +370,15 @@ export default function HomePage() {
                 Compare contractors on risk, not just price.
               </h2>
               <p className="text-base font-inter font-light text-[#A8A8A8] leading-relaxed mb-9">
-                Send us a brief summary of your project. We will respond within 24 hours with a clear scope of how we would approach it.
+                Send us a brief summary of your project. We will review it and reply with the next practical step.
               </p>
               <div className="flex flex-col gap-5">
-                <a href={telHref} data-testid="cta-call-btn" className="inline-flex items-center gap-3 text-sm font-inter font-medium text-[#F6F6F3] group">
+                {telHref && <a href={telHref} data-testid="cta-call-btn" className="inline-flex items-center gap-3 text-sm font-inter font-medium text-[#F6F6F3] group">
                   <div className="w-10 h-10 bg-white flex items-center justify-center group-hover:bg-[#8A8A8A] transition-colors">
                     <Phone size={15} className="text-[#050505]" strokeWidth={1.5} />
                   </div>
-                  {contact.phone_display || 'Call us'}
-                </a>
+                  {contact.phone_display}
+                </a>}
                 {contact.contact_person && (
                   <div className="flex items-center gap-3 pl-[52px] -mt-2">
                     <p className="text-sm font-inter text-[#A8A8A8]">
@@ -390,13 +387,13 @@ export default function HomePage() {
                     </p>
                   </div>
                 )}
-                <a href={waHref} target="_blank" rel="noopener noreferrer" data-testid="cta-whatsapp-btn"
+                {waHref && <a href={waHref} target="_blank" rel="noopener noreferrer" data-testid="cta-whatsapp-btn"
                   className="inline-flex items-center gap-3 text-sm font-inter font-medium text-[#F6F6F3] group">
                   <div className="w-10 h-10 border border-white/20 flex items-center justify-center group-hover:border-white transition-colors">
                     <MessageCircle size={15} className="text-white" strokeWidth={1.5} />
                   </div>
                   WhatsApp
-                </a>
+                </a>}
               </div>
             </div>
 
@@ -408,12 +405,12 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="tech-label text-[10px] text-white/50 block mb-2">Your Name *</label>
-                    <input type="text" required className="input-underline-dark" placeholder="Full name" data-testid="form-name"
+                    <input type="text" required minLength={2} maxLength={120} autoComplete="name" className="input-underline-dark" placeholder="Full name" data-testid="form-name"
                       value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                   </div>
                   <div>
                     <label className="tech-label text-[10px] text-white/50 block mb-2">Phone Number *</label>
-                    <input type="tel" required className="input-underline-dark" placeholder="+91 XXXXX XXXXX" data-testid="form-phone"
+                    <input type="tel" required minLength={8} maxLength={32} autoComplete="tel" className="input-underline-dark" placeholder="Your phone number" data-testid="form-phone"
                       value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                   </div>
                 </div>
@@ -435,13 +432,13 @@ export default function HomePage() {
 
                 <div>
                   <label className="tech-label text-[10px] text-white/50 block mb-2">Brief Message</label>
-                  <textarea rows={3} className="input-underline-dark resize-none" placeholder="Tell us briefly about your project..." data-testid="form-message"
+                  <textarea rows={3} maxLength={5000} className="input-underline-dark resize-none" placeholder="Tell us briefly about your project..." data-testid="form-message"
                     value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
                 </div>
 
                 {formStatus === 'success' && (
                   <div className="flex items-center gap-2 text-white text-sm font-inter" data-testid="form-success-msg">
-                    <CheckCircle2 size={15} strokeWidth={1.5} /> Enquiry received. We will contact you within 24 hours.
+                    <CheckCircle2 size={15} strokeWidth={1.5} /> Enquiry received. We will contact you about the next step.
                   </div>
                 )}
                 {formStatus === 'error' && (

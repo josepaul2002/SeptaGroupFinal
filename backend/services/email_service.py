@@ -2,6 +2,8 @@
 Email service using Resend
 """
 import os
+from html import escape
+from config import PRODUCTION
 import asyncio
 import logging
 from typing import List, Optional
@@ -19,12 +21,14 @@ load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 def _configure_resend() -> str:
     """Read the API key at call time so .env load order doesn't matter."""
     key = os.environ.get("RESEND_API_KEY", "")
+    if PRODUCTION and (not os.getenv("FROM_EMAIL") or "resend.dev" in os.getenv("FROM_EMAIL", "")):
+        return ""
     resend.api_key = key
     return key
 
 
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "onboarding@resend.dev")
-ADMIN_NOTIFY_EMAILS = os.environ.get("ADMIN_NOTIFY_EMAIL", "jose@septa.group,info@septa.group").split(",")
+ADMIN_NOTIFY_EMAILS = os.environ.get("ADMIN_NOTIFY_EMAIL", "").split(",")
 
 # Database reference (will be set from server.py)
 email_logs_collection = None
@@ -67,6 +71,7 @@ async def log_email_attempt(
 
 
 def get_admin_notification_html(lead_data: dict) -> str:
+    lead_data = {k: escape(str(v)) for k, v in lead_data.items()}
     """Generate HTML email for admin notification"""
     return f"""
 <!DOCTYPE html>
@@ -220,6 +225,7 @@ Septa Group Lead Notification System
 
 
 def get_user_confirmation_html(name: str) -> str:
+    name = escape(name)
     """Generate HTML confirmation email for user"""
     return f"""
 <!DOCTYPE html>
@@ -248,7 +254,7 @@ def get_user_confirmation_html(name: str) -> str:
                             </h2>
                             
                             <p style="color: #1F2328; font-size: 15px; line-height: 1.7; margin: 0 0 24px 0;">
-                                We have received your construction enquiry. Our team will review your requirements and get back to you within <strong>24 working hours</strong>.
+                                We have received your construction enquiry. Our team will review your requirements and get back to you within <strong>the next practical step</strong>.
                             </p>
                             
                             <div style="background-color: #F8F7F4; padding: 20px; margin-bottom: 24px; border-left: 3px solid #0F5E5B;">
@@ -267,14 +273,10 @@ def get_user_confirmation_html(name: str) -> str:
                             <table>
                                 <tr>
                                     <td style="padding-right: 20px;">
-                                        <a href="tel:+919876543210" style="color: #0F5E5B; text-decoration: none; font-size: 14px;">
-                                            Call: +91 XXXXX XXXXX
-                                        </a>
+                                        <span style="color: #0F5E5B; font-size: 14px;">Reply to this email to follow up</span>
                                     </td>
                                     <td>
-                                        <a href="https://wa.me/919876543210" style="color: #25D366; text-decoration: none; font-size: 14px;">
-                                            WhatsApp Us
-                                        </a>
+                                        <span style="color: #25D366; font-size: 14px;">WhatsApp details will be added in Site Settings</span>
                                     </td>
                                 </tr>
                             </table>
@@ -307,7 +309,7 @@ SEPTA GROUP
 
 Thank you, {name}
 
-We have received your construction enquiry. Our team will review your requirements and get back to you within 24 working hours.
+We have received your construction enquiry. Our team will review your requirements and contact you about the next practical step.
 
 What happens next?
 1. Our team reviews your project details
@@ -315,8 +317,8 @@ What happens next?
 3. If suitable, we'll schedule a site visit or consultation
 
 For urgent enquiries, you can reach us directly:
-- Phone: +91 XXXXX XXXXX
-- WhatsApp: wa.me/919876543210
+- Phone: Please reply to this email
+- WhatsApp: configured in Site Settings
 
 ---
 Septa Group - Kerala's Premium Delivery Studio
@@ -337,7 +339,9 @@ async def send_admin_notification(lead_data: dict, max_retries: int = 3) -> dict
     lead_id = lead_data.get('id', '')
     
     subject = f"New Septa Lead - {project_type} - {location} - {name} - {phone}"
-    recipients = [email.strip() for email in ADMIN_NOTIFY_EMAILS]
+    recipients = [email.strip() for email in ADMIN_NOTIFY_EMAILS if email.strip()]
+    if not recipients:
+        return {"success": False, "error": "Notification recipient is not configured"}
     
     if not _configure_resend():
         logger.warning("Resend API key not configured - skipping admin notification")
