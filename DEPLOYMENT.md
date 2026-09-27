@@ -30,6 +30,8 @@ cd frontend && npm ci --legacy-peer-deps && npm run build
 cd ../backend && python -m uvicorn server:app --reload --port 8000
 ```
 
+Run the commands from the repository root. On macOS, use `python3` if `python` is not installed.
+
 The local server uses a generated development signing key if `SECRET_KEY` is omitted. It does not seed demo content unless `SEED_DEMO_DATA=true` is explicitly set.
 
 ## Release sequence
