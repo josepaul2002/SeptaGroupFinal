@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 axios.defaults.withCredentials = true;
@@ -14,7 +14,8 @@ export function getText(bilingual, lang = 'en') {
 
 // Generic fetch hook
 export function useApiData(endpoint, defaultValue = []) {
-  const [data, setData] = useState(() => { try { return JSON.parse(document.getElementById('septa-bootstrap')?.textContent || '{}')[endpoint] ?? defaultValue; } catch { return defaultValue; } });
+  const fallbackValue = useRef(defaultValue).current;
+  const [data, setData] = useState(() => { try { return JSON.parse(document.getElementById('septa-bootstrap')?.textContent || '{}')[endpoint] ?? fallbackValue; } catch { return fallbackValue; } });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,7 +27,13 @@ export function useApiData(endpoint, defaultValue = []) {
       try {
         const res = await axios.get(`${API}${endpoint}`, endpoint.includes('preview=true') && sessionStorage.getItem('septa-admin-token') ? {headers:{Authorization:`Bearer ${sessionStorage.getItem('septa-admin-token')}`}} : {});
         if (!cancelled) {
-          setData(res.data);
+          // A static SPA server can return index.html with a 200 for missing
+          // /api routes. Keep the typed fallback instead of crashing pages
+          // that expect an array or object response.
+          const expectsArray = Array.isArray(fallbackValue);
+          const expectsObject = fallbackValue !== null && typeof fallbackValue === 'object' && !expectsArray;
+          const valid = expectsArray ? Array.isArray(res.data) : expectsObject ? Boolean(res.data && typeof res.data === 'object' && !Array.isArray(res.data)) : true;
+          setData(valid ? res.data : fallbackValue);
           setError(null);
         }
       } catch (err) {
@@ -43,7 +50,7 @@ export function useApiData(endpoint, defaultValue = []) {
     
     fetchData();
     return () => { cancelled = true; };
-  }, [endpoint]);
+  }, [endpoint, fallbackValue]);
 
   return { data, loading, error, setData };
 }
