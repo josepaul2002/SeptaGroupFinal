@@ -33,6 +33,7 @@ fi
 if ! .venv/bin/python -c 'import uvicorn, fastapi, motor, jose, passlib, resend, slowapi, boto3, email_validator, multipart' >/dev/null 2>&1; then
   .venv/bin/python -m pip install -r backend/requirements.txt
 fi
+.venv/bin/python scripts/ensure-local-owner.py
 export FRONTEND_BUILD_DIR="$SEPTA_ROOT/frontend/build"
 echo 'Septa website: http://localhost:8000'
 echo 'Website Studio: http://localhost:8000/admin'
