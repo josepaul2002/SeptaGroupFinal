@@ -14,45 +14,36 @@ export function getText(bilingual, lang = 'en') {
 
 // Generic fetch hook
 export function useApiData(endpoint, defaultValue = []) {
-  const fallbackValue = useRef(defaultValue).current;
-  const [data, setData] = useState(() => { try { return JSON.parse(document.getElementById('septa-bootstrap')?.textContent || '{}')[endpoint] ?? fallbackValue; } catch { return fallbackValue; } });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+  const fallback = useRef({endpoint, value:defaultValue});
+  if (fallback.current.endpoint !== endpoint) fallback.current = {endpoint, value:defaultValue};
+  const fallbackValue = fallback.current.value;
+  const [state, setState] = useState(() => {
+    let data = fallbackValue;
+    try { data = JSON.parse(document.getElementById('septa-bootstrap')?.textContent || '{}')[endpoint] ?? fallbackValue; } catch {}
+    return {endpoint, data, loading:true, error:null};
+  });
   useEffect(() => {
     let cancelled = false;
-    
+    setState(previous => ({endpoint, data:previous.endpoint===endpoint ? previous.data : fallbackValue, loading:true, error:null}));
     async function fetchData() {
-      setLoading(true);
       try {
-        const res = await axios.get(`${API}${endpoint}`, endpoint.includes('preview=true') && sessionStorage.getItem('septa-admin-token') ? {headers:{Authorization:`Bearer ${sessionStorage.getItem('septa-admin-token')}`}} : {});
-        if (!cancelled) {
-          // A static SPA server can return index.html with a 200 for missing
-          // /api routes. Keep the typed fallback instead of crashing pages
-          // that expect an array or object response.
-          const expectsArray = Array.isArray(fallbackValue);
-          const expectsObject = fallbackValue !== null && typeof fallbackValue === 'object' && !expectsArray;
-          const valid = expectsArray ? Array.isArray(res.data) : expectsObject ? Boolean(res.data && typeof res.data === 'object' && !Array.isArray(res.data)) : true;
-          setData(valid ? res.data : fallbackValue);
-          setError(null);
-        }
+        const token = sessionStorage.getItem('septa-admin-token');
+        const options = endpoint.includes('preview=true') && token ? {headers:{Authorization:`Bearer ${token}`}} : {};
+        const res = await axios.get(`${API}${endpoint}`, options);
+        const expectsArray = Array.isArray(fallbackValue);
+        const expectsObject = fallbackValue === null || (typeof fallbackValue === 'object' && !expectsArray);
+        const valid = expectsArray ? Array.isArray(res.data) : expectsObject ? Boolean(res.data && typeof res.data==='object' && !Array.isArray(res.data)) : true;
+        if (!valid) throw new Error('The content service returned an invalid response.');
+        if (!cancelled) setState({endpoint, data:res.data, loading:false, error:null});
       } catch (err) {
-        if (!cancelled) {
-          setError(err.message);
-          console.error(`API error (${endpoint}):`, err);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setState(previous => ({endpoint, data:previous.endpoint===endpoint ? previous.data : fallbackValue, loading:false, error:err.message}));
       }
     }
-    
     fetchData();
     return () => { cancelled = true; };
   }, [endpoint, fallbackValue]);
-
-  return { data, loading, error, setData };
+  const setData = value => setState(previous => ({...previous, data:typeof value==='function'?value(previous.data):value}));
+  return state.endpoint===endpoint ? {...state,setData} : {data:fallbackValue,loading:true,error:null,setData};
 }
 
 // Site settings hook

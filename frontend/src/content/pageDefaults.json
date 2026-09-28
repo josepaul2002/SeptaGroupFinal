@@ -1,0 +1,608 @@
+{
+  "home": {
+    "hero": {
+      "eyebrow": {
+        "en": "Septa Group / Kerala",
+        "ml": ""
+      },
+      "title": {
+        "en": "From idea to\ninfrastructure.",
+        "ml": ""
+      },
+      "body": {
+        "en": "Considered construction. Clear responsibilities. Work built around your project.",
+        "ml": ""
+      },
+      "image_url": "",
+      "image_alt": "",
+      "image_position": "center",
+      "theme": "dark",
+      "primary_label": {
+        "en": "Discuss your project",
+        "ml": ""
+      },
+      "primary_url": "/contact",
+      "secondary_label": {
+        "en": "Explore our work",
+        "ml": ""
+      },
+      "secondary_url": "/projects"
+    },
+    "sections": [
+      {
+        "id": "selected-work",
+        "type": "projects",
+        "enabled": true,
+        "eyebrow": {
+          "en": "Selected projects",
+          "ml": ""
+        },
+        "title": {
+          "en": "The work speaks.",
+          "ml": ""
+        },
+        "body": {
+          "en": "Explore the projects, the details and the people behind them.",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [],
+        "limit": 3
+      },
+      {
+        "id": "capabilities",
+        "type": "cards",
+        "enabled": true,
+        "eyebrow": {
+          "en": "What we do",
+          "ml": ""
+        },
+        "title": {
+          "en": "Built around your ambition.",
+          "ml": ""
+        },
+        "body": {
+          "en": "",
+          "ml": ""
+        },
+        "theme": "light",
+        "items": [],
+        "limit": 3,
+        "source": "services"
+      },
+      {
+        "id": "approach",
+        "type": "text",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "A clear place to start.",
+          "ml": ""
+        },
+        "body": {
+          "en": "Whether you have an architect, a set of plans or an early idea, start with a conversation about the work you need.",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [],
+        "limit": 3,
+        "link_url": "/about",
+        "link_label": {
+          "en": "Get to know Septa",
+          "ml": ""
+        }
+      },
+      {
+        "id": "conversation",
+        "type": "cta",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "Have a project in mind?",
+          "ml": ""
+        },
+        "body": {
+          "en": "Tell us what you are planning. Let\u2019s work out the next step.",
+          "ml": ""
+        },
+        "theme": "dark",
+        "items": [],
+        "limit": 3,
+        "link_url": "/contact",
+        "link_label": {
+          "en": "Discuss your project",
+          "ml": ""
+        }
+      }
+    ],
+    "page_id": "home",
+    "version": 2,
+    "status": "draft",
+    "publication_reviewed": false,
+    "seo": {
+      "title": "",
+      "description": "",
+      "image": "",
+      "noindex": false
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": {
+        "en": "About Septa",
+        "ml": ""
+      },
+      "title": {
+        "en": "People. Purpose.\nConsidered construction.",
+        "ml": ""
+      },
+      "body": {
+        "en": "We work with clients, architects and specialists to bring construction projects to life in Kerala.",
+        "ml": ""
+      },
+      "image_url": "",
+      "image_alt": "",
+      "image_position": "center",
+      "theme": "light",
+      "primary_label": {
+        "en": "Discuss your project",
+        "ml": ""
+      },
+      "primary_url": "/contact",
+      "secondary_label": {
+        "en": "Explore our work",
+        "ml": ""
+      },
+      "secondary_url": "/projects"
+    },
+    "sections": [
+      {
+        "id": "capabilities",
+        "type": "cards",
+        "enabled": true,
+        "eyebrow": {
+          "en": "Our focus",
+          "ml": ""
+        },
+        "title": {
+          "en": "What we build.",
+          "ml": ""
+        },
+        "body": {
+          "en": "",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [],
+        "limit": 3,
+        "source": "services"
+      },
+      {
+        "id": "coverage",
+        "type": "locations",
+        "enabled": true,
+        "eyebrow": {
+          "en": "Where we work",
+          "ml": ""
+        },
+        "title": {
+          "en": "Rooted in Kerala.",
+          "ml": ""
+        },
+        "body": {
+          "en": "Explore our operating areas and tell us where you are planning to build.",
+          "ml": ""
+        },
+        "theme": "light",
+        "items": [],
+        "limit": 3,
+        "graphic_label": {
+          "en": "Kerala",
+          "ml": ""
+        }
+      },
+      {
+        "id": "people",
+        "type": "people",
+        "enabled": true,
+        "eyebrow": {
+          "en": "Project leadership",
+          "ml": ""
+        },
+        "title": {
+          "en": "People behind the work.",
+          "ml": ""
+        },
+        "body": {
+          "en": "Meet the people responsible for our projects.",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [],
+        "limit": 3
+      },
+      {
+        "id": "conversation",
+        "type": "cta",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "Have a project in mind?",
+          "ml": ""
+        },
+        "body": {
+          "en": "Tell us what you are planning. Let\u2019s work out the next step.",
+          "ml": ""
+        },
+        "theme": "dark",
+        "items": [],
+        "limit": 3,
+        "link_url": "/contact",
+        "link_label": {
+          "en": "Discuss your project",
+          "ml": ""
+        }
+      }
+    ],
+    "page_id": "about",
+    "version": 2,
+    "status": "draft",
+    "publication_reviewed": false,
+    "seo": {
+      "title": "",
+      "description": "",
+      "image": "",
+      "noindex": false
+    }
+  },
+  "services": {
+    "hero": {
+      "eyebrow": {
+        "en": "What we do",
+        "ml": ""
+      },
+      "title": {
+        "en": "The right team.\nThe right scope.",
+        "ml": ""
+      },
+      "body": {
+        "en": "Explore our areas of work, then talk to us about the responsibilities your project needs.",
+        "ml": ""
+      },
+      "image_url": "",
+      "image_alt": "",
+      "image_position": "center",
+      "theme": "light",
+      "primary_label": {
+        "en": "Discuss your project",
+        "ml": ""
+      },
+      "primary_url": "/contact",
+      "secondary_label": {
+        "en": "Explore our work",
+        "ml": ""
+      },
+      "secondary_url": "/projects"
+    },
+    "sections": [
+      {
+        "id": "services",
+        "type": "cards",
+        "enabled": true,
+        "eyebrow": {
+          "en": "Areas of work",
+          "ml": ""
+        },
+        "title": {
+          "en": "Construction, shaped to fit.",
+          "ml": ""
+        },
+        "body": {
+          "en": "",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [
+          {
+            "id": "commercial",
+            "title": {
+              "en": "Commercial spaces",
+              "ml": ""
+            },
+            "body": {
+              "en": "Construction for spaces where business happens.",
+              "ml": ""
+            },
+            "subtitle": {
+              "en": "",
+              "ml": ""
+            },
+            "image_url": "",
+            "image_alt": "",
+            "link_url": "",
+            "link_label": {
+              "en": "Explore",
+              "ml": ""
+            },
+            "tag": "Commercial"
+          },
+          {
+            "id": "residential",
+            "title": {
+              "en": "Homes & residences",
+              "ml": ""
+            },
+            "body": {
+              "en": "Construction shaped around the way you want to live.",
+              "ml": ""
+            },
+            "subtitle": {
+              "en": "",
+              "ml": ""
+            },
+            "image_url": "",
+            "image_alt": "",
+            "link_url": "",
+            "link_label": {
+              "en": "Explore",
+              "ml": ""
+            },
+            "tag": "Residential"
+          },
+          {
+            "id": "institutional",
+            "title": {
+              "en": "Institutional buildings",
+              "ml": ""
+            },
+            "body": {
+              "en": "Spaces that serve organisations and their communities.",
+              "ml": ""
+            },
+            "subtitle": {
+              "en": "",
+              "ml": ""
+            },
+            "image_url": "",
+            "image_alt": "",
+            "link_url": "",
+            "link_label": {
+              "en": "Explore",
+              "ml": ""
+            },
+            "tag": "Institutional"
+          }
+        ],
+        "limit": 3
+      },
+      {
+        "id": "relevant-work",
+        "type": "projects",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "See it in practice.",
+          "ml": ""
+        },
+        "body": {
+          "en": "Explore our published project experience.",
+          "ml": ""
+        },
+        "theme": "light",
+        "items": [],
+        "limit": 3
+      },
+      {
+        "id": "conversation",
+        "type": "cta",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "Have a project in mind?",
+          "ml": ""
+        },
+        "body": {
+          "en": "Tell us what you are planning. Let\u2019s work out the next step.",
+          "ml": ""
+        },
+        "theme": "dark",
+        "items": [],
+        "limit": 3,
+        "link_url": "/contact",
+        "link_label": {
+          "en": "Discuss your project",
+          "ml": ""
+        }
+      }
+    ],
+    "page_id": "services",
+    "version": 2,
+    "status": "draft",
+    "publication_reviewed": false,
+    "seo": {
+      "title": "",
+      "description": "",
+      "image": "",
+      "noindex": false
+    }
+  },
+  "projects": {
+    "hero": {
+      "eyebrow": {
+        "en": "Our work",
+        "ml": ""
+      },
+      "title": {
+        "en": "Spaces with a purpose.",
+        "ml": ""
+      },
+      "body": {
+        "en": "Explore our work, our scope and the collaborators behind each project.",
+        "ml": ""
+      },
+      "image_url": "",
+      "image_alt": "",
+      "image_position": "center",
+      "theme": "light",
+      "primary_label": {
+        "en": "Discuss your project",
+        "ml": ""
+      },
+      "primary_url": "",
+      "secondary_label": {
+        "en": "Explore our work",
+        "ml": ""
+      },
+      "secondary_url": ""
+    },
+    "sections": [],
+    "page_id": "projects",
+    "version": 2,
+    "status": "draft",
+    "publication_reviewed": false,
+    "seo": {
+      "title": "",
+      "description": "",
+      "image": "",
+      "noindex": false
+    }
+  },
+  "ecosystem": {
+    "hero": {
+      "eyebrow": {
+        "en": "Collaborators",
+        "ml": ""
+      },
+      "title": {
+        "en": "Good work is\na shared effort.",
+        "ml": ""
+      },
+      "body": {
+        "en": "Meet the architects, specialists and organisations connected to our projects.",
+        "ml": ""
+      },
+      "image_url": "",
+      "image_alt": "",
+      "image_position": "center",
+      "theme": "light",
+      "primary_label": {
+        "en": "Discuss your project",
+        "ml": ""
+      },
+      "primary_url": "",
+      "secondary_label": {
+        "en": "Explore our work",
+        "ml": ""
+      },
+      "secondary_url": ""
+    },
+    "sections": [],
+    "page_id": "ecosystem",
+    "version": 2,
+    "status": "draft",
+    "publication_reviewed": false,
+    "seo": {
+      "title": "",
+      "description": "",
+      "image": "",
+      "noindex": false
+    }
+  },
+  "contact": {
+    "hero": {
+      "eyebrow": {
+        "en": "Start a conversation",
+        "ml": ""
+      },
+      "title": {
+        "en": "What are you\nplanning to build?",
+        "ml": ""
+      },
+      "body": {
+        "en": "Share a few details about your project. We will contact you to discuss the next step.",
+        "ml": ""
+      },
+      "image_url": "",
+      "image_alt": "",
+      "image_position": "center",
+      "theme": "light",
+      "primary_label": {
+        "en": "Discuss your project",
+        "ml": ""
+      },
+      "primary_url": "",
+      "secondary_label": {
+        "en": "Explore our work",
+        "ml": ""
+      },
+      "secondary_url": ""
+    },
+    "sections": [],
+    "page_id": "contact",
+    "version": 2,
+    "status": "draft",
+    "publication_reviewed": false,
+    "seo": {
+      "title": "",
+      "description": "",
+      "image": "",
+      "noindex": false
+    }
+  },
+  "leaders": {
+    "hero": {
+      "eyebrow": {
+        "en": "Project leadership",
+        "ml": ""
+      },
+      "title": {
+        "en": "The people\nbehind the work.",
+        "ml": ""
+      },
+      "body": {
+        "en": "Explore the people responsible for our projects and their contributions.",
+        "ml": ""
+      },
+      "image_url": "",
+      "image_alt": "",
+      "image_position": "center",
+      "theme": "light",
+      "primary_label": {
+        "en": "Discuss your project",
+        "ml": ""
+      },
+      "primary_url": "",
+      "secondary_label": {
+        "en": "Explore our work",
+        "ml": ""
+      },
+      "secondary_url": ""
+    },
+    "sections": [],
+    "page_id": "leaders",
+    "version": 2,
+    "status": "draft",
+    "publication_reviewed": false,
+    "seo": {
+      "title": "",
+      "description": "",
+      "image": "",
+      "noindex": false
+    }
+  }
+}

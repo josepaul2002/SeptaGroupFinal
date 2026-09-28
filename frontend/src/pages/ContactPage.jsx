@@ -1,3 +1,5 @@
+import { newId } from '../lib/pageContent';
+import { ManagedIntro } from '../components/PageSections';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Phone, Mail, MapPin, MessageCircle, ArrowRight, CheckCircle2, Loader2, Send } from 'lucide-react';
@@ -18,7 +20,7 @@ export default function ContactPage() {
   const leaderRef = searchParams.get('leader') || '';
   const projectRef = searchParams.get('project') || '';
   const {data:referredEntity} = useApiData(partnerRef ? `/partners/${partnerRef}` : leaderRef ? `/leaders/${leaderRef}` : '/settings',null);
-  const [submissionId] = useState(() => crypto.randomUUID());
+  const [submissionId] = useState(() => newId());
 
   const [form, setForm] = useState({
     name: '', phone: '', email: '', project_type: '', project_location: '',
@@ -65,19 +67,8 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="pt-16" data-testid="contact-page">
-      {/* Hero */}
-      <section className="bg-[#F6F6F3] py-14 md:py-20">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3 reveal">Contact</p>
-          <h1 className="text-4xl md:text-5xl font-sora font-light text-[#050505] tracking-tight leading-tight reveal reveal-delay-1">
-            Start a Conversation
-          </h1>
-          <p className="text-base font-inter font-light text-[#050505]/55 leading-relaxed max-w-xl mt-5 reveal reveal-delay-2">
-            Tell us about your project. We'll respond with an honest assessment of fit, scope, and next steps.
-          </p>
-        </div>
-      </section>
+    <div className="pt-16 lg:pt-[76px]" data-testid="contact-page">
+      <ManagedIntro pageId="contact"/>
 
       {/* Contact Info + Form */}
       <section className="py-12 md:py-20 bg-white">
@@ -164,6 +155,7 @@ export default function ContactPage() {
                   </div>
                 </div>
 
+                <details className="border-y py-4"><summary className="cursor-pointer text-sm">Add a few more details (optional)</summary><div className="mt-5 space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label htmlFor="contact-budget" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Budget Range</label>
@@ -189,6 +181,7 @@ export default function ContactPage() {
                     maxLength={5000} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} id="contact-message" data-testid="input-message" />
                 </div>
 
+                </div></details>
                 {(partnerRef || leaderRef) && referredEntity?.name && (
                   <p className="text-xs font-inter text-[#606060] bg-[#ECECEA] px-3 py-2">
                     Enquiry about: <strong>{getText(referredEntity.name)}</strong>

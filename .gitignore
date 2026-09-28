@@ -86,3 +86,7 @@ credentials.json
 .env
 .env.*
 *.env
+!.env.example
+!backend/.env.example
+/frontend/build/
+/review-artifacts/

@@ -9,6 +9,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, Response, FileResponse
 from services.content import PUBLIC_QUERY, public_document, text
 from config import SITE_URL, INDEXABLE, BUILD_DIR
+from services.pages import PAGE_PATHS, public_page as load_public_page, design_html
 
 STATIC = {'/': ('Septa Group', 'Construction delivery in Kerala.'), '/about': ('About Septa Group', 'The people and experience behind Septa Group.'), '/services': ('Construction Capabilities', 'Explore Septa’s construction capabilities and relevant project experience.'), '/projects': ('Projects', 'Explore documented projects delivered by Septa Group.'), '/ecosystem': ('People & Collaborators', 'Independent professionals behind projects delivered with Septa.'), '/project-leaders': ('Project Leaders', 'Meet the people responsible for construction delivery.'), '/contact': ('Discuss Your Project', 'Tell Septa about the project you are planning.'), '/privacy': ('Privacy', 'How Septa handles website enquiries.')}
 
@@ -81,23 +82,33 @@ async def resolve(db, path):
         prefix = '/projects/' if coll == 'projects' else '/ecosystem/' if coll == 'partners' else '/project-leaders/'
         body = '<p>' + escape(description) + '</p>' + ''.join(f'<article><h2><a href="{prefix}{url(d["slug"])}">{escape(text(d.get("title") if coll == "projects" else d.get("name")))}</a></h2><p>{escape(text(d.get("short_description") or d.get("bio_short") or d.get("bio")))}</p></article>' for d in docs)
     elif path in ['/about', '/services']:
-        page_id = path[1:]
-        page = await db.page_content.find_one({'page_id': page_id, 'status': 'published', 'publication_reviewed': True}, {'_id': 0}) or {'blocks': []}
-        data['/pages/' + page_id] = page
-        body = ''.join(f'<section><h2>{escape(text(b.get("title")))}</h2><p>{escape(text(b.get("body")))}</p></section>' for b in page.get('blocks', []))
+        body = ''
     elif path == '/privacy':
         body = '<p>Information submitted through an enquiry is used to respond and coordinate your request. Please avoid submitting sensitive documents through the public form. Contact Septa using the contact page to request access, correction or deletion of your enquiry. External links and messaging services operate under their own privacy policies.</p>'
     elif path == '/contact':
         contact = settings.get('contact') or {}
         body = '<p>Tell us about your project using the enquiry form or our business contact details.</p>'
         body += '<p>' + escape(contact.get('phone_display', '')) + '</p><p>' + escape(contact.get('email', '')) + '</p>'
-    elif path in ['/admin', '/content-checklist']:
+    elif path.startswith('/admin') or path == '/content-checklist':
         title, status, noindex = 'Admin — Septa Group', 200, True
+    heading = title
+    page_id = next((key for key,value in PAGE_PATHS.items() if value==path),None)
+    if page_id:
+        page = await load_public_page(db,page_id)
+        data['/site-pages/'+page_id] = page
+        heading = text(page['hero']['title'])
+        seo = page.get('seo') or {}
+        title = seo.get('title') or heading.replace('\n',' ')
+        description = seo.get('description') or text(page['hero'].get('body'))
+        image = seo.get('image') or page['hero'].get('image_url') or ''
+        noindex = seo.get('noindex',False)
+        page_body = await design_html(db,page,settings)
+        body = page_body + (body if page_id in ['projects','ecosystem','leaders','contact'] else '')
     schema.update(name=title, description=description)
     if path == '/':
         schema['mainEntity'] = {'@type': 'Organization', '@id': SITE_URL + '/#organization', 'name': 'Septa Group', 'url': SITE_URL, 'logo': SITE_URL + '/septa-logo.png'}
     canonical = SITE_URL + path if SITE_URL and status == 200 else ''
-    return {'title': title + (' | Septa Group' if 'Septa Group' not in title else ''), 'description': description, 'image': media_url(image), 'canonical': canonical, 'robots': 'index, follow' if INDEXABLE and status == 200 and not noindex else 'noindex, nofollow', 'schema': schema if status == 200 else None, 'status': status, 'body': body, 'data': data}
+    return {'heading':heading,'title': title + (' | Septa Group' if 'Septa Group' not in title else ''), 'description': description, 'image': media_url(image), 'canonical': canonical, 'robots': 'index, follow' if INDEXABLE and status == 200 and not noindex else 'noindex, nofollow', 'schema': schema if status == 200 else None, 'status': status, 'body': body, 'data': data}
 
 
 def attach_public_site(app, db):
@@ -114,7 +125,11 @@ def attach_public_site(app, db):
     async def sitemap():
         entries = []
         if INDEXABLE:
-            entries = [(p, '') for p in STATIC]
+            for p in STATIC:
+                page_id = next((key for key,value in PAGE_PATHS.items() if value==p),None)
+                if page_id and (await load_public_page(db,page_id)).get('seo',{}).get('noindex'):
+                    continue
+                entries.append((p,''))
             for coll, prefix in [('projects', '/projects/'), ('partners', '/ecosystem/'), ('leaders', '/project-leaders/')]:
                 for doc in await db[coll].find({**PUBLIC_QUERY, 'seo.noindex': {'$ne': True}}, {'_id': 0}).to_list(10000):
                     entries.append((prefix + doc['slug'], doc.get('updated_at') or doc.get('created_at', '')))
@@ -125,6 +140,9 @@ def attach_public_site(app, db):
 
     @app.get('/{path:path}')
     async def public_page(path: str, request: Request):
+        if path.rstrip('/') == 'solution-packs':
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse('/services',status_code=301)
         if path.startswith(('api/', 'uploads/')):
             raise HTTPException(404)
         candidate = (BUILD_DIR / path).resolve()
@@ -146,6 +164,6 @@ def attach_public_site(app, db):
             head += '<script type="application/ld+json" id="septa-schema">' + safe_json(result['schema']) + '</script>'
         head += '<script id="septa-bootstrap" type="application/json">' + safe_json(result['data']) + '</script>'
         html = html.replace('</head>', head + '</head>')
-        content = '<div class="max-w-5xl mx-auto px-6 py-24"><nav><a href="/">Septa Group</a> · <a href="/projects">Projects</a> · <a href="/ecosystem">Collaborators</a> · <a href="/project-leaders">Project Leaders</a> · <a href="/contact">Contact</a></nav><h1>' + escape(result['title']) + '</h1>' + result['body'] + '</div>'
+        content = '<div class="max-w-5xl mx-auto px-6 py-24"><nav><a href="/">Septa Group</a> · <a href="/projects">Projects</a> · <a href="/services">What we do</a> · <a href="/about">About</a> · <a href="/contact">Contact</a></nav><h1>' + escape(result['heading']) + '</h1>' + result['body'] + '</div>'
         html = html.replace('<div id="root"></div>', '<div id="root">' + content + '</div>')
         return HTMLResponse(html, status_code=result['status'], headers={'Cache-Control': 'no-store', 'X-Robots-Tag': result['robots']})

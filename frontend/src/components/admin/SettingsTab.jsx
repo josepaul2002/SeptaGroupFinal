@@ -1,3 +1,4 @@
+import NavigationSettings from './NavigationSettings';
 import { useState, useEffect } from 'react';
 import { Download, Loader2, Save } from 'lucide-react';
 import { exportContent } from '../../hooks/useApi';
@@ -70,8 +71,7 @@ export default function SettingsTab({ token }) {
   const sections = [
     { id: 'contact', label: 'Contact Info' },
     { id: 'enquiry', label: 'Enquiry Form' },
-    { id: 'proof', label: 'Proof & Metrics' },
-    { id: 'navigation', label: 'Navigation' },
+    { id: 'navigation', label: 'Brand & Navigation' },
     { id: 'language', label: 'Language Mode' },
     { id: 'export', label: 'Export / Backup' },
   ];
@@ -95,7 +95,7 @@ export default function SettingsTab({ token }) {
   return (
     <div className="space-y-6" data-testid="settings-tab">
       {/* Section Tabs */}
-      <div className="flex gap-2 border-b border-[#8A8A8A]/20 pb-0">
+      <div className="flex flex-wrap gap-2 border-b border-[#8A8A8A]/20 pb-0">
         {sections.map(s => (
           <button key={s.id} onClick={() => setActiveSection(s.id)}
             data-testid={`settings-section-${s.id}`}
@@ -157,44 +157,13 @@ export default function SettingsTab({ token }) {
         </div>
       )}
 
-      {/* PROOF & METRICS */}
-      {activeSection === 'proof' && (
-        <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4">
-          <h3 className="text-sm font-sora font-medium text-[#050505]">Verified homepage metrics</h3>
-          <p className="text-xs text-[#8A8A8A]">Only enter numbers and claims that Septa can substantiate. One metric per line in the format: value | label | supporting line.</p>
-          <textarea rows={8} className="form-input resize-none" value={(settings.trust_metrics || []).map(m => `${m.value || ''} | ${m.label || ''} | ${m.sub || ''}`).join('\n')} onChange={e => setSettings({...settings,trust_metrics:e.target.value.split('\n').filter(Boolean).map(line=>{const [value,label,sub]=line.split('|').map(v=>v.trim());return {value,label,sub};})})} placeholder="e.g. 20+ | Years delivering projects | Confirm exact basis" />
-        </div>
-      )}
-
       {/* NAVIGATION */}
-      {activeSection === 'navigation' && (
-        <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4" data-testid="nav-visibility-section">
-          <h3 className="text-sm font-sora font-medium text-[#050505] mb-2">Navigation Menu Visibility</h3>
-          <p className="text-xs text-[#8A8A8A] mb-4">Show or hide pages in the header and mobile menu. Hidden pages are removed from the menu but still reachable by direct URL. Home is always shown.</p>
-          <div className="space-y-2">
-            {navItems.map(item => {
-              const on = navVis[item.key] !== false;
-              return (
-                <div key={item.key} className="flex items-center justify-between p-3 border border-[#8A8A8A]/20"
-                  data-testid={`nav-toggle-row-${item.key}`}>
-                  <span className="text-sm font-inter text-[#050505]">{item.label}</span>
-                  <button type="button" onClick={() => toggleNav(item.key)}
-                    data-testid={`nav-toggle-${item.key}`}
-                    role="switch" aria-checked={on}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${on ? 'bg-[#050505]' : 'bg-[#8A8A8A]/40'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${on ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {activeSection === 'navigation' && <NavigationSettings settings={settings} setSettings={setSettings}/>}
 
       {/* LANGUAGE MODE */}
       {activeSection === 'language' && (        <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4">
           <h3 className="text-sm font-sora font-medium text-[#050505] mb-2">Content Language Mode</h3>
-          <p className="text-xs text-[#8A8A8A] mb-4">Controls how bilingual content is displayed. Navigation and buttons always stay in English.</p>
+          <p className="text-xs text-[#8A8A8A] mb-4">Controls how bilingual content is displayed. Page content and section buttons support both languages. Global navigation labels are managed in Brand & Navigation.</p>
           {['english_only', 'malayalam_primary', 'toggle'].map(mode => (
             <label key={mode} className={`flex items-start gap-3 p-3 border cursor-pointer transition-colors ${
               settings.content_language_mode === mode ? 'border-[#606060] bg-[#ECECEA]/30' : 'border-[#8A8A8A]/20'

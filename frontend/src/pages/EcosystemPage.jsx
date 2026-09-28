@@ -1,3 +1,4 @@
+import { ManagedIntro } from '../components/PageSections';
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ArrowRight, Loader2 } from 'lucide-react';
@@ -52,22 +53,11 @@ export default function EcosystemPage() {
   }
 
   return (
-    <div className="pt-16" data-testid="ecosystem-page">
-      {/* Hero */}
-      <section className="bg-[#F6F6F3] py-16 md:py-24">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3 reveal">Ecosystem</p>
-          <h1 className="text-4xl md:text-5xl font-sora font-light text-[#050505] tracking-tight leading-tight max-w-2xl reveal reveal-delay-1">
-            The Septa Partner Network
-          </h1>
-          <p className="text-base font-inter font-light text-[#050505]/55 leading-relaxed max-w-xl mt-5 reveal reveal-delay-2">
-            A curated network of specialists who bring discipline, quality, and deep domain expertise to every project Septa delivers.
-          </p>
-        </div>
-      </section>
+    <div className="pt-16 lg:pt-[76px]" data-testid="ecosystem-page">
+      <ManagedIntro pageId="ecosystem"/>
 
       {/* Filters */}
-      <section className="bg-white py-6 border-b border-[#8A8A8A]/15 sticky top-16 z-20">
+      <section className="bg-white py-6 border-b border-[#8A8A8A]/15 sticky top-16 lg:top-[76px] z-20">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 justify-between">
             <div className="flex flex-wrap gap-2" data-testid="ecosystem-category-filter">

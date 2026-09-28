@@ -19,7 +19,7 @@ export default function SolutionPacksPage() {
     async function fetchPacks() {
       try {
         const res = await axios.get(`${API}/solution-packs`);
-        setPacks(res.data);
+        setPacks(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to fetch solution packs:', err);
       }

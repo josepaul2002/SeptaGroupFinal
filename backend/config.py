@@ -3,13 +3,14 @@ import os
 import secrets
 from pathlib import Path
 from urllib.parse import urlsplit
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parent
 # Accept the documented repository-root .env as well as a backend-local file.
 # The backend-local file wins when both are present for developer overrides.
-load_dotenv(ROOT.parent / '.env')
-load_dotenv(ROOT / '.env', override=True)
+for key, value in {**dotenv_values(ROOT.parent / '.env'), **dotenv_values(ROOT / '.env')}.items():
+    if value is not None:
+        os.environ.setdefault(key, value)
 PRODUCTION = os.getenv('APP_ENV', 'development') == 'production'
 SITE_URL = os.getenv('SITE_URL', '').rstrip('/')
 INDEXABLE = PRODUCTION and os.getenv('ALLOW_INDEXING', 'false').lower() == 'true'

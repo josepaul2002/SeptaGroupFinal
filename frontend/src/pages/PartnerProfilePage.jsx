@@ -32,11 +32,12 @@ export default function PartnerProfilePage() {
     setLoading(true);
     axios.get(`${API}/partners/${slug}${isPreview ? '?preview=true' : ''}`, isPreview ? {headers:{Authorization:`Bearer ${sessionStorage.getItem('septa-admin-token')}`}} : {})
       .then(res => {
+        if (!res.data || typeof res.data !== 'object' || Array.isArray(res.data)) throw new Error('Partner API unavailable');
         setPartner(res.data);
         document.title = `${getText(res.data.name)} — Septa Ecosystem`;
         return axios.get(`${API}/credits/partner/${slug}/projects`).catch(()=>({data:[]}));
       })
-      .then(res => setPartnerProjects(res.data || []))
+      .then(res => setPartnerProjects(Array.isArray(res.data) ? res.data : []))
       .catch(() => setPartner(null))
       .finally(() => setLoading(false));
   }, [slug, isPreview]);

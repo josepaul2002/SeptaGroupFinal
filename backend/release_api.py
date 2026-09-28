@@ -127,6 +127,10 @@ def attach_release_routes(router, db, audit):
         counts = {}
         for collection in ['projects', 'partners', 'leaders', 'testimonials']:
             counts[collection] = {'published': await db[collection].count_documents(PUBLIC_QUERY), 'needs_review': await db[collection].count_documents({'publication_reviewed': {'$ne': True}, 'status': {'$ne': 'archived'}})}
+        counts['pages'] = {
+            'published': await db.page_content.count_documents({'$or':[PUBLIC_QUERY,{'published_snapshot.status':'published','published_snapshot.publication_reviewed':True}]}),
+            'needs_review': await db.page_content.count_documents({'status':{'$in':['draft','review']}})
+        }
         return {'environment': 'production' if PRODUCTION else 'development', 'site_url': SITE_URL,
             'indexing_enabled': INDEXABLE, 'persistent_storage_configured': is_cloud_storage_configured(),
             'email_configured': bool(os.getenv('RESEND_API_KEY') and os.getenv('ADMIN_NOTIFY_EMAIL') and os.getenv('FROM_EMAIL') and 'resend.dev' not in os.getenv('FROM_EMAIL', '')),

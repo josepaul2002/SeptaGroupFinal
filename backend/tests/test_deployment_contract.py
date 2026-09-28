@@ -93,3 +93,35 @@ async def test_page_content_is_private_until_reviewed(client, db):
     login=await client.post('/api/admin/login',json={'email':'owner@example.com','password':'local-test-password-123'})
     private=(await client.get('/api/pages/about',headers={'Authorization':f"Bearer {login.json()['access_token']}"})).json()
     assert private['blocks'][0]['title']['en']=='Private'
+
+@pytest.mark.asyncio
+async def test_studio_publishing_permissions_and_live_snapshot(client, db):
+    from copy import deepcopy
+    from services.pages import DEFAULTS
+    page=deepcopy(DEFAULTS['about'])
+    assert (await client.get('/api/admin/pages/about')).status_code==401
+    login=await client.post('/api/admin/login',json={'email':'owner@example.com','password':'local-test-password-123'})
+    owner={'Authorization':f"Bearer {login.json()['access_token']}"}
+    page.update(status='published',publication_reviewed=True)
+    page['hero']['title']['en']='Reviewed company introduction'
+    first=await client.put('/api/admin/pages/about',json=page,headers=owner)
+    assert first.status_code==200,first.text
+    page['updated_at']=first.json()['updated_at']
+    page['hero']['title']['en']='Unfinished private revision'
+    page.update(status='draft',publication_reviewed=False)
+    second=await client.put('/api/admin/pages/about',json=page,headers=owner)
+    assert second.status_code==200,second.text
+    assert (await client.get('/api/site-pages/about')).json()['hero']['title']['en']=='Reviewed company introduction'
+    assert (await client.get('/api/seo?path=/about')).json()['title'].startswith('Reviewed company introduction')
+    assert (await client.put('/api/admin/pages/about',json=page,headers=owner)).status_code==409
+    history=(await client.get('/api/admin/pages/about/revisions',headers=owner)).json()
+    assert len(history)==1
+    restored=(await client.get('/api/admin/pages/about/revisions/'+history[0]['id'],headers=owner)).json()
+    assert restored['status']=='draft' and restored['publication_reviewed'] is False
+    await db.admins.insert_one({'id':'editor-1','email':'editor@example.com','password_hash':server.get_password_hash('local-editor-password-123'),'role':'editor','auth_version':0})
+    editor_login=await client.post('/api/admin/login',json={'email':'editor@example.com','password':'local-editor-password-123'})
+    editor={'Authorization':f"Bearer {editor_login.json()['access_token']}"}
+    page.update(updated_at=second.json()['updated_at'],status='published',publication_reviewed=True)
+    assert (await client.put('/api/admin/pages/about',json=page,headers=editor)).status_code==403
+    page.update(status='review',publication_reviewed=False)
+    assert (await client.put('/api/admin/pages/about',json=page,headers=editor)).status_code==200

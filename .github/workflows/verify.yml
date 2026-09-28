@@ -13,7 +13,9 @@ jobs:
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
+      - run: node scripts/verify-frontend.cjs
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: pip install -r backend/requirements.txt pytest pytest-asyncio mongomock-motor
       - run: python -m compileall -q backend
+      - run: python -m pytest -q backend/tests

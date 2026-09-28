@@ -19,7 +19,7 @@ const TABS = [
   { id: 'leads', label: 'Leads', icon: MessageSquare },
   { id: 'projects', label: 'Projects', icon: Folder },
   { id: 'partners', label: 'Partners', icon: Users },
-  { id: 'pages', label: 'Pages', icon: LayoutDashboard },
+  { id: 'pages', label: 'Website studio', icon: LayoutDashboard },
   { id: 'testimonials', label: 'Testimonials', icon: FileText },
   { id: 'audit', label: 'Audit Log', icon: History },
   { id: 'settings', label: 'Settings', icon: Settings },
@@ -29,7 +29,7 @@ const TABS = [
 
 export default function AdminPage() {
   const { token, admin, loading: authLoading, login, logout, isAuthenticated } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState('projects');
+  const [activeTab, setActiveTab] = useState('pages');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
@@ -89,10 +89,10 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F6F3] pt-16" data-testid="admin-dashboard">
+    <div className="min-h-screen bg-[#F6F6F3]" data-testid="admin-dashboard">
       <div className="bg-white border-b border-[#8A8A8A]/20">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-sora font-medium text-[#050505]">Admin Panel</h1>
+        <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+          <div><h1 className="text-lg font-sora font-medium text-[#050505]">Septa / Admin</h1><a href="/" target="_blank" rel="noreferrer" className="text-xs underline">View website ↗</a></div>
           <div className="flex items-center gap-4">
             <span className="text-xs font-inter text-[#8A8A8A]">{admin?.email}</span>
             <button onClick={logout} className="flex items-center gap-2 text-xs font-inter text-red-500 hover:text-red-600 transition-colors" data-testid="admin-logout-btn">
@@ -102,11 +102,11 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-[1600px] mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row gap-8">
           <aside className="w-full md:w-48 flex-shrink-0">
             <nav className="space-y-1">
-              {TABS.filter(tab => admin?.role !== 'editor' || ['projects','partners','leaders','testimonials','account','users'].includes(tab.id)).map(tab => (
+              {TABS.filter(tab => tab.id !== 'users' || admin?.role === 'owner').filter(tab => admin?.role !== 'editor' || ['pages','projects','partners','leaders','testimonials','account'].includes(tab.id)).map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-testid={`tab-${tab.id}`}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-inter rounded transition-colors ${
                     activeTab === tab.id ? 'bg-[#050505] text-white' : 'text-[#050505]/70 hover:bg-[#050505]/10'
@@ -123,7 +123,7 @@ export default function AdminPage() {
             {activeTab === 'leads' && <LeadsTab token={token} />}
             {activeTab === 'projects' && <ProjectsTab token={token} />}
             {activeTab === 'partners' && <PartnersTab token={token} />}
-            {activeTab === 'pages' && <PageContentTab token={token} />}
+            <div hidden={activeTab !== 'pages'}><PageContentTab token={token} admin={admin} /></div>
             {activeTab === 'testimonials' && <TestimonialsTab token={token} />}
             {activeTab === 'audit' && <AuditLogTab token={token} />}
             {activeTab === 'settings' && <SettingsTab token={token} />}

@@ -1,5 +1,6 @@
+import { ManagedIntro } from '../components/PageSections';
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Filter, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useProjects, usePartners, getText } from '../hooks/useApi';
@@ -20,7 +21,9 @@ export default function ProjectsPage() {
   const { data: projects, loading: projectsLoading } = useProjects();
   const { data: partners, loading: partnersLoading } = usePartners();
   
-  const [typeFilter, setTypeFilter] = useState('All');
+  const [searchParams]=useSearchParams();
+  const [typeFilter, setTypeFilter] = useState(searchParams.get('type') || 'All');
+  useEffect(()=>setTypeFilter(searchParams.get('type')||'All'),[searchParams]);
   const [statusFilter, setStatusFilter] = useState('All');
   const [partnerFilter, setPartnerFilter] = useState('All');
   const [tagFilter, setTagFilter] = useState('All');
@@ -30,9 +33,9 @@ export default function ProjectsPage() {
   }, []);
 
   const getArchitectName = (project) => {
-    const arch = project.partner_stack?.find(ps => ps.role_label === 'Architect');
+    const arch = project.credits?.find(c => c.entity_type === 'partner' && /architect/i.test(c.role));
     if (!arch) return null;
-    const partner = partners.find(p => p.slug === arch.partner_id || p.id === arch.partner_id);
+    const partner = partners.find(p => p.slug === arch.entity_slug);
     return partner ? getText(partner.name) : null;
   };
 
@@ -46,7 +49,7 @@ export default function ProjectsPage() {
     return projects.filter(p => {
       const matchType = typeFilter === 'All' || p.type === typeFilter;
       const matchStatus = statusFilter === 'All' || p.project_status === statusFilter;
-      const matchPartner = partnerFilter === 'All' || p.partner_stack?.some(ps => ps.partner_id === partnerFilter);
+      const matchPartner = partnerFilter === 'All' || p.credits?.some(c => c.entity_type === 'partner' && c.entity_slug === partnerFilter);
       const matchTag = tagFilter === 'All' || p.design?.tags?.includes(tagFilter);
       return matchType && matchStatus && matchPartner && matchTag;
     });
@@ -62,26 +65,11 @@ export default function ProjectsPage() {
   const loading = projectsLoading || partnersLoading;
 
   return (
-    <div className="pt-16">
-      {/* Hero */}
-      <section className="py-20 md:py-28 bg-[#F6F6F3]" data-testid="projects-hero">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-[0.28em] text-[#8A8A8A] font-inter mb-4 reveal">
-              Our Work
-            </p>
-            <h1 className="text-4xl md:text-6xl font-sora font-light text-[#050505] tracking-tight leading-tight mb-6 reveal reveal-delay-1">
-              Projects
-            </h1>
-            <p className="text-base md:text-lg font-inter font-light text-[#050505]/55 leading-relaxed reveal reveal-delay-2">
-              Each project tells three stories: what was built, what challenge was solved, and which partner network made it possible. Filter by type, status, partner, or design approach.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="pt-16 lg:pt-[76px]">
+      <ManagedIntro pageId="projects"/>
 
       {/* Filter Bar */}
-      <section className="sticky top-16 z-30 bg-white border-b border-[#8A8A8A]/20" data-testid="projects-filter-bar">
+      <section className="sticky top-16 lg:top-[76px] z-30 bg-white border-b border-[#8A8A8A]/20" data-testid="projects-filter-bar">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12 py-4">
           <div className="flex flex-col gap-3">
             {/* Type + Status */}
@@ -91,7 +79,7 @@ export default function ProjectsPage() {
                 Type
               </div>
               <div className="flex flex-wrap gap-2">
-                {typeFilters.map(f => (
+                {['All',...new Set([...projects.map(p=>p.type).filter(Boolean),...(typeFilter==='All'?[]:[typeFilter])])].map(f => (
                   <button key={f} onClick={() => setTypeFilter(f)} data-testid={`type-filter-${f.toLowerCase()}`}
                     className={`text-xs font-inter px-3 py-1.5 border transition-colors ${typeFilter === f ? 'bg-[#050505] text-white border-[#606060]' : 'text-[#050505]/60 border-[#8A8A8A]/30 hover:border-[#606060] hover:text-[#606060]'}`}>
                     {f}

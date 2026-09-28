@@ -45,8 +45,6 @@ from utils.auth import (
 )
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR.parent / '.env')
-load_dotenv(ROOT_DIR / '.env', override=True)
 
 # Database setup
 mongo_url = os.environ['MONGO_URL']
@@ -691,6 +689,11 @@ async def export_content(admin: dict = Depends(get_current_admin)):
     export_data = {
         "projects": projects,
         "partners": partners,
+        "leaders": await db.leaders.find({}, {"_id":0}).to_list(1000),
+        "testimonials": await db.testimonials.find({}, {"_id":0}).to_list(1000),
+        "pages": await db.page_content.find({}, {"_id":0}).to_list(100),
+        "page_revisions": await db.page_revisions.find({}, {"_id":0}).to_list(5000),
+        "settings": await db.site_settings.find_one({"id":"site_settings"}, {"_id":0}),
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "exported_by": admin["email"]
     }
@@ -981,6 +984,13 @@ async def update_page_content(
     admin: dict = Depends(get_current_admin)
 ):
     """Update page content blocks"""
+    existing = await db.page_content.find_one({'page_id':page_id})
+    if existing and existing.get('version') == 2:
+        raise HTTPException(409, 'Use Website Studio to edit this page without losing version history.')
+    if admin.get('role') == 'editor' and content.get('status') in ('published', 'archived'):
+        raise HTTPException(403, 'A publisher or owner must publish or unpublish pages.')
+    if content.get('status') == 'published' and content.get('publication_reviewed') is not True:
+        raise HTTPException(422, 'Review the content before publishing.')
     content.pop("_id", None)
     content["page_id"] = page_id
     content.setdefault("status", "draft")
@@ -1359,6 +1369,7 @@ async def startup_event():
     await db.projects.create_index("slug", unique=True)
     await db.partners.create_index("slug", unique=True)
     await db.leaders.create_index("slug", unique=True)
+    await db.page_content.create_index('page_id', unique=True)
     await db.admins.create_index("email", unique=True)
     await db.leads.create_index("submission_id", unique=True, sparse=True)
     if not PRODUCTION and os.getenv("SEED_DEMO_DATA") == "true":
@@ -1375,6 +1386,8 @@ async def startup_event():
 # ============================================================================
 
 from release_api import attach_release_routes
+from services.pages import attach_page_routes
+attach_page_routes(api_router, db, log_audit)
 attach_release_routes(api_router, db, log_audit)
 app.include_router(api_router)
 
