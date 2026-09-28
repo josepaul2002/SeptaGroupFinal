@@ -116,3 +116,14 @@ html[data-motion="off"] .reveal,html[data-motion="off"] .mobile-navigation,html[
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.motion-enter,.globe-pulse,.globe-location strong,.gallery-dialog figure>img,.mobile-link-group>a{animation:none!important}.mobile-navigation,.gallery-thumbnail>img,.project-image>img,.project-open{transition:none!important;transform:none!important}}
 :where(a,button,input,select,summary):focus-visible{outline:2px solid #c6a15b;outline-offset:4px}
 .testimonial-card .testimonial-cover{width:100%;height:240px;object-fit:cover}.testimonial-person{display:flex;align-items:center;gap:16px}.testimonial-card .testimonial-portrait{width:56px;height:56px;object-fit:cover;border-radius:50%;margin:0}.testimonial-person small{display:block;margin-top:4px;color:#606060}.septa-delivery-team{padding:32px;background:#efede5;border-top:2px solid #ad8d45;margin-bottom:48px}.project-team-grid article{padding:28px;border:1px solid #dedbd2;background:#fff}.project-team-grid article>p{line-height:1.8;margin:20px 0}.project-team-person h3{line-height:1.3}.credit-affiliation{font-size:13px;color:#606060}.compact-credits>span>div{display:inline}.project-team-person .design-eyebrow{line-height:1.6}
+.collaborator-projects{max-height:208px;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#c6a15b #f6f6f3;scrollbar-width:thin}
+.collaborator-project:hover{background:#f6f6f3}
+.project-team-grid article{border-top:3px solid #c6a15b;box-shadow:0 14px 28px #0505050b}
+.project-team-person h3{font-weight:650;font-size:clamp(18px,1.7vw,24px)}
+.project-team-grid .credit-affiliation{background:#f6f6f3;padding:12px 14px;border-left:3px solid #c6a15b;color:#050505}
+.project-team-grid .credit-affiliation strong{font-weight:700}
+.project-extra-media>div{min-width:0}
+.project-extra-media>div:only-child{grid-column:1/-1;max-width:960px;width:100%}
+.gallery-thumbnail img{transition:transform .45s ease}
+.gallery-thumbnail:hover img{transform:scale(1.018)}
+@media (prefers-reduced-motion:reduce){.gallery-thumbnail img{transition:none}}

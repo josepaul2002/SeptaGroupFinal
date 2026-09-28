@@ -140,9 +140,9 @@ export default function PartnerProfilePage() {
               {(media.videos||[]).filter(Boolean).map((src,i)=><section className="mb-10" key={src}><h2 className="text-2xl mb-4">{i===0?'Films & walkthroughs':''}</h2><VideoPlayer src={src} title={`${t(partner.name)} video ${i+1}`} className="aspect-video"/></section>)}{gallery.length > 0 && (
                 <div className="reveal" data-testid="partner-gallery">
                   <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-4">Gallery</p>
-                  <div className="relative aspect-[16/9] bg-[#ECECEA] overflow-hidden">
+                  <div className="relative aspect-[16/9] bg-[#181818] overflow-hidden">
                     <img src={gallery[galleryIdx]} alt={`Gallery ${galleryIdx + 1}`}
-                      className="w-full h-full object-cover transition-opacity duration-300" />
+                      className="w-full h-full object-contain transition-opacity duration-300" />
                     {gallery.length > 1 && (
                       <>
                         <button onClick={() => setGalleryIdx((galleryIdx - 1 + gallery.length) % gallery.length)}

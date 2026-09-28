@@ -95,6 +95,7 @@ class LeaderCreate(BaseModel):
     title: BilingualText = Field(default_factory=BilingualText)
     bio: BilingualText = Field(default_factory=BilingualText)
     photo: str = ""
+    hierarchy_rank: int = Field(default=100, ge=0, le=999)
     expertise: List[str] = Field(default_factory=list)
     qualifications: List[str] = Field(default_factory=list)
     status: PublishStatus = PublishStatus.draft

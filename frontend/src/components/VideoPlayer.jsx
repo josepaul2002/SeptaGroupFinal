@@ -12,6 +12,20 @@ export default function VideoPlayer({
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
   const [showControls, setShowControls] = useState(true);
+  let embed = null;
+  try {
+    const url = new URL(src);
+    if (['youtube.com','www.youtube.com','m.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(url.hostname)) {
+      const id = url.pathname.startsWith('/shorts/') || url.pathname.startsWith('/embed/') ? url.pathname.split('/')[2] : url.searchParams.get('v');
+      if (/^[\w-]{11}$/.test(id || '')) embed = `https://www.youtube-nocookie.com/embed/${id}`;
+    } else if (url.hostname === 'youtu.be' || url.hostname === 'www.youtu.be') {
+      const id = url.pathname.slice(1);
+      if (/^[\w-]{11}$/.test(id)) embed = `https://www.youtube-nocookie.com/embed/${id}`;
+    } else if (['vimeo.com','www.vimeo.com','player.vimeo.com'].includes(url.hostname)) {
+      const id = url.pathname.match(/(?:\/video)?\/(\d+)/)?.[1];
+      if (id) embed = `https://player.vimeo.com/video/${id}`;
+    }
+  } catch { /* Local upload URLs are handled by the native video player below. */ }
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -42,6 +56,7 @@ export default function VideoPlayer({
   };
 
   if (!src) return null;
+  if (embed) return <div className={`bg-black ${className}`} data-testid="video-player"><iframe src={embed} title={title} className="w-full h-full" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" loading="lazy" /></div>;
 
   return (
     <div

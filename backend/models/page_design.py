@@ -40,6 +40,7 @@ class PageHero(BaseModel):
     theme: Literal['light', 'dark'] = 'light'
     layout: Literal['split', 'text'] = 'split'
     image_url: str = ''
+    video_url: str = ''
     image_alt: str = ''
     featured_project_slug: str = ''
     image_position: Literal['center', 'top', 'bottom', 'left', 'right'] = 'center'
@@ -47,7 +48,7 @@ class PageHero(BaseModel):
     primary_url: str = ''
     secondary_label: BilingualText = Field(default_factory=BilingualText)
     secondary_url: str = ''
-    _links = field_validator('image_url', 'primary_url', 'secondary_url')(safe_link)
+    _links = field_validator('image_url', 'video_url', 'primary_url', 'secondary_url')(safe_link)
 
 class PageSection(BaseModel):
     id: str = Field(min_length=1, max_length=100)

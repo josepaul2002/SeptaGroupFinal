@@ -3,6 +3,7 @@ import { errorMessage } from '../../lib/cms';
 import { useState } from 'react';
 import { X, Save, Loader2, Upload, Plus, AlertTriangle } from 'lucide-react';
 import { uploadFile } from '../../hooks/useApi';
+import MediaGuide,{validateMediaRatio} from './MediaGuide';
 
 const PARTNER_CATEGORIES = [
   'Architecture & Design', 'Structural Engineering', 'MEP Engineering', 'Quantity Surveying',
@@ -49,7 +50,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
     e.preventDefault();
     if(uploading)return;
     setFormError('');
-    if (form.status === 'published' && !(form.media.card_image || (form.profile_type === 'person' && form.media.portrait_image))) {
+    if (form.status === 'published' && !form.media.card_image) {
       if (!window.confirm('Publishing without a card image is not recommended. Cards will appear with a placeholder. Continue?')) return;
     }
     setSaving(true);
@@ -60,6 +61,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
   const handleUpload = async (e, field) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    try {const issue=await validateMediaRatio(file,field);if(issue){setFormError(issue);e.target.value='';return;}}catch{setFormError('Could not read this image. Please try a JPG, PNG or WebP.');return;}
     setUploading(true);setFormError('');setMediaMessage('');
     try {
       const result = await uploadFile(token, file);
@@ -90,7 +92,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
     { id: 'media', label: 'Media' },
   ];
 
-  const needsCardImage = form.status === 'published' && !(form.media.card_image || (form.profile_type === 'person' && form.media.portrait_image));
+  const needsCardImage = form.status === 'published' && !form.media.card_image;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -203,24 +205,27 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
           {/* MEDIA */}
           {tab === 'media' && (
             <>
-              {form.profile_type==='person'&&<MediaField label="Profile portrait" hint="Use a clear headshot. Reused on profile cards, homepage and project credits." url={form.media.portrait_image} onUpload={e=>handleUpload(e,'portrait_image')} onClear={()=>setForm({...form,media:{...form.media,portrait_image:null}})} onUrlChange={v=>setForm({...form,media:{...form.media,portrait_image:v}})}/>}
-              <MediaField label="Card Image (16:9) *" hint="Used in ecosystem grid. Required for published partners."
+              <p className="text-sm text-[#606060]">Each image has a separate purpose. The portrait identifies the person; the card is a wide image of their work or studio. Uploaded files are checked for the shape shown below. Paste-in URLs cannot be checked before loading: review the preview carefully.</p>
+              {form.profile_type==='person'&&<MediaField field="portrait_image" label="Profile portrait" hint="Face photograph for identity and project credits; never stretched into the wide collaborator card." url={form.media.portrait_image} onUpload={e=>handleUpload(e,'portrait_image')} onClear={()=>setForm({...form,media:{...form.media,portrait_image:null}})} onUrlChange={v=>setForm({...form,media:{...form.media,portrait_image:v}})}/>}
+              <MediaField field="card_image" label="Collaborator card image (16:9) *" hint="Wide image of the person's work or company, used across collaborator cards. Required for a published profile."
                 url={form.media.card_image} onUpload={e => handleUpload(e, 'card_image')}
                 onClear={() => setForm({ ...form, media: { ...form.media, card_image: null } })}
                 onUrlChange={v => setForm({ ...form, media: { ...form.media, card_image: v } })} />
-              <MediaField label="Logo Image" hint="Transparent logo, used on cards and detail page."
+              <MediaField field="logo_image" label="Logo Image" hint="Optional original logo, displayed on company profile. Do not generate an invented logo."
                 url={form.media.logo_image} onUpload={e => handleUpload(e, 'logo_image')}
                 onClear={() => setForm({ ...form, media: { ...form.media, logo_image: null } })}
                 onUrlChange={v => setForm({ ...form, media: { ...form.media, logo_image: v } })} />
-              <MediaField label="Hero Image (21:9)" hint="Full-width banner on detail page. Falls back to card image."
+              <MediaField field="hero_image" label="Hero Image (16:9)" hint="Full-width banner on detail page. Falls back to card image."
                 url={form.media.hero_image} onUpload={e => handleUpload(e, 'hero_image')}
                 onClear={() => setForm({ ...form, media: { ...form.media, hero_image: null } })}
                 onUrlChange={v => setForm({ ...form, media: { ...form.media, hero_image: v } })} />
               <F label="Gallery Images (up to 10)">
+                <MediaGuide field="gallery_images" />
                 <div className="flex flex-wrap gap-2 mb-3">
                   {(form.media.gallery_images || []).map((img, i) => (
                     <div key={i} className="relative group">
                       <img src={img} alt="" className="h-20 w-28 object-cover border" />
+                      <MediaGuide field="gallery_images" index={i}/>
                       <button type="button" onClick={() => removeGalleryImage(i)}
                         className="absolute top-1 right-1 bg-red-500 text-white p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
                     </div>
@@ -260,11 +265,12 @@ function F({ label, children }) {
   );
 }
 
-function MediaField({ label, hint, url, onUpload, onClear, onUrlChange }) {
+function MediaField({ field, label, hint, url, onUpload, onClear, onUrlChange }) {
   return (
     <div>
       <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-1">{label}</label>
       {hint && <p className="text-[10px] text-[#8A8A8A] mb-2">{hint}</p>}
+      <MediaGuide field={field}/>
       <div className="flex gap-3 items-end">
         <input type="text" className="form-input flex-1" placeholder="Upload a file or paste an image address" value={url || ''}
           onChange={e => onUrlChange(e.target.value || null)} />
