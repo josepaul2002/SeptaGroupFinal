@@ -1,3 +1,4 @@
+import {useMotion} from './MotionProvider';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 // Simplified original continent outlines for an illustrative, low-bandwidth globe.
@@ -26,6 +27,7 @@ function project(lat,lon,centre) {
   return {x:250+177*Math.cos(p)*Math.sin(d),y:218-177*(Math.cos(tilt)*Math.sin(p)-Math.sin(tilt)*Math.cos(p)*Math.cos(d)),z:Math.sin(tilt)*Math.sin(p)+Math.cos(tilt)*Math.cos(p)*Math.cos(d)};
 }
 export default function CoverageGlobe({items,active,t}) {
+  const {globe:motionAllowed}=useMotion();
   const id=useId().replace(/:/g,''),root=useRef(null);
   const [angle,setAngle]=useState(62),[paused,setPaused]=useState(false),[visible,setVisible]=useState(false),[reduced,setReduced]=useState(false);
   const activePoint=coordinates(active,t);
@@ -33,7 +35,7 @@ export default function CoverageGlobe({items,active,t}) {
   useEffect(()=>{const mq=window.matchMedia('(prefers-reduced-motion: reduce)');setReduced(mq.matches);const fn=e=>setReduced(e.matches);mq.addEventListener('change',fn);return()=>mq.removeEventListener('change',fn);},[]);
   useEffect(()=>{const observer=new IntersectionObserver(entries=>setVisible(entries.some(e=>e.isIntersecting)));observer.observe(root.current);return()=>observer.disconnect();},[]);
   useEffect(()=>{setAngle(activeLon??62);},[active?.id,activeLon]);
-  useEffect(()=>{if(paused||reduced||!visible)return;const timer=setInterval(()=>{if(!document.hidden)setAngle(a=>(a+0.18)%360);},80);return()=>clearInterval(timer);},[paused,reduced,visible]);
+  useEffect(()=>{if(paused||reduced||!visible||!motionAllowed)return;const timer=setInterval(()=>{if(!document.hidden)setAngle(a=>(a+0.18)%360);},80);return()=>clearInterval(timer);},[paused,reduced,visible,motionAllowed]);
   const dots=useMemo(()=>DOTS.map(([lat,lon])=>project(lat,lon,angle)).filter(p=>p.z>0),[angle]);
   const kerala=project(10.85,76.27,angle);
   const marker=activeLat!=null?project(activeLat,activeLon,angle):kerala;
@@ -51,6 +53,6 @@ export default function CoverageGlobe({items,active,t}) {
       {activePoint&&marker.z>0&&<circle cx={marker.x} cy={marker.y} r="3" fill="#fff"/>}
     </svg>
     <div className="globe-location"><span className="tech-label">Rooted in Kerala</span><strong key={active?.id}>{active?t(active.title):'Connected by craft.'}</strong></div>
-    <div className="globe-controls"><button type="button" onClick={()=>{setAngle(76.27);setPaused(true);}}>Focus on Kerala</button>{!reduced&&<button type="button" onClick={()=>setPaused(v=>!v)}>{paused?'Rotate globe':'Pause rotation'}</button>}</div>
+    <div className="globe-controls"><button type="button" onClick={()=>{setAngle(76.27);setPaused(true);}}>Focus on Kerala</button>{!reduced&&motionAllowed&&<button type="button" onClick={()=>setPaused(v=>!v)}>{paused?'Rotate globe':'Pause rotation'}</button>}</div>
   </div>;
 }

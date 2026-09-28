@@ -83,6 +83,8 @@ class ProjectCredit(BaseModel):
     entity_slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     role: str = Field(min_length=2, max_length=120)
     contribution: BilingualText = Field(default_factory=BilingualText)
+    display_as: Literal["profile", "company"] = "profile"
+    affiliation_url: str = ""
     affiliation_at_time: str = ""
     verified: bool = False
 
@@ -135,6 +137,15 @@ class ProjectTabVisibility(BaseModel):
 # --- Lead Model ---
 
 class LeadCreate(BaseModel):
+    answers: dict[str, str] = Field(default_factory=dict, max_length=30)
+
+    @field_validator('answers')
+    @classmethod
+    def answer_limits(cls, values):
+        if any(len(k)>80 or len(v)>2000 for k,v in values.items()):
+            raise ValueError('Enquiry answers must be no longer than 2000 characters.')
+        return values
+
     preferred_contact: Literal["phone", "email", "whatsapp"] = "phone"
     name: str = Field(min_length=2, max_length=120)
     phone: str = Field(min_length=8, max_length=32)
@@ -196,6 +207,8 @@ class LeadResponse(BaseModel):
 # --- Partner Model (upgraded) ---
 
 class PartnerMedia(BaseModel):
+    videos: List[str] = Field(default_factory=list)
+    portrait_image: Optional[str] = None
     card_image: Optional[str] = None
     logo_image: Optional[str] = None
     hero_image: Optional[str] = None
@@ -203,6 +216,9 @@ class PartnerMedia(BaseModel):
 
 
 class PartnerBase(BaseModel):
+    profile_type: Literal["person", "company"] = "company"
+    professional_role: BilingualText = Field(default_factory=BilingualText)
+    firm: str = ""
     publication_reviewed: bool = False
     seo: SEOSettings = Field(default_factory=SEOSettings)
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -230,6 +246,9 @@ class PartnerCreate(PartnerBase):
 
 
 class PartnerUpdate(BaseModel):
+    profile_type: Optional[Literal["person", "company"]] = None
+    professional_role: Optional[BilingualText] = None
+    firm: Optional[str] = None
     publication_reviewed: Optional[bool] = None
     seo: Optional[SEOSettings] = None
     name: Optional[BilingualText] = None
@@ -337,12 +356,15 @@ class ProjectResponse(ProjectBase):
 # --- Testimonial Model ---
 
 class TestimonialBase(BaseModel):
+    profile_image: str = ""
+    cover_image: str = ""
+    completed_project: bool = False
     status: PublishStatus = PublishStatus.draft
     publication_reviewed: bool = False
     project_ref: str = ""
     client_name: str
     client_role: str
-    project_type: str
+    project_type: str = ""
     content: BilingualText
     rating: int = 5
 

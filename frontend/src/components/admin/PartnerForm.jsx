@@ -14,6 +14,9 @@ const RELATIONSHIP_TYPES = ['Group Company', 'Core Partner', 'Project Partner', 
 
 export default function PartnerForm({ partner, token, onSave, onClose }) {
   const [form, setForm] = useState({
+    profile_type: partner?.profile_type || 'company',
+    professional_role: partner?.professional_role || {en:'',ml:''},
+    firm: partner?.firm || '',
     publication_reviewed: partner?.publication_reviewed || false,
     seo: partner?.seo || {},
     slug: partner?.slug || '',
@@ -37,32 +40,36 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
     status: partner?.status || 'draft',
   });
   const [saving, setSaving] = useState(false);
+  const [mediaMessage,setMediaMessage]=useState(''),[formError,setFormError]=useState('');
   const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState('basic');
   const [specInput, setSpecInput] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.status === 'published' && !form.media.card_image) {
+    if(uploading)return;
+    setFormError('');
+    if (form.status === 'published' && !(form.media.card_image || (form.profile_type === 'person' && form.media.portrait_image))) {
       if (!window.confirm('Publishing without a card image is not recommended. Cards will appear with a placeholder. Continue?')) return;
     }
     setSaving(true);
-    try { await onSave(form); } catch(e) { alert(errorMessage(e)); }
+    try { await onSave(form); } catch(e) { setFormError(errorMessage(e)); }
     setSaving(false);
   };
 
   const handleUpload = async (e, field) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
+    setUploading(true);setFormError('');setMediaMessage('');
     try {
       const result = await uploadFile(token, file);
-      if (field === 'gallery_images') {
-        setForm({ ...form, media: { ...form.media, gallery_images: [...(form.media.gallery_images || []), result.url] } });
+      if (field === 'gallery_images' || field === 'videos') {
+        setForm(f => ({ ...f, media: { ...f.media, [field]: [...(f.media[field] || []), result.url] } }));
       } else {
-        setForm({ ...form, media: { ...form.media, [field]: result.url } });
+        setForm(f => ({ ...f, media: { ...f.media, [field]: result.url } }));
       }
-    } catch (error) { alert(errorMessage(error)); }
+      setMediaMessage('Upload complete. Save this profile to keep the file.');
+    } catch (error) { setFormError(errorMessage(error)); }
     setUploading(false);
   };
 
@@ -83,7 +90,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
     { id: 'media', label: 'Media' },
   ];
 
-  const needsCardImage = form.status === 'published' && !form.media.card_image;
+  const needsCardImage = form.status === 'published' && !(form.media.card_image || (form.profile_type === 'person' && form.media.portrait_image));
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -111,7 +118,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* BASIC INFO */}
           {tab === 'basic' && (
-            <>
+            <><F label="Profile type"><select className="form-input" value={form.profile_type} onChange={e=>setForm({...form,profile_type:e.target.value})}><option value="company">Company / studio</option><option value="person">Person / independent professional</option></select></F>{form.profile_type==='person'&&<><F label="Professional role · English"><input className="form-input" value={form.professional_role.en||''} onChange={e=>setForm({...form,professional_role:{...form.professional_role,en:e.target.value}})}/></F><F label="Professional role · Malayalam"><input className="form-input" value={form.professional_role.ml||''} onChange={e=>setForm({...form,professional_role:{...form.professional_role,ml:e.target.value}})}/></F><F label="Firm / studio (optional)"><input className="form-input" value={form.firm} onChange={e=>setForm({...form,firm:e.target.value})}/></F></>}
               <div className="grid grid-cols-2 gap-4">
                 <F label="Slug *">
                   <input type="text" required disabled={!!partner} className="form-input" value={form.slug}
@@ -196,6 +203,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
           {/* MEDIA */}
           {tab === 'media' && (
             <>
+              {form.profile_type==='person'&&<MediaField label="Profile portrait" hint="Use a clear headshot. Reused on profile cards, homepage and project credits." url={form.media.portrait_image} onUpload={e=>handleUpload(e,'portrait_image')} onClear={()=>setForm({...form,media:{...form.media,portrait_image:null}})} onUrlChange={v=>setForm({...form,media:{...form.media,portrait_image:v}})}/>}
               <MediaField label="Card Image (16:9) *" hint="Used in ecosystem grid. Required for published partners."
                 url={form.media.card_image} onUpload={e => handleUpload(e, 'card_image')}
                 onClear={() => setForm({ ...form, media: { ...form.media, card_image: null } })}
@@ -225,14 +233,14 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                   </label>
                 )}
               </F>
-              {uploading && <div className="flex items-center gap-2 text-sm text-[#606060]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
+              <section className="space-y-3"><h3>Profile videos</h3><p className="text-sm">Upload approved MP4 or WebM videos up to 50 MB. Save the profile after uploading.</p><input type="file" accept="video/mp4,video/webm" disabled={uploading} onChange={e=>handleUpload(e,'videos')}/>{(form.media.videos||[]).map((url,i)=><div key={i} className="flex gap-3"><input className="form-input" value={url} onChange={e=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.map((v,n)=>n===i?e.target.value:v)}}))}/><button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.filter((_,n)=>n!==i)}}))}>Remove</button></div>)}<button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:[...(f.media.videos||[]),'']}}))}>Add video URL</button></section>{mediaMessage&&<p role="status">{mediaMessage}</p>}{uploading && <div className="flex items-center gap-2 text-sm text-[#606060]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
             </>
           )}
 
           <PublicationFields form={form} setForm={setForm} /><SEOFields value={form.seo} onChange={seo=>setForm({...form,seo})} />
           <div className="flex justify-end gap-3 pt-4 border-t border-[#8A8A8A]/20">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">Cancel</button>
-            <button type="submit" disabled={saving} data-testid="save-partner-btn"
+            <div>{formError&&<p role="alert" className="text-red-700">{formError}</p>}</div><button type="submit" disabled={saving||uploading} data-testid="save-partner-btn"
               className="flex items-center gap-2 px-4 py-2 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] disabled:opacity-60">
               {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />} Save
             </button>

@@ -466,3 +466,17 @@ async def send_password_changed(recipient: str) -> bool:
     except Exception as error:
         logger.error('Password-change notice failed: %s', type(error).__name__)
         return False
+
+async def send_login_code(recipient: str, code: str) -> bool:
+    if not _configure_resend() or not os.getenv('FROM_EMAIL'):
+        return False
+    try:
+        await asyncio.to_thread(resend.Emails.send, {
+            'from': os.environ['FROM_EMAIL'], 'to': [recipient],
+            'subject': 'Your Septa admin sign-in code',
+            'html': f'<p>Your Septa admin sign-in code is:</p><p style="font-size:28px;letter-spacing:6px">{escape(code)}</p><p>This code expires in 5 minutes. Never share it. If you did not sign in, change your password.</p>'
+        })
+        return True
+    except Exception as error:
+        logger.error('Sign-in email failed: %s', type(error).__name__)
+        return False

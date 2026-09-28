@@ -1,3 +1,4 @@
+import EnquiryQuestions from './EnquiryQuestions';
 import { errorMessage } from '../../lib/cms';
 import NavigationSettings from './NavigationSettings';
 import { useState, useEffect } from 'react';
@@ -136,7 +137,7 @@ export default function SettingsTab({ token }) {
       {/* ENQUIRY FORM */}
       {activeSection === 'enquiry' && (
         <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4">
-          <h3 className="text-sm font-sora font-medium text-[#050505] mb-2">Enquiry Form Options</h3>
+          <EnquiryQuestions value={settings.enquiry} onChange={updateEnquiry}/><h3 className="text-sm font-sora font-medium text-[#050505] mb-2">Enquiry Form Options</h3>
           <p className="text-xs text-[#8A8A8A] mb-4">Customize dropdowns in the contact form.</p>
           <p className="text-xs text-amber-800 border border-amber-200 bg-amber-50 p-3">Lead email delivery is configured with the deployment environment variable ADMIN_NOTIFY_EMAIL. It is never saved in public site settings.</p>
           <div>

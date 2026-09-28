@@ -13,10 +13,13 @@ export default function ContactPage() {
   const [params] = useSearchParams();
   const partnerRef = params.get('partner') || '', leaderRef = params.get('leader') || '';
   const {data: person} = useApiData(partnerRef ? `/partners/${encodeURIComponent(partnerRef)}` : leaderRef ? `/leaders/${encodeURIComponent(leaderRef)}` : '/settings', null);
-  const [form, setForm] = useState({name:'',phone:'',email:'',message:'',project_location:'',project_type:'',honeypot:''});
+  const [form, setForm] = useState({name:'',phone:'',email:'',message:'',project_location:'',project_type:'',honeypot:'',answers:{}});
   const [submissionId] = useState(newId);
   const [sending,setSending] = useState(false), [sent,setSent] = useState(false), [error,setError] = useState('');
   useEffect(() => { window.scrollTo(0,0); }, []);
+  const questions=(settings?.enquiry?.questions||[]).filter(q=>q.label);
+  const labels=settings?.enquiry?.labels||{};
+  const renderQuestion=q=><label className="block text-sm" key={q.id}>{q.label}{q.required?' *':''}{q.type==='select'?<select className="form-input mt-2" required={q.required} value={form.answers[q.id]||''} onChange={e=>setForm({...form,answers:{...form.answers,[q.id]:e.target.value}})}><option value="">Select an option</option>{(q.options||[]).filter(Boolean).map(o=><option key={o}>{o}</option>)}</select>:q.type==='textarea'?<textarea className="form-input mt-2" required={q.required} maxLength={2000} value={form.answers[q.id]||''} onChange={e=>setForm({...form,answers:{...form.answers,[q.id]:e.target.value}})}/>:<input className="form-input mt-2" required={q.required} maxLength={2000} value={form.answers[q.id]||''} onChange={e=>setForm({...form,answers:{...form.answers,[q.id]:e.target.value}})}/>}</label>;
   const contact = settings?.contact || {};
   const introduction = !!(partnerRef || leaderRef || params.get('enquiry_type') === 'introduction');
   const personName = getText(person?.name);
@@ -49,17 +52,17 @@ export default function ContactPage() {
         </div>
         <div className="border border-[#8A8A8A]/20 p-6 md:p-8">
           {sent ? <div role="status" data-testid="contact-success"><CheckCircle2 className="mb-5"/><h2 className="text-2xl mb-3">Callback requested.</h2><p>Thank you, {form.name}. Our team will contact you on {form.phone}.</p></div> : <>
-            <h2 className="text-2xl font-sora mb-2">Prefer us to call?</h2><p className="text-sm text-[#606060] mb-7">Just your name and phone number.</p>
+            <h2 className="text-2xl font-sora mb-2">Prefer us to call?</h2><p className="text-sm text-[#606060] mb-7">{questions.some(q=>q.required)?'Your contact details and a few quick questions.':'Just your name and phone number.'}</p>
             <form className="space-y-5" onSubmit={submit} data-testid="enquiry-form">
               <div className="absolute -left-[9999px]" aria-hidden="true"><input name="website" tabIndex={-1} autoComplete="off" value={form.honeypot} onChange={e=>setForm({...form,honeypot:e.target.value})}/></div>
-              <label className="block text-sm">Your name<input className="form-input mt-2" required minLength={2} maxLength={120} autoComplete="name" data-testid="input-name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
-              <label className="block text-sm">Phone number<input className="form-input mt-2" type="tel" required minLength={8} maxLength={32} autoComplete="tel" data-testid="input-phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>
-              <details className="border-y py-4"><summary className="text-sm cursor-pointer">Add details (optional)</summary><div className="space-y-4 mt-5">
-                <label className="block text-sm">Email<input type="email" className="form-input mt-2" autoComplete="email" maxLength={254} value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
-                <label className="block text-sm">Project location<input className="form-input mt-2" value={form.project_location} onChange={e=>setForm({...form,project_location:e.target.value})}/></label>
-                <label className="block text-sm">Project type<select className="form-input mt-2" value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value})}><option value="">Choose if relevant</option>{(settings?.enquiry?.project_types||[]).map(t=><option key={t}>{t}</option>)}</select></label>
-                <label className="block text-sm">Anything we should know?<textarea className="form-input mt-2" rows={3} maxLength={5000} value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
-              </div></details>
+              <label className="block text-sm">{labels.name||'Your name'}<input className="form-input mt-2" required minLength={2} maxLength={120} autoComplete="name" data-testid="input-name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
+              <label className="block text-sm">{labels.phone||'Phone number'}<input className="form-input mt-2" type="tel" required minLength={8} maxLength={32} autoComplete="tel" data-testid="input-phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>
+              {questions.filter(q=>q.required).map(renderQuestion)}<details className="border-y py-4"><summary className="text-sm cursor-pointer">Add details (optional)</summary><div className="space-y-4 mt-5">
+                <label className="block text-sm">{labels.email||'Email'}<input type="email" className="form-input mt-2" autoComplete="email" maxLength={254} value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
+                <label className="block text-sm">{labels.project_location||'Project location'}<input className="form-input mt-2" value={form.project_location} onChange={e=>setForm({...form,project_location:e.target.value})}/></label>
+                <label className="block text-sm">{labels.project_type||'Project type'}<select className="form-input mt-2" value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value})}><option value="">Choose if relevant</option>{(settings?.enquiry?.project_types||[]).map(t=><option key={t}>{t}</option>)}</select></label>
+                <label className="block text-sm">{labels.message||'Anything we should know?'}<textarea className="form-input mt-2" rows={3} maxLength={5000} value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
+              {questions.filter(q=>!q.required).map(renderQuestion)}</div></details>
               {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
               <button type="submit" className="design-button primary w-full justify-center" disabled={sending}>{sending?<><Loader2 size={16} className="animate-spin"/>Sending…</>:'Request a callback'}</button>
               <p className="text-xs text-[#606060]">We’ll use these details to respond to your request. <a className="underline" href="/privacy">Privacy</a></p>

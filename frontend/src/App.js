@@ -1,5 +1,9 @@
+import MotionProvider from './components/MotionProvider';
+import HashNavigation from './components/HashNavigation';
+import MobileContactBar from './components/MobileContactBar';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import './App.css';
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -22,13 +26,13 @@ import PagePreview from './pages/PagePreview';
 function PublicChrome({children}) {
   const {pathname}=useLocation();
   const internal=pathname.startsWith('/admin')||pathname==='/content-checklist';
-  return <>{!internal&&<Navbar/>}<main id="main-content">{children}</main>{!internal&&<><Footer/><WhatsAppButton/></>}</>;
+  return <>{!internal&&<Navbar/>}<main id="main-content">{children}</main>{!internal&&<><Footer/><WhatsAppButton/><MobileContactBar/></>}</>;
 }
 
 function App() {
   return (
     <LanguageProvider>
-      <BrowserRouter>
+      <BrowserRouter><MotionProvider><HashNavigation/>
         <div className="min-h-screen bg-[#F6F6F3] font-inter">
           <PageMetadata />
           <PublicChrome>
@@ -53,7 +57,7 @@ function App() {
             </Routes>
           </PublicChrome>
         </div>
-      </BrowserRouter>
+      </MotionProvider></BrowserRouter>
     </LanguageProvider>
   );
 }

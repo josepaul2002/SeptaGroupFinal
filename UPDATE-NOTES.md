@@ -1,3 +1,57 @@
+# Septa: layout, testimonials and admin update
+
+## Install this cumulative update on your Mac
+
+1. Stop the running site with Control-C in its terminal.
+2. Extract `septa-discovery-update.zip` in Downloads.
+3. Run `bash ~/Downloads/septa-discovery-update/apply-update.sh`.
+4. If asked, enter the folder you currently run. The installer prints the exact restart command.
+5. Restart and open http://localhost:8000/admin. Refresh the browser.
+
+The installer backs up replaced files and preserves your environment settings, Python virtual environment, uploaded files, MongoDB data and existing login. The compiled React build is included; you do not need to run npm. This package has not been installed on your Mac or deployed remotely.
+
+## What changed and where to edit it
+
+- **Website studio:** dynamic homepage project, services, Septa team, collaborator, coverage and testimonial sections. Existing published content is reused. Empty sections stay hidden. Existing custom page content is preserved; the default homepage upgrades when read/saved. You can reorder, disable and select records.
+- **Settings → Brand & navigation:** separate desktop/menu/footer links, editable footer groups, Off/Subtle/Expressive motion, header glass, globe animation and mobile contact actions. OS reduced-motion preferences override site motion.
+- **Projects:** visible photographs and continuous content with jump links, keyboard/swipe gallery, prominent Septa responsibility, separate Septa delivery team and external collaborator cards. Optional 3D/video/drawings load further down.
+- **Credits:** select a published/reviewed profile, or see unready profiles in a separate dropdown group. Verify its project role separately. Choose the selected profile name or company represented only; add an optional company website. “Company represented on this project” replaces “At the time”. Publication errors now tell you which check failed. Drafts can still be saved.
+- **Partners:** person/company identity, portrait, professional role and firm. Image uploads keep their local paths. Upload approved MP4/WebM profile videos up to 50 MB; save afterward. Saving is disabled while an upload is in progress. Errors remain visible in the editor.
+- **Testimonials:** client portrait and cover upload, completed-project checkbox, optional published-project selector. Selecting a project creates a public link and displays the testimonial on that project. A completed-project testimonial can link only to a project marked Completed. Linking is optional. Only reviewed, published testimonials appear publicly.
+- **Settings → Enquiry form:** edit standard field labels and add/remove text, long-text and dropdown questions; mark them required if necessary. Name/phone remain required for callbacks. Required questions are visible immediately; optional ones stay collapsed. Server validation and saved question/answer snapshots preserve what the visitor answered. Answers also appear in the lead message for existing admin/email workflows.
+
+## Email-code login: configure before enabling
+
+This build supports password followed by a six-digit email code for all admin accounts. It is **off by default** to avoid locking out an installation without working email.
+
+Use the existing Resend integration: set a real `RESEND_API_KEY`, a verified `FROM_EMAIL`, and a unique `SECRET_KEY` in your existing environment. Ensure every admin address can receive mail. Test password-recovery delivery first. Then set `ADMIN_EMAIL_OTP=true` and restart. Do not replace your existing environment with the example file.
+
+Codes expire after five minutes, allow five attempts, are single-use, and have a 60-second resend cooldown. Only keyed hashes are stored; changing account access/password invalidates pending codes. If delivery fails, login stops with a configuration error rather than bypassing verification. As the local owner, you can set `ADMIN_EMAIL_OTP=false` and restart to recover from a broken email-provider configuration.
+
+This verifies the **admin mailbox** during login. It does not add an OTP barrier to customer enquiries. Email codes depend on mailbox security and are not phishing-resistant authentication.
+
+## Google Workspace and provider options
+
+- Protect staff mailboxes with enforced Google Workspace 2-Step Verification, preferably passkeys/security keys: https://support.google.com/a/answer/175197
+- Google sign-in can be integrated later for explicitly approved Septa admins. A Workspace subscription does not automatically authenticate this custom application; validate Google tokens and the hosted-domain claim, and retain the admin allowlist: https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
+- Google Calendar booking pages can be linked from an editable navigation/CTA for consultations. Premium booking features depend on the precise Workspace edition: https://support.google.com/calendar/answer/11608416
+- Workspace SMTP relay can send application email after configuration, but it is not an OTP verification service: https://support.google.com/a/answer/176600
+- Twilio Verify offers managed email verification through SendGrid: https://www.twilio.com/docs/verify/email . This build uses Resend delivery with verification handled by the application, so no second provider is needed initially. No provider accounts or Google Admin settings were changed.
+
+## Upload troubleshooting
+
+Use JPG/PNG/WebP/GIF images; export iPhone HEIC images as JPG first. Files must be under 50 MB. Uploading fills the address automatically; saving the record retains it. Locally the server must be able to write to backend/uploads; in production configure persistent R2/S3 storage and its public CDN URL. The supplied screenshots show credit/layout problems, not an upload failure response, so the exact failure on your Mac remains unconfirmed. If it persists after this update, copy the full error shown by the editor and the server terminal.
+
+## Verification
+
+Production frontend build, 22 isolated backend tests, 19 production-bundle DOM scenarios and media-link checks passed. Checks cover OTP expiry/replay/attempt limits, profile/testimonial schema retention, publishing errors, uploads and retry behavior, linked content, gallery keyboard navigation, custom enquiry questions, two-stage login and malformed API fallbacks.
+
+These checks use controlled data and DOM simulation, not a full visual browser or live MongoDB, Resend, Google Workspace or R2 service. Live email delivery, cloud storage credentials and the Mac installation require environment validation.
+
+---
+
+## Previous cumulative update details
+
 # Septa: contact, media and account recovery update
 
 ## Apply on your Mac

@@ -20,7 +20,16 @@ def design(page_id, doc=None):
     if not doc:
         return base
     if doc.get('version') == 2:
-        return {**base, **{k: v for k, v in doc.items() if k not in ('_id', 'published_snapshot')}}
+        result = {**base, **{k: v for k, v in doc.items() if k not in ('_id', 'published_snapshot')}}
+        if page_id == 'home' and doc.get('layout_revision', 1) < 2:
+            # Upgrade once on read/save. Keep custom headings, featured choices and hidden sections.
+            sections = deepcopy(result['sections'])
+            sections = [section for section in sections if not (section.get('id') == 'approach' and text(section.get('title')) == 'A clear place to start.' and text(section.get('body')) == 'Whether you have an architect, a set of plans or an early idea, start with a conversation about the work you need.')]
+            insertion = next((i for i, section in enumerate(sections) if section['type'] == 'cta'), len(sections))
+            added = [deepcopy(section) for section in base['sections'] if section['id'] in ('home-septa-team','home-collaborators','home-coverage','home-testimonials') and not any(old['id']==section['id'] for old in sections)]
+            sections[insertion:insertion] = added
+            result.update(sections=sections, layout_revision=2)
+        return result
     types = {'metrics': 'stats', 'timeline_step': 'process', 'team_member': 'cards', 'proof_callout': 'cards', 'comparison_row': 'cards'}
     for kind, target in types.items():
         blocks = sorted([b for b in doc.get('blocks', []) if b.get('block_type') == kind], key=lambda b:b.get('order', 0))
@@ -72,17 +81,25 @@ async def design_html(db, page, settings):
         kind, items = section['type'], section.get('items') or []
         if kind == 'cards' and section.get('source') == 'services':
             service_page = await public_page(db,'services')
-            items = [i for s in service_page['sections'] if s['type']=='cards' and s.get('source')!='services' for i in s.get('items',[])]
+            items = [i for s in service_page['sections'] if s['type']=='cards' and s.get('source')!='services' for i in s.get('items',[])][:section.get('limit',3)]
+        if kind == 'locations' and section.get('source') == 'about':
+            about = await public_page(db, 'about')
+            source = next((s for s in about['sections'] if s['type']=='locations'), None)
+            if not source:
+                continue
+            items = source.get('items') or []
         if kind == 'locations' and not items:
             items = [{'title':{'en':name}} for name in (settings.get('contact') or {}).get('operating_districts',[])]
-        if kind in ['projects','people','testimonials']:
-            coll = {'projects':'projects','people':'leaders','testimonials':'testimonials'}[kind]
+        if kind in ['projects','people','testimonials','collaborators']:
+            coll = {'projects':'projects','people':'leaders','testimonials':'testimonials','collaborators':'partners'}[kind]
             query = dict(PUBLIC_QUERY)
             if kind == 'projects' and section.get('project_type'):
                 query['type'] = section['project_type']
             records = await db[coll].find(query,{'_id':0}).to_list(500)
+            if kind == 'collaborators':
+                records.sort(key=lambda r: not bool(r.get('is_featured')))
             if section.get('selected_slugs'):
-                records = [r for slug in section['selected_slugs'] for r in records if r.get('slug')==slug]
+                records = [r for slug in section['selected_slugs'] for r in records if (r.get('slug') or r.get('id'))==slug]
             records = records[:section.get('limit',3)]
             if not records:
                 continue
@@ -90,11 +107,11 @@ async def design_html(db, page, settings):
             for record in records:
                 from services.content import public_document
                 r = public_document(record)
-                prefix = '/projects/' if kind=='projects' else '/project-leaders/'
-                items.append({'title':r.get('title') if kind=='projects' else r.get('name') or r.get('client_name'),'body':r.get('short_description') or r.get('bio') or r.get('content') or r.get('quote'),'image_url':r.get('image') or r.get('photo'),'image_alt':text(r.get('title') or r.get('name')),'link_url':prefix+r['slug'] if kind!='testimonials' else '', 'link_label':{'en':'Explore'}})
+                prefix = '/projects/' if kind=='projects' else '/ecosystem/' if kind=='collaborators' else '/project-leaders/'
+                items.append({'title':r.get('title') if kind=='projects' else r.get('name') or r.get('client_name'),'body':r.get('short_description') or r.get('bio_short') or r.get('bio') or r.get('content') or r.get('quote'),'image_url':r.get('cover_image') or r.get('image') or r.get('profile_image') or r.get('photo') or ((r.get('media') or {}).get('portrait_image') if r.get('profile_type')=='person' else (r.get('media') or {}).get('card_image')),'image_alt':text(r.get('title') or r.get('name')),'link_url':prefix+r['slug'] if kind!='testimonials' else ('/projects/'+quote(r['project_ref'])+'#client-perspectives' if r.get('project_ref') and await db.projects.find_one({'slug':r['project_ref'],**PUBLIC_QUERY}) else ''), 'link_label':{'en':'Explore'}})
         if kind in ['cards','process','stats','faq'] and not items:
             continue
-        body += '<section><h2>'+escape(text(section.get('title')))+'</h2>'+paragraph(section.get('body'))
+        body += '<section id="'+escape(section.get('id',''),quote=True)+'"><h2>'+escape(text(section.get('title')))+'</h2>'+paragraph(section.get('body'))
         body += picture(section.get('image_url'),section.get('image_alt'))
         for item in items:
             body += '<article><h3>'+escape(text(item.get('title')))+'</h3>'+paragraph(item.get('subtitle'))+paragraph(item.get('body'))

@@ -1,3 +1,4 @@
+import {profileImage} from '../lib/profiles';
 import { ManagedIntro } from '../components/PageSections';
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -103,7 +104,7 @@ export default function EcosystemPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((partner, i) => {
-                const cardImage = partner.media?.card_image || partner.cover_image || partner.logo_url;
+                const cardImage = profileImage(partner);
                 const hasWarning = !cardImage;
                 return (
                   <Link

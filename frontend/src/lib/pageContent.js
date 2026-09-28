@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 export { defaults };
 export const PAGE_PATHS = {home:'/',about:'/about',services:'/services',projects:'/projects',ecosystem:'/ecosystem',contact:'/contact',leaders:'/project-leaders'};
 export const PAGE_NAMES = {home:'Home',about:'About',services:'What we do',projects:'Projects',ecosystem:'Collaborators',contact:'Contact',leaders:'Project leaders'};
-export const SECTION_TYPES = {text:'Text + image',cards:'Capability cards',projects:'Projects',locations:'Where we work',process:'Working process',people:'Project leaders',stats:'Verified figures',faq:'Questions & answers',cta:'Call to action',testimonials:'Testimonials'};
+export const SECTION_TYPES = {text:'Text + image',cards:'Capability cards',projects:'Projects',locations:'Where we work',process:'Working process',collaborators:'Architects & collaborators',people:'Project leaders',stats:'Verified figures',faq:'Questions & answers',cta:'Call to action',testimonials:'Testimonials'};
 export const bilingual = (en='') => ({en,ml:''});
 export const newId = () => window.crypto?.randomUUID?.() || `item-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
 export const safeHref = value => typeof value === 'string' && !/[\\\u0000-\u0020]/.test(value) && (/^\/(?!\/)/.test(value) || /^(https:\/\/|mailto:|tel:|#)/.test(value)) ? value : '';
@@ -24,15 +24,4 @@ export function useSitePage(pageId) {
   const result=useApiData(endpoint,defaults[pageId]);
   return {...result,page:result.data?.version===2?result.data:defaults[pageId],preview:preview&&!!token};
 }
-export const defaultNavigation = [
-  {key:'projects',label:'Projects',url:'/projects',header:true,footer:true},
-  {key:'services',label:'What we do',url:'/services',header:true,footer:true},
-  {key:'about',label:'About',url:'/about',header:true,footer:true},
-  {key:'ecosystem',label:'Collaborators',url:'/ecosystem',header:false,footer:true},
-  {key:'leaders',label:'Project leaders',url:'/project-leaders',header:false,footer:true},
-  {key:'contact',label:'Contact',url:'/contact',header:false,footer:true},
-];
-export function navigationFor(settings,placement) {
-  const links=Array.isArray(settings?.navigation)?settings.navigation:defaultNavigation;
-  return links.filter(item=>item[placement]&&(Array.isArray(settings?.navigation)||settings?.nav_visibility?.[item.key]!==false)&&safeHref(item.url));
-}
+export {defaultNavigation,navigationFor} from './navigation';

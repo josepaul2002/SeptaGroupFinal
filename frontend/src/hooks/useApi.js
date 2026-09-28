@@ -147,8 +147,9 @@ export function useAdminAuth() {
     checkAuth();
   }, [token]);
 
-  const login = async (email, password) => {
-    const res = await axios.post(`${API}/admin/login`, { email, password });
+  const login = async (email, password, challenge, code) => {
+    const res = challenge ? await axios.post(`${API}/admin/login/verify`, {challenge,code}) : await axios.post(`${API}/admin/login`, { email, password });
+    if(res.data.requires_otp)return res.data;
     const newToken = res.data.access_token;
     sessionStorage.setItem('septa-admin-token', newToken);
     setToken(newToken);

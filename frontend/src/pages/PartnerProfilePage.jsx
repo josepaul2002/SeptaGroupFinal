@@ -1,3 +1,5 @@
+import VideoPlayer from '../components/VideoPlayer';
+import {profileIdentity} from '../lib/profiles';
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Globe, Facebook, Instagram, Mail, Phone, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -65,7 +67,7 @@ export default function PartnerProfilePage() {
 
   const media = partner.media || {};
   const heroImage = media.hero_image || media.card_image || partner.cover_image;
-  const logoImage = media.logo_image || partner.logo_url;
+  const logoImage = profileIdentity(partner);
   const gallery = media.gallery_images || [];
   const relInfo = relationshipLabels[partner.relationship_type] || relationshipLabels['Project Partner'];
   const showPreview = isPreview || partner._preview_mode;
@@ -96,7 +98,7 @@ export default function PartnerProfilePage() {
           <div className="max-w-[1400px] mx-auto flex items-end gap-6">
             {logoImage && (
               <div className="w-16 h-16 md:w-20 md:h-20 bg-white p-2 flex-shrink-0">
-                <img src={logoImage} alt="" className="w-full h-full object-contain" />
+                <img src={logoImage} alt="" className={`w-full h-full ${partner.profile_type==='person'?'object-cover':'object-contain'}`} />
               </div>
             )}
             <div>
@@ -106,7 +108,7 @@ export default function PartnerProfilePage() {
               <h1 className="text-3xl md:text-5xl font-sora font-light text-white tracking-tight" data-testid="partner-name">
                 {t(partner.name)}
               </h1>
-              <p className="text-sm font-inter text-[#8A8A8A] mt-1">{partner.category}</p>
+              <p className="text-sm font-inter text-[#8A8A8A] mt-1">{t(partner.professional_role)||partner.category}{partner.firm&&` · ${partner.firm}`}</p>
             </div>
           </div>
         </div>
@@ -135,7 +137,7 @@ export default function PartnerProfilePage() {
               )}
 
               {/* Gallery */}
-              {gallery.length > 0 && (
+              {(media.videos||[]).filter(Boolean).map((src,i)=><section className="mb-10" key={src}><h2 className="text-2xl mb-4">{i===0?'Films & walkthroughs':''}</h2><VideoPlayer src={src} title={`${t(partner.name)} video ${i+1}`} className="aspect-video"/></section>)}{gallery.length > 0 && (
                 <div className="reveal" data-testid="partner-gallery">
                   <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-4">Gallery</p>
                   <div className="relative aspect-[16/9] bg-[#ECECEA] overflow-hidden">

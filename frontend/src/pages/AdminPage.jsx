@@ -33,6 +33,7 @@ export default function AdminPage() {
   const { token, admin, loading: authLoading, login, logout, isAuthenticated } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('pages');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [challenge,setChallenge]=useState(''),[code,setCode]=useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -41,9 +42,10 @@ export default function AdminPage() {
     setLoginLoading(true);
     setLoginError('');
     try {
-      await login(loginForm.email, loginForm.password);
+      const result=await login(loginForm.email, loginForm.password, challenge, code);
+      if(result.requires_otp){setChallenge(result.challenge);setLoginForm(f=>({...f,password:''}));}
     } catch (error) {
-      setLoginError(error.response?.status === 401 ? 'Invalid email or password.' : errorMessage(error));
+      setLoginError(error.response?.status === 401 ? (challenge?'Invalid or expired code. Try again, or start again.':'Invalid email or password.') : errorMessage(error));
     }
     setLoginLoading(false);
   };
@@ -72,17 +74,17 @@ export default function AdminPage() {
             </div>
             <div>
               <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Password</label>
-              <input type="password" required className="w-full h-10 px-3 text-sm font-inter border border-[#8A8A8A]/30 bg-transparent text-[#050505] outline-none focus:border-[#606060] transition-colors"
+              <input type="password" required={!challenge} disabled={!!challenge} className="w-full h-10 px-3 text-sm font-inter border border-[#8A8A8A]/30 bg-transparent text-[#050505] outline-none focus:border-[#606060] transition-colors"
                 value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} data-testid="admin-password-input" />
             </div>
-            {loginError && (
+            {challenge&&<div className="space-y-3"><p>Enter the six-digit code sent to your admin email. It expires in 5 minutes.</p><input aria-label="Email verification code" className="form-input" required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e=>setCode(e.target.value)}/><button type="button" onClick={()=>{setChallenge('');setCode('');}}>Start again / request another code</button></div>}{loginError && (
               <div className="flex items-center gap-2 text-red-500 text-sm" data-testid="admin-login-error">
                 <AlertCircle size={14} />{loginError}
               </div>
             )}
             <button type="submit" disabled={loginLoading} data-testid="admin-login-btn"
               className="w-full h-11 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-              {loginLoading ? <Loader2 className="animate-spin" size={16} /> : 'Login'}
+              {loginLoading ? <Loader2 className="animate-spin" size={16} /> : challenge?'Verify code':'Login'}
             </button>
           </form><Link to="/admin/recover" className="block mt-6 text-sm underline">Forgot your password?</Link>
         </div>

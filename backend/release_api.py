@@ -72,18 +72,19 @@ def attach_release_routes(router, db, audit):
         return [public_document(doc) for doc in docs]
 
     @router.get('/projects/{slug}/credits')
-    async def project_credits(slug: str):
-        doc = await db.projects.find_one({'slug': slug, **PUBLIC_QUERY})
+    async def project_credits(slug: str, preview: bool = False, admin=Depends(get_optional_admin)):
+        preview = bool(preview and admin)
+        doc = await db.projects.find_one({'slug': slug, **({} if preview else PUBLIC_QUERY)})
         if not doc:
             raise HTTPException(404, 'Project not found')
         result = []
         for c in doc.get('credits', []):
-            if not c.get('verified') or c.get('entity_type') not in ('leader', 'partner') or not c.get('entity_slug'):
+            if (not preview and not c.get('verified')) or c.get('entity_type') not in ('leader', 'partner') or not c.get('entity_slug'):
                 continue
             collection = db.leaders if c['entity_type'] == 'leader' else db.partners
-            entity = await collection.find_one({'slug': c['entity_slug'], **PUBLIC_QUERY})
+            entity = await collection.find_one({'slug': c['entity_slug'], **({} if preview else PUBLIC_QUERY)})
             if entity:
-                result.append({**c, 'name': entity['name'], 'url': ('/project-leaders/' if c['entity_type'] == 'leader' else '/ecosystem/') + c['entity_slug']})
+                result.append({**c, 'photo': entity.get('photo') or ((entity.get('media') or {}).get('portrait_image') if entity.get('profile_type') == 'person' else (entity.get('media') or {}).get('logo_image')) or (entity.get('media') or {}).get('card_image') or '', 'profile_type': entity.get('profile_type', 'person' if c['entity_type']=='leader' else 'company'), 'firm': entity.get('firm',''), 'name': entity['name'], 'url': ('/project-leaders/' if c['entity_type'] == 'leader' else '/ecosystem/') + c['entity_slug']})
         return result
 
     @router.get('/admin/revisions/{collection}/{slug}')
@@ -141,7 +142,7 @@ def attach_release_routes(router, db, audit):
 
     @router.get('/admin/users')
     async def users(admin=Depends(get_current_admin)):
-        return await db.admins.find({}, {'_id': 0, 'password_hash': 0, 'auth_version': 0, 'reset_hash': 0, 'reset_expires': 0, 'reset_auth_version': 0, 'reset_requested_at': 0}).to_list(100)
+        return await db.admins.find({}, {'_id': 0, 'password_hash': 0, 'auth_version': 0, 'reset_hash': 0, 'reset_expires': 0, 'reset_auth_version': 0, 'reset_requested_at': 0, 'otp_hash': 0, 'otp_challenge': 0, 'otp_expires': 0, 'otp_version': 0, 'otp_attempts': 0}).to_list(100)
 
     @router.post('/admin/users', status_code=201)
     async def add_user(body: NewUser, admin=Depends(get_current_admin)):

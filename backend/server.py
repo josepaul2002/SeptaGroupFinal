@@ -1,8 +1,12 @@
+from services.enquiry_questions import validate_questions
+from pydantic import BaseModel, Field
+from services.login_otp import issue_code, consume_code
+from services.email_service import send_login_code
 """
 Septa Group API Server
 Full CMS with Admin Panel, Email Notifications, and Media Storage
 """
-from config import PRODUCTION, SITE_URL, INDEXABLE, CORS_ORIGINS, UPLOADS_DIR
+from config import SECRET_KEY, PRODUCTION, SITE_URL, INDEXABLE, CORS_ORIGINS, UPLOADS_DIR
 from fastapi import FastAPI, BackgroundTasks, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -136,7 +140,22 @@ async def create_lead(request: Request, lead: LeadCreate, background_tasks: Back
         raise HTTPException(status_code=400, detail="Valid phone number is required")
     
     # Prepare document
+    settings = await db.site_settings.find_one({"id":"site_settings"}) or {}
+    questions = (settings.get('enquiry') or {}).get('questions') or []
+    snapshots = []
+    for question in questions:
+        answer = lead.answers.get(question.get('id'), '').strip()
+        if question.get('required') and not answer:
+            raise HTTPException(422, f"Please answer: {question.get('label')}")
+        if len(answer) > 2000 or (answer and question.get('type') == 'select' and answer not in question.get('options', [])):
+            raise HTTPException(422, f"Invalid answer: {question.get('label')}")
+        if answer:
+            snapshots.append({'question': question.get('label'), 'answer': answer})
     doc = lead.model_dump()
+    doc['question_answers'] = snapshots
+    if snapshots:
+        doc['message'] = (doc.get('message') or '') + '\n\n' + '\n'.join(f"{row['question']}: {row['answer']}" for row in snapshots)
+
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["status"] = "new"
     doc["id"] = str(uuid.uuid4())
@@ -563,6 +582,15 @@ async def admin_login(request: Request, response: Response, auth: AdminLoginRequ
     if not admin or admin.get("disabled") or not verify_password(auth.password, admin["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    if os.getenv('ADMIN_EMAIL_OTP', 'false').lower() == 'true':
+        try:
+            challenge = await issue_code(db.admins, admin, SECRET_KEY, send_login_code)
+        except (RuntimeError, KeyError):
+            raise HTTPException(503, 'Sign-in email could not be sent. Check RESEND_API_KEY and verified FROM_EMAIL on the server.')
+        if not challenge:
+            raise HTTPException(429, 'Please wait 60 seconds before requesting another sign-in code.')
+        return {'requires_otp': True, 'challenge': challenge}
+
     # Create token
     token = create_access_token({"sub": admin["id"], "email": admin["email"], "auth_version": admin.get("auth_version", 0)})
     
@@ -585,6 +613,22 @@ async def admin_login(request: Request, response: Response, auth: AdminLoginRequ
     )
 
 
+class LoginCodeRequest(BaseModel):
+    challenge: str = Field(min_length=40, max_length=128)
+    code: str = Field(pattern=r"^\d{6}$")
+
+@api_router.post('/admin/login/verify')
+@limiter.limit('10/minute')
+async def verify_login_code(request: Request, response: Response, data: LoginCodeRequest):
+    admin = await consume_code(db.admins, data.challenge, data.code, SECRET_KEY)
+    if not admin:
+        raise HTTPException(401, 'Invalid or expired code. After five attempts, sign in again for a new code.')
+    token = create_access_token({'sub':admin['id'], 'email':admin['email'], 'auth_version':admin.get('auth_version',0)})
+    set_auth_cookie(response, token)
+    await db.admins.update_one({'id':admin['id']},{'$set':{'last_login':datetime.now(timezone.utc).isoformat()}})
+    return AdminLoginResponse(access_token=token,admin_id=admin['id'],email=admin['email'],role=admin.get('role','owner'))
+
+
 @api_router.post("/admin/logout")
 async def admin_logout(response: Response, admin: dict = Depends(get_current_admin)):
     """Admin logout"""
@@ -596,7 +640,7 @@ async def admin_logout(response: Response, admin: dict = Depends(get_current_adm
 @api_router.get("/admin/me")
 async def get_current_admin_info(admin: dict = Depends(get_current_admin)):
     """Get current admin info"""
-    admin_doc = await db.admins.find_one({"id": admin["admin_id"]}, {"_id": 0, "password_hash": 0, "reset_hash": 0, "reset_expires": 0, "reset_auth_version": 0, "reset_requested_at": 0})
+    admin_doc = await db.admins.find_one({"id": admin["admin_id"]}, {"_id": 0, "password_hash": 0, "reset_hash": 0, "reset_expires": 0, "reset_auth_version": 0, "reset_requested_at": 0, "otp_hash": 0, "otp_challenge": 0, "otp_expires": 0, "otp_version": 0, "otp_attempts": 0})
     if not admin_doc:
         raise HTTPException(status_code=404, detail="Admin not found")
     return admin_doc
@@ -954,6 +998,14 @@ async def update_site_settings(
     admin: dict = Depends(get_current_admin)
 ):
     """Update site settings"""
+    if 'enquiry' in updates:
+        if not isinstance(updates['enquiry'], dict):
+            raise HTTPException(422, 'Invalid enquiry settings.')
+        if 'questions' in updates['enquiry']:
+            try:
+                validate_questions(updates['enquiry']['questions'])
+            except ValueError as error:
+                raise HTTPException(422, str(error))
     updates.pop("_id", None)
     updates.pop("id", None)
     updates["id"] = "site_settings"

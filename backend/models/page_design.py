@@ -41,6 +41,7 @@ class PageHero(BaseModel):
     layout: Literal['split', 'text'] = 'split'
     image_url: str = ''
     image_alt: str = ''
+    featured_project_slug: str = ''
     image_position: Literal['center', 'top', 'bottom', 'left', 'right'] = 'center'
     primary_label: BilingualText = Field(default_factory=BilingualText)
     primary_url: str = ''
@@ -50,7 +51,7 @@ class PageHero(BaseModel):
 
 class PageSection(BaseModel):
     id: str = Field(min_length=1, max_length=100)
-    type: Literal['text', 'cards', 'projects', 'locations', 'process', 'people', 'stats', 'faq', 'cta', 'testimonials']
+    type: Literal['text', 'cards', 'projects', 'locations', 'process', 'people', 'stats', 'faq', 'cta', 'testimonials', 'collaborators']
     enabled: bool = True
     eyebrow: BilingualText = Field(default_factory=BilingualText)
     title: BilingualText = Field(default_factory=BilingualText)
@@ -62,7 +63,7 @@ class PageSection(BaseModel):
     link_label: BilingualText = Field(default_factory=BilingualText)
     graphic_label: BilingualText = Field(default_factory=BilingualText)
     items: list[PageItem] = Field(default_factory=list, max_length=30)
-    source: Literal['manual', 'services'] = 'manual'
+    source: Literal['manual', 'services', 'about'] = 'manual'
     limit: int = Field(default=3, ge=1, le=12)
     selected_slugs: list[str] = Field(default_factory=list, max_length=30)
     project_type: str = ''
@@ -75,6 +76,7 @@ class PageSection(BaseModel):
         return self
 
 class PageDesign(BaseModel):
+    layout_revision: int = 2
     version: Literal[2] = 2
     hero: PageHero
     sections: list[PageSection] = Field(default_factory=list, max_length=20)

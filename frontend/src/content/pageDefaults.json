@@ -23,10 +23,11 @@
       },
       "primary_url": "/contact",
       "secondary_label": {
-        "en": "Explore our work",
+        "en": "View projects",
         "ml": ""
       },
-      "secondary_url": "/projects"
+      "secondary_url": "/projects",
+      "featured_project_slug": ""
     },
     "sections": [
       {
@@ -71,29 +72,94 @@
         "source": "services"
       },
       {
-        "id": "approach",
-        "type": "text",
+        "id": "home-septa-team",
+        "type": "people",
+        "enabled": true,
+        "theme": "white",
+        "eyebrow": {
+          "en": "Septa Group"
+        },
+        "title": {
+          "en": "Our people. Your project."
+        },
+        "body": {
+          "en": "Meet the Septa team responsible for planning, coordination and delivery."
+        },
+        "limit": 3,
+        "selected_slugs": [],
+        "items": []
+      },
+      {
+        "id": "home-collaborators",
+        "type": "collaborators",
         "enabled": true,
         "eyebrow": {
           "en": "",
           "ml": ""
         },
         "title": {
-          "en": "A clear place to start.",
+          "en": "People we build with.",
           "ml": ""
         },
         "body": {
-          "en": "Whether you have an architect, a set of plans or an early idea, start with a conversation about the work you need.",
+          "en": "",
           "ml": ""
         },
         "theme": "white",
         "items": [],
         "limit": 3,
-        "link_url": "/about",
+        "link_url": "/ecosystem",
         "link_label": {
-          "en": "Get to know Septa",
-          "ml": ""
+          "en": "Meet our collaborators"
         }
+      },
+      {
+        "id": "home-coverage",
+        "type": "locations",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "Rooted in Kerala.",
+          "ml": ""
+        },
+        "body": {
+          "en": "",
+          "ml": ""
+        },
+        "theme": "light",
+        "items": [],
+        "limit": 3,
+        "source": "about",
+        "graphic_label": {
+          "en": "Kerala"
+        },
+        "link_url": "/about#coverage",
+        "link_label": {
+          "en": "Where we work"
+        }
+      },
+      {
+        "id": "home-testimonials",
+        "type": "testimonials",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "Through our clients’ eyes.",
+          "ml": ""
+        },
+        "body": {
+          "en": "",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [],
+        "limit": 1
       },
       {
         "id": "conversation",
@@ -108,7 +174,7 @@
           "ml": ""
         },
         "body": {
-          "en": "Tell us what you are planning. Let\u2019s work out the next step.",
+          "en": "Tell us what you are planning. Let’s work out the next step.",
           "ml": ""
         },
         "theme": "dark",
@@ -116,7 +182,7 @@
         "limit": 3,
         "link_url": "/contact",
         "link_label": {
-          "en": "Discuss your project",
+          "en": "Request a callback",
           "ml": ""
         }
       }
@@ -130,7 +196,8 @@
       "description": "",
       "image": "",
       "noindex": false
-    }
+    },
+    "layout_revision": 2
   },
   "about": {
     "hero": {
@@ -240,7 +307,7 @@
           "ml": ""
         },
         "body": {
-          "en": "Tell us what you are planning. Let\u2019s work out the next step.",
+          "en": "Tell us what you are planning. Let’s work out the next step.",
           "ml": ""
         },
         "theme": "dark",
@@ -418,7 +485,7 @@
           "ml": ""
         },
         "body": {
-          "en": "Tell us what you are planning. Let\u2019s work out the next step.",
+          "en": "Tell us what you are planning. Let’s work out the next step.",
           "ml": ""
         },
         "theme": "dark",
