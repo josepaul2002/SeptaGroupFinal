@@ -1,31 +1,41 @@
 import {useState} from 'react';
 
-const base = 'Edit my attached source image for a premium Septa Group construction and architecture website. Keep the actual person, building, design, materials and attribution truthful. Improve the composition, camera alignment, clarity, natural lighting and tonal balance. Match a minimal black, warm ivory and muted brass visual identity, with realistic walnut and restrained greens. Avoid CGI, invented architectural features, changed faces, added logos, text and watermarks. Do not erase existing photographer credits. Deliver a clean, high-resolution image with the requested composition and no text overlay.';
-const directions = {
-  portrait_image: 'Portrait, 4:5. Preserve facial identity exactly. Show the person from the chest up, comfortable headroom, natural confident expression and soft neutral background. Leave room around the face for cropping on mobile.',
-  card_image: 'Landscape, 16:9. This is the wide collaborator card, distinct from the person portrait. Choose an authentic work or studio image representing the collaborator, place the subject in the safe central 70%, and keep all important features visible.',
-  logo_image: 'Square, 1:1. Use the supplied original logo without altering its letters, symbol or colors. Center it with generous transparent padding. If no original logo exists, do not invent one.',
-  hero_image: 'Wide landscape, 16:9. Compose a compelling full-width architectural hero with the important subject near the center and breathing room for an overlaid title. Keep structural lines level and preserve the real design.',
-  gallery_images: 'Landscape, 16:9. Make a single coherent portfolio gallery photograph. Center the important architectural features and preserve the distinct identity of this project. Edit each of the up to ten originals individually with the same restrained grading; do not merge different projects or turn renders into built photographs.'
-};
-const ratios = {portrait_image:4/5,card_image:16/9,logo_image:1,hero_image:16/9,gallery_images:16/9};
-const names = {portrait_image:'4:5',card_image:'16:9',logo_image:'1:1',hero_image:'16:9',gallery_images:'16:9'};
-export function ratioName(field){return names[field];}
+const ratios={portrait_image:4/5,card_image:16/9,logo_image:1,hero_image:16/9,gallery_images:16/9,video_poster:16/9,project_cover:16/9,project_gallery:16/9,project_render:16/9,testimonial_cover:16/9,testimonial_portrait:1,page_hero:16/9,public_plan:null,virtual_tour_image:2,page_video:16/9,partner_video:16/9,project_video:16/9};
+const names={portrait_image:'4:5',card_image:'16:9',logo_image:'1:1',hero_image:'16:9',gallery_images:'16:9',video_poster:'16:9',project_cover:'16:9',project_gallery:'16:9',project_render:'16:9',testimonial_cover:'16:9',testimonial_portrait:'1:1',page_hero:'16:9',public_plan:'original drawing ratio',virtual_tour_image:'2:1 equirectangular',page_video:'16:9',partner_video:'16:9',project_video:'16:9'};
+export function ratioName(field){return names[field]||'original ratio';}
 export async function validateMediaRatio(file,field){
-  const required=ratios[field];
-  if(!required || !file.type.startsWith('image/'))return null;
-  const url=URL.createObjectURL(file);
-  try {
-    const image=new Image();
-    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});
-    const actual=image.naturalWidth/image.naturalHeight;
-    if(Math.abs(actual/required-1)>.025)return `${names[field]} image required. This image is ${image.naturalWidth} × ${image.naturalHeight}. Crop or export it to ${names[field]}, then upload again.`;
-    if(image.naturalWidth<600)return `Image is only ${image.naturalWidth}px wide. Please use at least 600px for a clear profile image.`;
-    return null;
-  } finally { URL.revokeObjectURL(url); }
+ const required=ratios[field];
+ if(!required||!(file.type.startsWith('image/')||file.type.startsWith('video/')))return null;
+ const url=URL.createObjectURL(file);
+ try {const isVideo=file.type.startsWith('video/'),element=isVideo?document.createElement('video'):new Image();await new Promise((resolve,reject)=>{element[isVideo?'onloadedmetadata':'onload']=resolve;element.onerror=reject;element.src=url;});
+  const width=isVideo?element.videoWidth:element.naturalWidth,height=isVideo?element.videoHeight:element.naturalHeight;
+  if(Math.abs(width/height/required-1)>.025)return `${names[field]} ${isVideo?'video':'image'} required. This file is ${width} × ${height}. Export it to ${names[field]} and try again.`;
+  if(width<600)return `Media is only ${width}px wide. Use at least 600px for a clear asset.`;
+  return null;
+ }finally{URL.revokeObjectURL(url);}
 }
+const brand=`You are editing source media for Septa Group, a Kerala-based architecture and construction company. Do not assume prior knowledge of the brand. Its website is editorial and architectural: carbon black #050505, warm off-white #F6F6F3, muted brass #C6A15B used sparingly, cool charcoal #606060, pale stone #ECECEA. Layouts have straight architectural lines, generous negative space, quiet typographic hierarchy, authentic Kerala context and real material textures. The desired photographic grade is natural, restrained and premium: neutral warm whites, truthful timber, controlled highlights, deep shadows with visible detail, slightly restrained saturation, no heavy orange/teal film filter, no fake HDR, no glossy CGI. A person remains recognisably the same person, and built work remains the actual building. Preserve structure, materials, proportions, original marks and credit information. Never invent credentials, logos, site details or project outcomes. If an image is a render, keep it visibly and clearly a render; never disguise it as a built project. Produce a polished, realistic high-resolution asset WITHOUT added text. Suggest a crop only if it can preserve essential details; otherwise tell me a different source photograph is needed. Return one image at the specified ratio and check the result against my original.`;
+const tasks={
+ portrait_image:'Create a 4:5 chest-up portrait for a professional collaborator or Septa team member. Preserve their identity and skin tone exactly; correct perspective, exposure, sharpness and background, with soft natural directional light and comfortable headroom. Do not replace clothing, glasses or facial features without permission. Keep eyes in the upper third, face within central safe area. This image is for a person, never a building.',
+ card_image:'Create a 16:9 collaborator card from a photograph of the person’s actual work or studio. This is separate from the headshot. Frame the central 70% as the safe area, with a distinctive architectural focal point and room for a lower text overlay; avoid tiny subjects and invented context. Match the grading of other cards. Multiple selected images should have the same exposure and cropping discipline so a fade transition feels coherent.',
+ logo_image:'Prepare an existing supplied logo at 1:1 with transparent padding. Keep the mark, type, colors and relationships exactly intact. Do not redraw or invent a logo. If the supplied image has no real logo, say that an original logo file is required.',
+ hero_image:'Create a 16:9 wide profile hero. Level verticals and find a strong central architectural subject, with unbusy darker space toward the lower left for white title text. Protect the subject for center crop on mobile. Keep the built space truthful.',
+ gallery_images:'Prepare this one gallery item at 16:9 for a compact portfolio filmstrip. Preserve its project identity, label renders as renders separately, correct camera tilt and exposure, keep honest textures and ensure the subject is readable at thumbnail size. Match the restrained Septa grade consistently across gallery items.',
+ video_poster:'Make a 16:9 static video cover from an approved frame or associated project photo. Create a clean focal point with center safe area and enough tonal separation for the website play button overlay. Do not add an artificial play icon or video title to the image; the website supplies those.',
+ project_cover:'Make a 16:9 project cover from the actual project photo. Composition should show the architectural work clearly, with clean verticals, natural Kerala light, room for overlay text at the bottom and no fabricated site conditions.',
+ project_gallery:'Make a 16:9 gallery photo of this specific project. Keep it documentary accurate, architecturally legible and harmonious with the other photographs from this same project. Retain photographer credit and relevant site details.',
+ project_render:'Prepare the supplied architectural render at 16:9 with legible materials and balanced lighting. This must remain an architectural visualization and be labelled as such in the website caption. Never make it look like documentary evidence of a completed building.',
+ public_plan:'This is an approved public drawing. Preserve EVERY dimension, label, line, north arrow and scale exactly. Do not redraw, interpret, beautify or invent technical information. Only straighten a scanned sheet and improve legibility. Maintain the original page ratio. A PDF can be uploaded as-is without using AI.',
+ testimonial_cover:'Make a 16:9 testimonial cover from an approved photo of the relevant finished work or person. Keep an uncluttered central subject, realistic light and a quieter area for website text. Do not invent a person or imply they said words they did not say.',
+ testimonial_portrait:'Prepare the client’s consented original portrait at 1:1; preserve facial identity, natural skin tone and headroom for the circular website crop. Do not create a fabricated person.',
+ page_hero:'Create a 16:9 opening image for the Septa Group website, suitable for a black or ivory editorial split layout. Choose clear architectural subject, preserve accurate building and materials, leave controlled negative space for adjacent website copy. No text in the image.',
+ virtual_tour_image:'Only process a REAL 360-degree equirectangular panorama into a 2:1 file. Preserve the entire 360-degree wrap seamlessly; do not crop, mirror, invent new rooms or pretend an ordinary flat photo is a navigable panorama.'
+ ,page_video:'Prepare a 16:9 opening film. Follow a clear architectural story with calm camera movement, steady exposure and truthful spaces. Keep cuts unhurried and protect an appealing representative frame for its cover. Avoid stock footage implying it is Septa work.',
+ partner_video:'Prepare a 16:9 partner profile film. Show the collaborator’s real work and accurately credit them; trim dead time, stabilise shots and match understated tonal treatment across clips. Do not add fabricated construction progress or unrelated projects.',
+ project_video:'Prepare a 16:9 project film from authentic approved footage of this exact project. Maintain location and sequence truth, clean audio, steady restrained camera motion, no invented project claims and no added marketing copy embedded in the picture.'
+};
 export default function MediaGuide({field,index}){
  const [copied,setCopied]=useState(false);
- const copy=async()=>{try{await navigator.clipboard.writeText(`${base}\n\n${directions[field]}${index!=null?`\n\nThis is gallery image ${index+1} of up to ten; keep its original project identity and use the same grading as the other gallery images.`:''}`);setCopied(true);setTimeout(()=>setCopied(false),2500);}catch{setCopied(false);}};
- return <div className="mt-2 flex flex-wrap items-center gap-3 text-xs"><span className="text-[#606060]">Required image shape: <strong>{names[field]}</strong></span><button type="button" onClick={copy} className="underline underline-offset-4 font-medium text-[#050505]">{copied?'Prompt copied':'Copy AI editing prompt'}</button><span className="text-[#606060]">Attach the original photo with the prompt. Check the edited result before publishing.</span></div>;
+ const copy=async()=>{try{const prompt=`${brand}\n\nSPECIFIC OUTPUT FOR THIS FIELD (${names[field]||'original format'}): ${tasks[field]||tasks.page_hero}${index!=null?`\n\nThis is item ${index+1}. Keep the original project and its attribution distinct from other items.`:''}\n\nUse ONLY the source media I attach with this prompt. If the photo cannot safely be adapted to this aspect ratio, explain why instead of inventing missing content.`;await navigator.clipboard.writeText(prompt);setCopied(true);setTimeout(()=>setCopied(false),2400);}catch{setCopied(false);}};
+ return <div className="mt-2 mb-3 flex flex-wrap items-center gap-3 text-xs"><span className="text-[#606060]">Expected: <strong>{names[field]||'original format'}</strong></span><button type="button" onClick={copy} className="underline underline-offset-4 font-semibold text-[#050505]">{copied?'Detailed prompt copied':'Copy complete AI prompt'}</button><span className="text-[#606060]">Attach the source file with the prompt. Verify before publishing.</span></div>;
 }

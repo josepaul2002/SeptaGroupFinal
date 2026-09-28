@@ -3,6 +3,7 @@ import PartnerCard from './PartnerCard';
 import ProjectCard from './ProjectCard';
 import {contactLinks} from '../lib/contactLinks';
 import CoverageGlobe from './CoverageGlobe';
+import KeralaDistrictGraphic,{isKeralaDistrict} from './KeralaDistrictGraphic';
 import VideoPlayer from './VideoPlayer';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -25,16 +26,20 @@ export function ProjectMediaPlaceholder(){
 export function PageHero({hero,compact=false,pageId}) {
   const {t}=useLanguage();
   const {data:projects}=useProjects();
+  const [slideIndex,setSlideIndex]=useState(0),[paused,setPaused]=useState(false);
+  const slides=pageId==='home'?(hero?.slides||[]):[];
+  useEffect(()=>{setSlideIndex(0);},[pageId,slides.length]);
+  useEffect(()=>{if(slides.length<2||paused)return;const timer=window.setInterval(()=>setSlideIndex(i=>(i+1)%slides.length),6500);return()=>window.clearInterval(timer);},[slides.length,paused]);
   if(!hero)return null;
-  const featured=pageId==='home'?projects.find(project=>project.slug===hero.featured_project_slug)||projects.find(project=>safeHref(project.image)):null;
-  const imageUrl=safeHref(hero.image_url)||safeHref(featured?.image);
-  const videoUrl=safeHref(hero.video_url);
+  const slide=slides[slideIndex],featured=pageId==='home'?projects.find(project=>project.slug===(slide?.project_slug||hero.featured_project_slug))||projects.find(project=>safeHref(project.image)):null;
+  const imageUrl=safeHref(slide?.image_url)||safeHref(hero.image_url)||safeHref(featured?.image);
+  const videoUrl=safeHref(slide?.video_url)||safeHref(hero.video_url);
   const hasImage=!!imageUrl;
   const showArt=hero.layout!=='text'&&(hasImage||videoUrl||!compact);
   return <section className={`page-hero tone-${hero.theme||'light'} ${compact?'page-hero-compact':''} ${pageId==='home'?'page-hero-home':''}`}>
     <div className={`design-container hero-layout ${!showArt?'hero-text-only':''}`}>
       <div className="hero-copy"><p className="design-eyebrow">{t(hero.eyebrow)}</p><h1>{t(hero.title)}</h1>{t(hero.body)&&<p className="hero-description">{t(hero.body)}</p>}{pageId!=='about'&&<div className="design-actions"><ContentLink className="design-button" to={hero.primary_url}>{t(hero.primary_label)}<ArrowUpRight size={17}/></ContentLink><ContentLink className="design-text-link" to={hero.secondary_url}>{t(hero.secondary_label)}<ArrowRight size={16}/></ContentLink></div>}</div>
-      {showArt&&<div className="hero-art">{videoUrl?<VideoPlayer src={videoUrl} poster={imageUrl} title={pageId==='about'?'About Septa Group':'Septa Group feature'} className="w-full h-full"/>:hasImage?<img src={imageUrl} alt={hero.image_alt||t(featured?.title)||''} style={{objectPosition:hero.image_position||'center'}} fetchPriority="high"/>:pageId==='home'?<ProjectMediaPlaceholder/>:<div className="brand-media-placeholder" aria-hidden="true"><img src="/septa-logo.png" alt=""/></div>}{pageId==='home'&&featured&&<Link className="hero-feature-caption" to={`/projects/${featured.slug}`}><span>Featured project · {t(featured.title)}</span><span>Explore project ↗</span></Link>}</div>}
+      {showArt&&<div className="hero-art" onMouseEnter={()=>setPaused(true)} onMouseLeave={()=>setPaused(false)} onFocus={()=>setPaused(true)} onBlur={()=>setPaused(false)}>{videoUrl?<VideoPlayer key={videoUrl} src={videoUrl} poster={imageUrl} title={pageId==='about'?'About Septa Group':'Septa Group feature'} className="w-full h-full"/>:hasImage?<img key={imageUrl} className="hero-slide-photo" src={imageUrl} alt={slide?.image_alt||hero.image_alt||t(featured?.title)||''} style={{objectPosition:hero.image_position||'center'}} fetchPriority="high"/>:pageId==='home'?<ProjectMediaPlaceholder/>:<div className="brand-media-placeholder" aria-hidden="true"><img src="/septa-logo.png" alt=""/></div>}{pageId==='home'&&featured&&<Link className="hero-feature-caption" to={`/projects/${featured.slug}`}><span>Featured project · {t(featured.title)}</span><span>Explore project ↗</span></Link>}{slides.length>1&&<div className="hero-slide-controls" aria-label="Featured projects">{slides.map((item,i)=><button key={i} type="button" aria-label={`Show feature ${i+1}`} aria-pressed={slideIndex===i} onClick={()=>setSlideIndex(i)}>{String(i+1).padStart(2,'0')}</button>)}</div>}</div>}
     </div>
   </section>;
 }
@@ -90,11 +95,11 @@ function Coverage({section}) {
   const {settings}=useSiteSettings();
   const {data:projects}=useProjects();
   const {t}=useLanguage();
-  const [selected,setSelected]=useState(null);
+  const [selected,setSelected]=useState(null),[coverageView,setCoverageView]=useState('districts');
   const items=section.items?.length?section.items:(settings?.contact?.operating_districts||[]).map((name,i)=>({id:`district-${i}`,title:{en:name},body:{en:''},tag:name}));
   const active=items.find(i=>i.id===selected)||items[0];
   const related=active&&active.tag?projects.filter(p=>(p.location||'').toLowerCase().includes(active.tag.toLowerCase())).slice(0,2):[];
-  return <SectionShell section={section} className="coverage-section"><div className="coverage-layout"><div className="coverage-art">{section.image_url?<img src={safeHref(section.image_url)} alt={section.image_alt||''} loading="lazy"/>:<CoverageGlobe items={items} active={active} t={t}/>}<span className="coverage-caption">{t(section.graphic_label)||'Operating areas'}</span></div><div className="coverage-detail">{items.length>0?<><div className="location-options" aria-label="Operating areas">{items.map(item=><button key={item.id} onClick={()=>setSelected(item.id)} aria-pressed={active?.id===item.id} className={active?.id===item.id?'active':''}>{t(item.title)}<ArrowUpRight size={15}/></button>)}</div><div className="location-description" aria-live="polite"><h3>{t(active?.title)}</h3><p>{t(active?.body)}</p>{related.length>0&&<p className="design-eyebrow">Published work in this area</p>}{related.map(p=><Link key={p.slug} to={`/projects/${p.slug}`} className="design-text-link">{t(p.title)}<ArrowUpRight size={15}/></Link>)}<ContentLink to={active?.link_url||'/contact'} className="design-text-link">{t(active?.link_label)||'Discuss a project here'}<ArrowRight size={15}/></ContentLink></div></>:<div className="location-description"><h3>{t(section.graphic_label)||'Your project location'}</h3><ContentLink to={section.link_url||'/contact'} className="design-text-link">{t(section.link_label)||'Ask about your project location'}<ArrowUpRight size={16}/></ContentLink></div>}</div></div></SectionShell>;
+  return <SectionShell section={section} className="coverage-section"><div className="coverage-layout"><div className="coverage-art">{!section.image_url&&items.some(isKeralaDistrict)&&<div className="coverage-view-toggle"><button type="button" aria-pressed={coverageView==='districts'} onClick={()=>setCoverageView('districts')}>Kerala districts</button><button type="button" aria-pressed={coverageView==='world'} onClick={()=>setCoverageView('world')}>Wider view</button></div>}{section.image_url?<img src={safeHref(section.image_url)} alt={section.image_alt||''} loading="lazy"/>:items.some(isKeralaDistrict)&&coverageView==='districts'?<KeralaDistrictGraphic items={items} active={active} setSelected={setSelected} projects={projects} t={t}/>:<CoverageGlobe items={items} active={active} t={t}/>}<span className="coverage-caption">{t(section.graphic_label)||'Operating areas'}</span></div><div className="coverage-detail">{items.length>0?<><div className="location-options" aria-label="Operating areas">{items.map(item=><button key={item.id} onClick={()=>setSelected(item.id)} aria-pressed={active?.id===item.id} className={active?.id===item.id?'active':''}>{t(item.title)}<ArrowUpRight size={15}/></button>)}</div><div className="location-description" aria-live="polite"><h3>{t(active?.title)}</h3><p>{t(active?.body)}</p>{related.length>0&&<p className="design-eyebrow">Published work in this area</p>}{related.map(p=><Link key={p.slug} to={`/projects/${p.slug}`} className="design-text-link">{t(p.title)}<ArrowUpRight size={15}/></Link>)}<ContentLink to={active?.link_url||'/contact'} className="design-text-link">{t(active?.link_label)||'Discuss a project here'}<ArrowRight size={15}/></ContentLink></div></>:<div className="location-description"><h3>{t(section.graphic_label)||'Your project location'}</h3><ContentLink to={section.link_url||'/contact'} className="design-text-link">{t(section.link_label)||'Ask about your project location'}<ArrowUpRight size={16}/></ContentLink></div>}</div></div></SectionShell>;
 }
 
 function People({section}) {

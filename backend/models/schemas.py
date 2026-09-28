@@ -56,7 +56,17 @@ class ProjectMedia(BaseModel):
     plans: List[MediaItem] = Field(default_factory=list)
     renders_3d: List[MediaItem] = Field(default_factory=list)
     model_3d: Optional[str] = None
+    virtual_tour_url: Optional[str] = None
+    virtual_tour_label: str = ''
+    tour_public: bool = False
     plans_public: bool = False
+
+    @field_validator('virtual_tour_url')
+    @classmethod
+    def valid_tour(cls, value):
+        if value and not value.startswith('https://'):
+            raise ValueError('Virtual tours must use a public HTTPS link.')
+        return value
 
     @model_validator(mode="before")
     @classmethod
@@ -89,6 +99,12 @@ class ProjectCredit(BaseModel):
     verified: bool = False
 
 
+class HighlightFact(BaseModel):
+    value: str = Field(max_length=16)
+    label: str = Field(max_length=48)
+    visible: bool = True
+
+
 class LeaderCreate(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     name: BilingualText = Field(default_factory=BilingualText)
@@ -96,6 +112,7 @@ class LeaderCreate(BaseModel):
     bio: BilingualText = Field(default_factory=BilingualText)
     photo: str = ""
     hierarchy_rank: int = Field(default=100, ge=0, le=999)
+    highlights: List[HighlightFact] = Field(default_factory=list, max_length=4)
     expertise: List[str] = Field(default_factory=list)
     qualifications: List[str] = Field(default_factory=list)
     status: PublishStatus = PublishStatus.draft
@@ -209,9 +226,12 @@ class LeadResponse(BaseModel):
 
 class PartnerMedia(BaseModel):
     videos: List[str] = Field(default_factory=list)
+    video_posters: List[str] = Field(default_factory=list)
     portrait_image: Optional[str] = None
     card_image: Optional[str] = None
+    card_images: List[str] = Field(default_factory=list, max_length=6)
     logo_image: Optional[str] = None
+    show_logo: bool = False
     hero_image: Optional[str] = None
     gallery_images: List[str] = []
 
@@ -226,6 +246,7 @@ class PartnerBase(BaseModel):
     name: BilingualText
     category: str
     specialties: List[str] = []
+    highlights: List[HighlightFact] = Field(default_factory=list, max_length=4)
     districts: List[str] = []
     bio_short: BilingualText = BilingualText()
     bio_long: BilingualText = BilingualText()

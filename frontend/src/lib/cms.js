@@ -19,7 +19,7 @@ export function media(value = {}) {
   const src = value || {};
   const item = v => typeof v === 'string' ? { url: v, alt: '', credit: '', caption: bl(''), kind: 'photograph', approved: false } : { ...v, caption: bl(v.caption) };
   return { ...src, hero_video: typeof src.hero_video === 'object' ? src.hero_video?.url || '' : src.hero_video || '',
-    images: (src.images || src.gallery || []).map(item), plans: (src.plans || src.plan_drawings || []).map(item),
+    images: (src.images || src.gallery || []).map(item), plans: (src.plans || src.plan_drawings || []).map(item), renders_3d:(src.renders_3d||[]).map(item),
     model_3d: typeof (src.model_3d || src.model_3d_url) === 'object' ? (src.model_3d || src.model_3d_url)?.url || '' : src.model_3d || src.model_3d_url || '', plans_public: !!src.plans_public };
 }
 export function enquiryContext() {

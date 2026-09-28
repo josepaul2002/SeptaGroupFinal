@@ -1,4 +1,4 @@
-import VideoPlayer from '../components/VideoPlayer';
+import PartnerMediaShowcase from '../components/PartnerMediaShowcase';
 import {profileIdentity} from '../lib/profiles';
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
@@ -25,7 +25,6 @@ export default function PartnerProfilePage() {
   const isPreview = searchParams.get('preview') === 'true';
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [galleryIdx, setGalleryIdx] = useState(0);
   const [partnerProjects, setPartnerProjects] = useState([]);
   const { t } = useLanguage();
 
@@ -68,7 +67,6 @@ export default function PartnerProfilePage() {
   const media = partner.media || {};
   const heroImage = media.hero_image || media.card_image || partner.cover_image;
   const logoImage = profileIdentity(partner);
-  const gallery = media.gallery_images || [];
   const relInfo = relationshipLabels[partner.relationship_type] || relationshipLabels['Project Partner'];
   const showPreview = isPreview || partner._preview_mode;
 
@@ -111,6 +109,7 @@ export default function PartnerProfilePage() {
               <p className="text-sm font-inter text-[#8A8A8A] mt-1">{t(partner.professional_role)||partner.category}{partner.firm&&` · ${partner.firm}`}</p>
             </div>
           </div>
+          {media.show_logo && media.logo_image && <img className="ml-auto w-20 h-20 md:w-28 md:h-28 object-contain bg-white/95 p-3 shadow-md" src={media.logo_image} alt={`${t(partner.name)} logo`}/>}
         </div>
       </div>
 
@@ -136,36 +135,7 @@ export default function PartnerProfilePage() {
                 </div>
               )}
 
-              {/* Gallery */}
-              {(media.videos||[]).filter(Boolean).map((src,i)=><section className="mb-10" key={src}><h2 className="text-2xl mb-4">{i===0?'Films & walkthroughs':''}</h2><VideoPlayer src={src} title={`${t(partner.name)} video ${i+1}`} className="aspect-video"/></section>)}{gallery.length > 0 && (
-                <div className="reveal" data-testid="partner-gallery">
-                  <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-4">Gallery</p>
-                  <div className="relative aspect-[16/9] bg-[#181818] overflow-hidden">
-                    <img src={gallery[galleryIdx]} alt={`Gallery ${galleryIdx + 1}`}
-                      className="w-full h-full object-contain transition-opacity duration-300" />
-                    {gallery.length > 1 && (
-                      <>
-                        <button onClick={() => setGalleryIdx((galleryIdx - 1 + gallery.length) % gallery.length)}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
-                          data-testid="gallery-prev">
-                          <ChevronLeft size={16} />
-                        </button>
-                        <button onClick={() => setGalleryIdx((galleryIdx + 1) % gallery.length)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
-                          data-testid="gallery-next">
-                          <ChevronRight size={16} />
-                        </button>
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                          {gallery.map((_, i) => (
-                            <button key={i} onClick={() => setGalleryIdx(i)}
-                              className={`w-2 h-2 transition-colors ${i === galleryIdx ? 'bg-white' : 'bg-white/40'}`} />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
+              <PartnerMediaShowcase media={media} name={t(partner.name)}/>
 
               {/* Septa collaboration */}
               {t(partner.septa_collaboration) && (
@@ -188,6 +158,8 @@ export default function PartnerProfilePage() {
                 </span>
                 <p className="text-xs font-inter text-[#050505]/50 mt-2">{relInfo.desc}</p>
               </div>
+
+              {(partner.highlights||[]).some(item=>item.visible!==false&&item.value&&item.label)&&<div className="partner-highlight-grid">{partner.highlights.filter(item=>item.visible!==false&&item.value&&item.label).map((item,i)=><div key={i} className="partner-highlight"><strong>{item.value}</strong><span>{item.label}</span></div>)}</div>}
 
               {/* Specialties */}
               {partner.specialties?.length > 0 && (

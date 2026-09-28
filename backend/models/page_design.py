@@ -33,6 +33,14 @@ class PageItem(BaseModel):
     longitude: float | None = Field(default=None, ge=-180, le=180)
     _links = field_validator('image_url', 'link_url')(safe_link)
 
+class HeroSlide(BaseModel):
+    project_slug: str = ''
+    image_url: str = ''
+    video_url: str = ''
+    image_alt: str = ''
+    _links = field_validator('image_url','video_url')(safe_link)
+
+
 class PageHero(BaseModel):
     eyebrow: BilingualText = Field(default_factory=BilingualText)
     title: BilingualText = Field(default_factory=BilingualText)
@@ -43,6 +51,7 @@ class PageHero(BaseModel):
     video_url: str = ''
     image_alt: str = ''
     featured_project_slug: str = ''
+    slides: list[HeroSlide] = Field(default_factory=list, max_length=6)
     image_position: Literal['center', 'top', 'bottom', 'left', 'right'] = 'center'
     primary_label: BilingualText = Field(default_factory=BilingualText)
     primary_url: str = ''
