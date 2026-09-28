@@ -1,3 +1,4 @@
+import {homepageSlides} from '../lib/heroSlides';
 import TestimonialCard from './TestimonialCard';
 import PartnerCard from './PartnerCard';
 import ProjectCard from './ProjectCard';
@@ -5,9 +6,9 @@ import {contactLinks} from '../lib/contactLinks';
 import CoverageGlobe from './CoverageGlobe';
 import KeralaDistrictGraphic,{isKeralaDistrict} from './KeralaDistrictGraphic';
 import VideoPlayer from './VideoPlayer';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowUpRight, ArrowRight, Plus, MapPin, Building2, Home, Layers } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Pause, ArrowUpRight, ArrowRight, Plus, MapPin, Building2, Home, Layers } from 'lucide-react';
 import { useApiData, useProjects, useSiteSettings, usePartners, useTestimonials, getText } from '../hooks/useApi';
 import { useLanguage } from './LanguageToggle';
 import { safeHref, useSitePage } from '../lib/pageContent';
@@ -24,24 +25,29 @@ export function ProjectMediaPlaceholder(){
 }
 
 export function PageHero({hero,compact=false,pageId}) {
-  const {t}=useLanguage();
-  const {data:projects}=useProjects();
-  const [slideIndex,setSlideIndex]=useState(0),[paused,setPaused]=useState(false);
-  const slides=pageId==='home'?(hero?.slides||[]):[];
-  useEffect(()=>{setSlideIndex(0);},[pageId,slides.length]);
-  useEffect(()=>{if(slides.length<2||paused)return;const timer=window.setInterval(()=>setSlideIndex(i=>(i+1)%slides.length),6500);return()=>window.clearInterval(timer);},[slides.length,paused]);
-  if(!hero)return null;
-  const slide=slides[slideIndex],featured=pageId==='home'?projects.find(project=>project.slug===(slide?.project_slug||hero.featured_project_slug))||projects.find(project=>safeHref(project.image)):null;
-  const imageUrl=safeHref(slide?.image_url)||safeHref(hero.image_url)||safeHref(featured?.image);
-  const videoUrl=safeHref(slide?.video_url)||safeHref(hero.video_url);
-  const hasImage=!!imageUrl;
-  const showArt=hero.layout!=='text'&&(hasImage||videoUrl||!compact);
-  return <section className={`page-hero tone-${hero.theme||'light'} ${compact?'page-hero-compact':''} ${pageId==='home'?'page-hero-home':''}`}>
-    <div className={`design-container hero-layout ${!showArt?'hero-text-only':''}`}>
-      <div className="hero-copy"><p className="design-eyebrow">{t(hero.eyebrow)}</p><h1>{t(hero.title)}</h1>{t(hero.body)&&<p className="hero-description">{t(hero.body)}</p>}{pageId!=='about'&&<div className="design-actions"><ContentLink className="design-button" to={hero.primary_url}>{t(hero.primary_label)}<ArrowUpRight size={17}/></ContentLink><ContentLink className="design-text-link" to={hero.secondary_url}>{t(hero.secondary_label)}<ArrowRight size={16}/></ContentLink></div>}</div>
-      {showArt&&<div className="hero-art" onMouseEnter={()=>setPaused(true)} onMouseLeave={()=>setPaused(false)} onFocus={()=>setPaused(true)} onBlur={()=>setPaused(false)}>{videoUrl?<VideoPlayer key={videoUrl} src={videoUrl} poster={imageUrl} title={pageId==='about'?'About Septa Group':'Septa Group feature'} className="w-full h-full"/>:hasImage?<img key={imageUrl} className="hero-slide-photo" src={imageUrl} alt={slide?.image_alt||hero.image_alt||t(featured?.title)||''} style={{objectPosition:hero.image_position||'center'}} fetchPriority="high"/>:pageId==='home'?<ProjectMediaPlaceholder/>:<div className="brand-media-placeholder" aria-hidden="true"><img src="/septa-logo.png" alt=""/></div>}{pageId==='home'&&featured&&<Link className="hero-feature-caption" to={`/projects/${featured.slug}`}><span>Featured project · {t(featured.title)}</span><span>Explore project ↗</span></Link>}{slides.length>1&&<div className="hero-slide-controls" aria-label="Featured projects">{slides.map((item,i)=><button key={i} type="button" aria-label={`Show feature ${i+1}`} aria-pressed={slideIndex===i} onClick={()=>setSlideIndex(i)}>{String(i+1).padStart(2,'0')}</button>)}</div>}</div>}
-    </div>
-  </section>;
+ const {t}=useLanguage(),{data:projects}=useProjects(),{settings}=useSiteSettings();
+ const [slideIndex,setSlideIndex]=useState(0),[hovered,setHovered]=useState(false),[stopped,setStopped]=useState(false),[reduced,setReduced]=useState(false);
+ const touch=useRef(null);
+ const slides=pageId==='home'?homepageSlides(hero,projects):[];
+ const count=slides.length,index=count?slideIndex%count:0,slide=slides[index];
+ const featured=projects.find(p=>p.slug===slide?.project_slug);
+ const imageUrl=pageId==='home'?(slide?.image_url||''):safeHref(hero?.image_url);
+ const videoUrl=pageId==='home'?(slide?.video_url||''):safeHref(hero?.video_url);
+ useEffect(()=>{const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener?.('change',update);return()=>media.removeEventListener?.('change',update);},[]);
+ useEffect(()=>{setSlideIndex(0);},[pageId,count]);
+ useEffect(()=>{if(count<2||hovered||stopped||reduced||settings?.appearance?.motion==='off'||videoUrl)return;const timer=setInterval(()=>{if(!document.hidden)setSlideIndex(i=>(i+1)%count);},6500);return()=>clearInterval(timer);},[count,hovered,stopped,reduced,settings?.appearance?.motion,videoUrl]);
+ const go=delta=>{setStopped(true);setSlideIndex(i=>(i+delta+count)%count);};
+ if(!hero)return null;
+ const showArt=hero.layout!=='text'&&(imageUrl||videoUrl||!compact);
+ return <section className={`page-hero tone-${hero.theme||'light'} ${compact?'page-hero-compact':''} ${pageId==='home'?'page-hero-home':''}`}>
+ <div className={`design-container hero-layout ${!showArt?'hero-text-only':''}`}>
+ <div className="hero-copy"><p className="design-eyebrow">{t(hero.eyebrow)}</p><h1>{t(hero.title)}</h1>{t(hero.body)&&<p className="hero-description">{t(hero.body)}</p>}{pageId!=='about'&&<div className="design-actions"><ContentLink className="design-button" to={hero.primary_url}>{t(hero.primary_label)}<ArrowUpRight size={17}/></ContentLink><ContentLink className="design-text-link" to={hero.secondary_url}>{t(hero.secondary_label)}<ArrowRight size={16}/></ContentLink></div>}</div>
+ {showArt&&<div className="hero-art hero-carousel" role={count>1?'region':undefined} aria-roledescription={count>1?'carousel':undefined} aria-label="Featured project media" onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)} onFocus={()=>setHovered(true)} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))setHovered(false);}} onKeyDown={e=>{if(count>1&&['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();go(e.key==='ArrowLeft'?-1:1);}}} onTouchStart={e=>{if(!videoUrl)touch.current=e.touches[0].clientX;}} onTouchEnd={e=>{if(count>1&&touch.current!=null){const dx=e.changedTouches[0].clientX-touch.current;if(Math.abs(dx)>45)go(dx>0?-1:1);}touch.current=null;}}>
+ {pageId==='home'&&count>0?<div className="hero-image-layers">{slides.map((item,i)=>item.image_url&&<img key={`${item.project_slug}-${i}-${item.image_url}`} src={item.image_url} className={i===index?'active':''} aria-hidden={i!==index} alt={i===index?(item.image_alt||t(featured?.title)||'Featured work'):''} style={{objectPosition:hero.image_position||'center'}} loading={i===0?'eager':'lazy'}/>)}{videoUrl&&<div className="hero-video-layer"><VideoPlayer key={videoUrl} src={videoUrl} poster={imageUrl} title={t(featured?.title)||'Featured project film'} className="w-full h-full"/></div>}</div>:videoUrl?<VideoPlayer src={videoUrl} poster={imageUrl} title="About Septa Group" className="w-full h-full"/>:imageUrl?<img src={imageUrl} alt={hero.image_alt||''} style={{objectPosition:hero.image_position||'center'}}/>:<ProjectMediaPlaceholder/>}
+ {pageId==='home'&&featured&&<Link className="hero-feature-caption" to={`/projects/${featured.slug}`}><span>Featured project · {t(featured.title)}</span><span>Explore project ↗</span></Link>}
+ {count>1&&<div className="hero-carousel-controls"><button type="button" onClick={()=>go(-1)} aria-label="Previous featured project"><ChevronLeft size={20}/></button><span aria-live={stopped?'polite':'off'}>{index+1} / {count}</span><button type="button" onClick={()=>go(1)} aria-label="Next featured project"><ChevronRight size={20}/></button>{!reduced&&settings?.appearance?.motion!=='off'&&!videoUrl&&<button type="button" onClick={()=>setStopped(v=>!v)} aria-label={stopped?'Play slideshow':'Pause slideshow'}>{stopped?<Play size={16}/>:<Pause size={16}/>}</button>}</div>}
+ </div>}
+ </div></section>;
 }
 
 export function ManagedIntro({pageId}) {
@@ -131,7 +137,7 @@ export function PageSection({section}) {
   if(!section.items?.length)return null;
   return <SectionShell section={section}>{section.type==='faq'?<div className="faq-list">{section.items.map(item=><details key={item.id}><summary>{t(item.title)}<Plus size={18}/></summary><p>{t(item.body)}</p></details>)}</div>:<div className={section.type==='stats'?'stats-grid':'process-grid'}>{section.items.map((item,i)=><article key={item.id}>{section.type==='process'&&<span className="process-number">{String(i+1).padStart(2,'0')}</span>}<h3>{t(item.title)}</h3><p>{t(item.subtitle)}</p><p>{t(item.body)}</p><ContentLink to={item.link_url} className="design-text-link">{t(item.link_label)}<ArrowUpRight size={15}/></ContentLink></article>)}</div>}</SectionShell>;
 }
-export function PageSections({sections=[]}) {return sections.map(section=><PageSection section={section} key={section.id}/>);}
+export function PageSections({sections=[]}) {return sections.filter(section=>section.type!=='locations').map(section=><PageSection section={section} key={section.id}/>);}
 
 export function DesignedPage({pageId}) {
   const {page,preview,error}=useSitePage(pageId);

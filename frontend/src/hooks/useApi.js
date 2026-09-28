@@ -1,3 +1,4 @@
+import {validateMediaRatio,rememberImage} from '../lib/mediaRules';
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
@@ -346,13 +347,16 @@ export async function exportContent(token) {
 }
 
 // Upload file
-export async function uploadFile(token, file) {
+export async function uploadFile(token, file, role = 'page_image') {
   if (!file || !file.size) throw new Error('Choose a non-empty file to upload.');
   if (file.size > 50 * 1024 * 1024) throw new Error('Use a file under 50 MB.');
   if (!/\.(jpe?g|png|webp|gif|pdf|mp4|webm|mov|glb|gltf)$/i.test(file.name))
     throw new Error('Use JPG, PNG, WebP or GIF for images. Export HEIC photos as JPG first. PDF, MP4, WebM, MOV, GLB and GLTF files are also supported.');
+  const ratioIssue=await validateMediaRatio(file,role);
+  if(ratioIssue)throw new Error(ratioIssue);
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('media_role',role);
   
   const res = await axios.post(`${API}/upload`, formData, {
     headers: {
@@ -361,5 +365,6 @@ export async function uploadFile(token, file) {
   });
   
   if (!res.data?.url) throw new Error('Upload returned no image address. Check that the API server is running.');
+  rememberImage(res.data.url,role);
   return res.data;
 }

@@ -29,6 +29,8 @@ def design(page_id, doc=None):
             added = [deepcopy(section) for section in base['sections'] if section['id'] in ('home-septa-team','home-collaborators','home-coverage','home-testimonials') and not any(old['id']==section['id'] for old in sections)]
             sections[insertion:insertion] = added
             result.update(sections=sections, layout_revision=2)
+        result['sections'] = [s for s in result['sections'] if s.get('type') != 'locations']
+        result['layout_revision'] = 3
         return result
     types = {'metrics': 'stats', 'timeline_step': 'process', 'team_member': 'cards', 'proof_callout': 'cards', 'comparison_row': 'cards'}
     for kind, target in types.items():
@@ -127,6 +129,8 @@ async def design_html(db, page, settings):
 
 def next_document(page_id, body, old, now):
     doc = {**body.model_dump(), 'page_id':page_id, 'updated_at':now}
+    doc['sections'] = [s for s in doc['sections'] if s.get('type') != 'locations']
+    doc['layout_revision'] = 3
     live = design(page_id, old) if approved(old) else (old or {}).get('published_snapshot')
     if body.status not in ('published','archived') and approved(live):
         doc['published_snapshot'] = deepcopy(live)

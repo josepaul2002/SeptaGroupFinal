@@ -125,3 +125,22 @@ async def test_studio_publishing_permissions_and_live_snapshot(client, db):
     assert (await client.put('/api/admin/pages/about',json=page,headers=editor)).status_code==403
     page.update(status='review',publication_reviewed=False)
     assert (await client.put('/api/admin/pages/about',json=page,headers=editor)).status_code==200
+
+@pytest.mark.asyncio
+async def test_image_upload_enforces_destination_ratio_before_storage(client, db, monkeypatch):
+    from io import BytesIO
+    from PIL import Image
+    from unittest.mock import AsyncMock
+    login = await client.post('/api/admin/login', json={'email':'owner@example.com','password':'local-test-password-123'})
+    headers = {'Authorization':f"Bearer {login.json()['access_token']}"}
+    store = AsyncMock(return_value={'url':'/uploads/test.png','key':'test.png'})
+    monkeypatch.setattr(server, 'upload_file', store)
+    def data(size):
+        stream=BytesIO();Image.new('RGB', size).save(stream, format='PNG');return stream.getvalue()
+    invalid = await client.post('/api/upload', headers=headers, data={'media_role':'testimonial_cover'}, files={'file':('test.png',data((900,900)),'image/png')})
+    assert invalid.status_code == 422
+    assert '16:9' in invalid.json()['detail']
+    store.assert_not_awaited()
+    valid = await client.post('/api/upload', headers=headers, data={'media_role':'testimonial_cover'}, files={'file':('test.png',data((1600,900)),'image/png')})
+    assert valid.status_code == 200
+    store.assert_awaited_once()

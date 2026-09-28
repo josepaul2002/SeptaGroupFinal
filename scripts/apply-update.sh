@@ -60,3 +60,7 @@ echo
 echo 'Update complete. Restart the site with:'
 printf 'cd %q && bash start-local.sh\n' "$SEPTA_TARGET"
 echo 'Then open http://localhost:8000/admin and refresh the page.'
+
+if [[ "${SEPTA_START_AFTER_UPDATE:-0}" == "1" ]]; then
+  exec bash "$SEPTA_TARGET/start-local.sh"
+fi

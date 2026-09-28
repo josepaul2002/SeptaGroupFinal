@@ -6,7 +6,7 @@ function IdentityLink({credit,children,...props}){const external=credit.display_
 export function CompactCredits({credits=[]}){
  const {t}=useLanguage();if(!credits.length)return null;
  const sorted=[...credits].sort((a,b)=>Number(b.entity_type==='leader')-Number(a.entity_type==='leader'));
- return <div className="compact-credits">{sorted.slice(0,3).map(c=><span key={`${c.entity_slug}-${c.role}`}>{c.entity_type==='leader'?'Septa team · ':''}{c.role}: <IdentityLink credit={c}>{nameOf(c,t)}</IdentityLink></span>)}{credits.length>3&&<a href="#team">Meet the full team</a>}</div>;
+ return <div className="compact-credits">{sorted.slice(0,3).map(c=><div className="compact-credit" key={`${c.entity_slug}-${c.role}`}><span className="compact-credit-role">{c.entity_type==='leader'?'Septa team · ':''}{c.role}</span><IdentityLink credit={c}>{nameOf(c,t)}</IdentityLink></div>)}{credits.length>3&&<a className="compact-credit-more" href="#team">Meet the full team ↗</a>}</div>;
 }
 export default function ProjectCredits({credits=[]}){
  const {t}=useLanguage();if(!credits.length)return null;

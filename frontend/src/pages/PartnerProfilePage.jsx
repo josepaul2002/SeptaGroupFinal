@@ -85,7 +85,7 @@ export default function PartnerProfilePage() {
       </div>
 
       {/* Hero */}
-      <div className="relative h-[35vh] md:h-[50vh] overflow-hidden bg-[#050505]">
+      <div className="partner-profile-hero relative h-[35vh] md:h-[50vh] overflow-hidden bg-[#050505]">
         {heroImage ? (
           <img src={heroImage} alt={t(partner.name)} className="w-full h-full object-cover opacity-60" />
         ) : (
@@ -93,9 +93,9 @@ export default function PartnerProfilePage() {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 lg:p-16">
-          <div className="max-w-[1400px] mx-auto flex items-end gap-6">
+          <div className="partner-identity-row max-w-[1400px] mx-auto flex items-center gap-6">
             {logoImage && (
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-white p-2 flex-shrink-0">
+              <div className="partner-identity-image w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
                 <img src={logoImage} alt="" className={`w-full h-full ${partner.profile_type==='person'?'object-cover':'object-contain'}`} />
               </div>
             )}
@@ -108,8 +108,8 @@ export default function PartnerProfilePage() {
               </h1>
               <p className="text-sm font-inter text-[#8A8A8A] mt-1">{t(partner.professional_role)||partner.category}{partner.firm&&` · ${partner.firm}`}</p>
             </div>
+            {media.show_logo && media.logo_image && logoImage !== media.logo_image && <img className="partner-company-mark" src={media.logo_image} alt={`${partner.firm || t(partner.name)} logo`}/>}
           </div>
-          {media.show_logo && media.logo_image && <img className="ml-auto w-20 h-20 md:w-28 md:h-28 object-contain bg-white/95 p-3 shadow-md" src={media.logo_image} alt={`${t(partner.name)} logo`}/>}
         </div>
       </div>
 

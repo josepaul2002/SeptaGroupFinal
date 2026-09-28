@@ -114,34 +114,6 @@
         }
       },
       {
-        "id": "home-coverage",
-        "type": "locations",
-        "enabled": true,
-        "eyebrow": {
-          "en": "",
-          "ml": ""
-        },
-        "title": {
-          "en": "Rooted in Kerala.",
-          "ml": ""
-        },
-        "body": {
-          "en": "",
-          "ml": ""
-        },
-        "theme": "light",
-        "items": [],
-        "limit": 3,
-        "source": "about",
-        "graphic_label": {
-          "en": "Kerala"
-        },
-        "link_url": "/about#coverage",
-        "link_label": {
-          "en": "Where we work"
-        }
-      },
-      {
         "id": "home-testimonials",
         "type": "testimonials",
         "enabled": true,
@@ -197,7 +169,7 @@
       "image": "",
       "noindex": false
     },
-    "layout_revision": 2
+    "layout_revision": 3
   },
   "about": {
     "hero": {
@@ -249,30 +221,6 @@
         "items": [],
         "limit": 3,
         "source": "services"
-      },
-      {
-        "id": "coverage",
-        "type": "locations",
-        "enabled": true,
-        "eyebrow": {
-          "en": "Where we work",
-          "ml": ""
-        },
-        "title": {
-          "en": "Rooted in Kerala.",
-          "ml": ""
-        },
-        "body": {
-          "en": "Explore our operating areas and tell us where you are planning to build.",
-          "ml": ""
-        },
-        "theme": "light",
-        "items": [],
-        "limit": 3,
-        "graphic_label": {
-          "en": "Kerala",
-          "ml": ""
-        }
       },
       {
         "id": "people",
@@ -329,7 +277,8 @@
       "description": "",
       "image": "",
       "noindex": false
-    }
+    },
+    "layout_revision": 3
   },
   "services": {
     "hero": {
@@ -507,7 +456,8 @@
       "description": "",
       "image": "",
       "noindex": false
-    }
+    },
+    "layout_revision": 3
   },
   "projects": {
     "hero": {
@@ -548,7 +498,8 @@
       "description": "",
       "image": "",
       "noindex": false
-    }
+    },
+    "layout_revision": 3
   },
   "ecosystem": {
     "hero": {
@@ -589,7 +540,8 @@
       "description": "",
       "image": "",
       "noindex": false
-    }
+    },
+    "layout_revision": 3
   },
   "contact": {
     "hero": {
@@ -630,7 +582,8 @@
       "description": "",
       "image": "",
       "noindex": false
-    }
+    },
+    "layout_revision": 3
   },
   "leaders": {
     "hero": {
@@ -671,6 +624,7 @@
       "description": "",
       "image": "",
       "noindex": false
-    }
+    },
+    "layout_revision": 3
   }
 }

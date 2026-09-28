@@ -1,3 +1,4 @@
+import '../styles/admin-polish.css';
 import { errorMessage } from '../lib/cms';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -96,7 +97,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#F6F6F3]" data-testid="admin-dashboard">
       <div className="bg-white border-b border-[#8A8A8A]/20">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div><h1 className="text-lg font-sora font-medium text-[#050505]">Septa / Admin</h1><a href="/" target="_blank" rel="noreferrer" className="text-xs underline">View website ↗</a></div>
+          <div><h1 className="text-lg font-sora font-medium text-[#050505]">Septa / Admin</h1><p className="admin-build-label">Media & mobile update · 29 September 2026</p><a href="/" target="_blank" rel="noreferrer" className="text-xs underline">View website ↗</a></div>
           <div className="flex items-center gap-4">
             <span className="text-xs font-inter text-[#8A8A8A]">{admin?.email}</span>
             <button onClick={logout} className="flex items-center gap-2 text-xs font-inter text-red-500 hover:text-red-600 transition-colors" data-testid="admin-logout-btn">

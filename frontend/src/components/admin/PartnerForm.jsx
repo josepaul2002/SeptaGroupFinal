@@ -1,3 +1,4 @@
+import {validateRecordImages} from '../../lib/mediaRules';
 import { PublicationFields, SEOFields } from './Fields';
 import { errorMessage } from '../../lib/cms';
 import { useState } from 'react';
@@ -56,21 +57,21 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
       if (!window.confirm('Publishing without a card image is not recommended. Cards will appear with a placeholder. Continue?')) return;
     }
     setSaving(true);
-    try { await onSave(form); } catch(e) { setFormError(errorMessage(e)); }
+    try { await validateRecordImages(form,partner,'partner'); await onSave(form); } catch(e) { setFormError(errorMessage(e)); }
     setSaving(false);
   };
 
   const handleUpload = async (e, field) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try {const issue=await validateMediaRatio(file,field);if(issue){setFormError(issue);e.target.value='';return;}}catch{setFormError('Could not read this image. Please try a JPG, PNG or WebP.');return;}
+    try {const issue=await validateMediaRatio(file,field==='videos'?'partner_video':field==='video_posters'?'video_poster':field);if(issue){setFormError(issue);e.target.value='';return;}}catch{setFormError('Could not read this image. Please try a JPG, PNG or WebP.');return;}
     setUploading(true);setFormError('');setMediaMessage('');
     try {
-      const result = await uploadFile(token, file);
+      const result = await uploadFile(token, file,field==='videos'?'partner_video':field==='video_posters'?'video_poster':field);
       if (field === 'video_posters') {
         setForm(f => ({...f,media:{...f.media,video_posters:[...(f.media.video_posters||[]),result.url]}}));
       } else if (field === 'card_image') {
-        setForm(f => ({...f,media:{...f.media,card_image:result.url,card_images:[...(f.media.card_images||[]),result.url].slice(0,6)}}));
+        setForm(f => ({...f,media:{...f.media,card_image:f.media.card_image||result.url,card_images:[...new Set([...(f.media.card_images?.length?f.media.card_images:[f.media.card_image].filter(Boolean)),result.url])].slice(0,6)}}));
       } else if (field === 'gallery_images' || field === 'videos') {
         setForm(f => ({ ...f, media: { ...f.media, [field]: [...(f.media[field] || []), result.url] } }));
       } else {
@@ -95,6 +96,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'content', label: 'Content' },
+    { id: 'highlights', label: 'Highlights' },
     { id: 'media', label: 'Media' },
   ];
 
@@ -114,7 +116,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
           </div>
         )}
 
-        <div className="border-b border-[#8A8A8A]/20 flex">
+        <div className="border-b border-[#8A8A8A]/20 flex flex-wrap">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} data-testid={`partner-form-tab-${t.id}`}
               className={`px-6 py-3 text-xs font-inter uppercase tracking-wider transition-colors ${
@@ -127,7 +129,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
           {/* BASIC INFO */}
           {tab === 'basic' && (
             <><F label="Profile type"><select className="form-input" value={form.profile_type} onChange={e=>setForm({...form,profile_type:e.target.value})}><option value="company">Company / studio</option><option value="person">Person / independent professional</option></select></F>{form.profile_type==='person'&&<><F label="Professional role · English"><input className="form-input" value={form.professional_role.en||''} onChange={e=>setForm({...form,professional_role:{...form.professional_role,en:e.target.value}})}/></F><F label="Professional role · Malayalam"><input className="form-input" value={form.professional_role.ml||''} onChange={e=>setForm({...form,professional_role:{...form.professional_role,ml:e.target.value}})}/></F><F label="Firm / studio (optional)"><input className="form-input" value={form.firm} onChange={e=>setForm({...form,firm:e.target.value})}/></F></>}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <F label="Slug *">
                   <input type="text" required disabled={!!partner} className="form-input" value={form.slug}
                     onChange={e => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} data-testid="partner-slug" />
@@ -141,7 +143,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                 <input type="text" className="form-input" value={typeof form.name === 'object' ? (form.name.ml || '') : ''}
                   onChange={e => setForm({ ...form, name: { ...form.name, ml: e.target.value || null } })} />
               </F>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <F label="Category">
                   <select className="form-input" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                     {PARTNER_CATEGORIES.map(c => <option key={c}>{c}</option>)}
@@ -167,14 +169,14 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                   ))}
                 </div>
               </F>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <F label="Website URL"><input type="url" className="form-input" value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} /></F>
                 <F label="Facebook URL"><input type="url" className="form-input" value={form.facebook_url} onChange={e => setForm({ ...form, facebook_url: e.target.value })} /></F>
                 <F label="Instagram URL"><input type="url" className="form-input" value={form.instagram_url} onChange={e => setForm({ ...form, instagram_url: e.target.value })} /></F>
                 <F label="Contact Email"><input type="email" className="form-input" value={form.contact_email} onChange={e => setForm({ ...form, contact_email: e.target.value })} /></F>
                 <F label="Contact Phone"><input type="text" className="form-input" value={form.contact_phone} onChange={e => setForm({ ...form, contact_phone: e.target.value })} /></F>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <F label="Sort Order"><input type="number" className="form-input" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} /></F>
                 <F label="Status">
                   <select className="form-input" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
@@ -208,12 +210,12 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
             </>
           )}
 
-          {tab === 'content' && <HighlightEditor items={form.highlights||[]} onChange={highlights=>setForm({...form,highlights})}/>}
+          {tab === 'highlights' && <HighlightEditor items={form.highlights||[]} onChange={highlights=>setForm({...form,highlights})}/>}
 
           {/* MEDIA */}
           {tab === 'media' && (
             <>
-              <p className="text-sm text-[#606060]">Each image has a separate purpose. The portrait identifies the person; the card is a wide image of their work or studio. Uploaded files are checked for the shape shown below. Paste-in URLs cannot be checked before loading: review the preview carefully.</p>
+              <p className="text-sm text-[#606060]">Each image has a separate purpose. The portrait identifies the person; the card is a wide image of their work or studio. Uploaded files are checked for the shape shown below. New image links are checked before saving as well. Existing images stay available until replaced.</p>
               {form.profile_type==='person'&&<MediaField field="portrait_image" label="Profile portrait" hint="Face photograph for identity and project credits; never stretched into the wide collaborator card." url={form.media.portrait_image} onUpload={e=>handleUpload(e,'portrait_image')} onClear={()=>setForm({...form,media:{...form.media,portrait_image:null}})} onUrlChange={v=>setForm({...form,media:{...form.media,portrait_image:v}})}/>}
               <MediaField field="card_image" label="Collaborator card image (16:9) *" hint="Wide image of the person's work or company, used across collaborator cards. Required for a published profile."
                 url={form.media.card_image} onUpload={e => handleUpload(e, 'card_image')}
@@ -248,11 +250,11 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                   </label>
                 )}
               </F>
-              <section className="space-y-3"><h3>Profile videos</h3><p className="text-sm">Each video can have a custom 16:9 cover image. Visitors select a cover first; the video opens only after they press Play.</p><MediaGuide field="partner_video"/><MediaGuide field="video_poster"/><p className="text-sm">Upload approved MP4 or WebM videos up to 50 MB. Save the profile after uploading.</p><input type="file" accept="video/mp4,video/webm" disabled={uploading} onChange={e=>handleUpload(e,'videos')}/>{(form.media.videos||[]).map((url,i)=><div key={i} className="flex gap-3"><input className="form-input" value={url} onChange={e=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.map((v,n)=>n===i?e.target.value:v)}}))}/><input className="form-input" placeholder="Video cover image URL (16:9)" value={form.media.video_posters?.[i]||''} onChange={e=>setForm(f=>({...f,media:{...f.media,video_posters:(f.media.videos||[]).map((_,n)=>n===i?e.target.value:f.media.video_posters?.[n]||'')}}))}/><label className="text-xs">Upload cover<input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const file=e.target.files?.[0];if(!file)return;const issue=await validateMediaRatio(file,'video_poster');if(issue){setFormError(issue);return;}setUploading(true);try{const result=await uploadFile(token,file);setForm(f=>({...f,media:{...f.media,video_posters:f.media.videos.map((_,n)=>n===i?result.url:f.media.video_posters?.[n]||'')}}));}catch(err){setFormError(errorMessage(err));}finally{setUploading(false);}}}/></label><button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.filter((_,n)=>n!==i),video_posters:(f.media.video_posters||[]).filter((_,n)=>n!==i)}}))}>Remove</button></div>)}<button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:[...(f.media.videos||[]),'']}}))}>Add video URL</button></section>{mediaMessage&&<p role="status">{mediaMessage}</p>}{uploading && <div className="flex items-center gap-2 text-sm text-[#606060]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
+              <section className="space-y-3"><h3>Profile videos</h3><p className="text-sm">Each video can have a custom 16:9 cover image. Visitors select a cover first; the video opens only after they press Play.</p><MediaGuide field="partner_video"/><MediaGuide field="video_poster"/><p className="text-sm">Upload approved MP4 or WebM videos up to 50 MB. Save the profile after uploading.</p><input type="file" accept="video/mp4,video/webm" disabled={uploading} onChange={e=>handleUpload(e,'videos')}/>{(form.media.videos||[]).map((url,i)=><div key={i} className="grid gap-3"><input className="form-input" value={url} onChange={e=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.map((v,n)=>n===i?e.target.value:v)}}))}/><input className="form-input" placeholder="Video cover image URL (16:9)" value={form.media.video_posters?.[i]||''} onChange={e=>setForm(f=>({...f,media:{...f.media,video_posters:(f.media.videos||[]).map((_,n)=>n===i?e.target.value:f.media.video_posters?.[n]||'')}}))}/><label className="text-xs">Upload cover<input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const file=e.target.files?.[0];if(!file)return;const issue=await validateMediaRatio(file,'video_poster');if(issue){setFormError(issue);return;}setUploading(true);try{const result=await uploadFile(token,file,'video_poster');setForm(f=>({...f,media:{...f.media,video_posters:f.media.videos.map((_,n)=>n===i?result.url:f.media.video_posters?.[n]||'')}}));}catch(err){setFormError(errorMessage(err));}finally{setUploading(false);}}}/></label><button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.filter((_,n)=>n!==i),video_posters:(f.media.video_posters||[]).filter((_,n)=>n!==i)}}))}>Remove</button></div>)}<button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:[...(f.media.videos||[]),'']}}))}>Add video URL</button></section>{mediaMessage&&<p role="status">{mediaMessage}</p>}{uploading && <div className="flex items-center gap-2 text-sm text-[#606060]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
             </>
           )}
 
-          <PublicationFields form={form} setForm={setForm} /><SEOFields value={form.seo} onChange={seo=>setForm({...form,seo})} />
+          <PublicationFields form={form} setForm={setForm} /><SEOFields token={token} onBusy={setUploading} value={form.seo} onChange={seo=>setForm({...form,seo})} />
           <div className="flex justify-end gap-3 pt-4 border-t border-[#8A8A8A]/20">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">Cancel</button>
             <div>{formError&&<p role="alert" className="text-red-700">{formError}</p>}</div><button type="submit" disabled={saving||uploading} data-testid="save-partner-btn"
@@ -281,7 +283,7 @@ function MediaField({ field, label, hint, url, onUpload, onClear, onUrlChange })
       <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-1">{label}</label>
       {hint && <p className="text-[10px] text-[#8A8A8A] mb-2">{hint}</p>}
       <MediaGuide field={field}/>
-      <div className="flex gap-3 items-end">
+      <div className="flex flex-wrap gap-3 items-end">
         <input type="text" className="form-input flex-1" placeholder="Upload a file or paste an image address" value={url || ''}
           onChange={e => onUrlChange(e.target.value || null)} />
         <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">

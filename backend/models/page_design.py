@@ -86,7 +86,7 @@ class PageSection(BaseModel):
         return self
 
 class PageDesign(BaseModel):
-    layout_revision: int = 2
+    layout_revision: int = 3
     version: Literal[2] = 2
     hero: PageHero
     sections: list[PageSection] = Field(default_factory=list, max_length=20)

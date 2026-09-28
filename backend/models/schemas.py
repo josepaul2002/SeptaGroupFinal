@@ -276,6 +276,7 @@ class PartnerUpdate(BaseModel):
     name: Optional[BilingualText] = None
     category: Optional[str] = None
     specialties: Optional[List[str]] = None
+    highlights: Optional[List[HighlightFact]] = Field(default=None, max_length=4)
     districts: Optional[List[str]] = None
     bio_short: Optional[BilingualText] = None
     bio_long: Optional[BilingualText] = None
@@ -302,7 +303,14 @@ class PartnerResponse(PartnerBase):
 
 # --- Project Model ---
 
+class HomepageFeature(BaseModel):
+    enabled: bool = False
+    order: int = Field(default=0, ge=0, le=999)
+    use_video: bool = False
+
+
 class ProjectBase(BaseModel):
+    homepage_feature: HomepageFeature = Field(default_factory=HomepageFeature)
     publication_reviewed: bool = False
     scope: BilingualText = Field(default_factory=BilingualText)
     credits: List[ProjectCredit] = Field(default_factory=list)
@@ -338,6 +346,7 @@ class ProjectCreate(ProjectBase):
 
 
 class ProjectUpdate(BaseModel):
+    homepage_feature: Optional[HomepageFeature] = None
     publication_reviewed: Optional[bool] = None
     scope: Optional[BilingualText] = None
     credits: Optional[List[ProjectCredit]] = None

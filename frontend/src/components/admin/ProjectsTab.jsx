@@ -39,9 +39,9 @@ export default function ProjectsTab({ token }) {
   return (
     <div className="space-y-6" data-testid="projects-tab">
       <div className="bg-white border border-[#8A8A8A]/20 p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
           <h2 className="text-lg font-sora font-medium text-[#050505]">Projects ({projects.length})</h2>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={hidePhotoless}
               disabled={bulkBusy}
@@ -68,10 +68,10 @@ export default function ProjectsTab({ token }) {
             {projects.map(project => (
               <div
                 key={project.slug}
-                className="flex items-center justify-between p-4 border border-[#8A8A8A]/20 hover:border-[#606060]/30 transition-colors"
+                className="admin-record-row flex items-center justify-between p-4 border border-[#8A8A8A]/20 hover:border-[#606060]/30 transition-colors"
                 data-testid={`project-row-${project.slug}`}
               >
-                <div className="flex items-center gap-4">
+                <div className="admin-record-identity flex items-center gap-4">
                   {project.image && (
                     <img src={project.image} alt="" className="w-16 h-12 object-cover bg-[#ECECEA]" />
                   )}
@@ -80,7 +80,7 @@ export default function ProjectsTab({ token }) {
                     <p className="text-xs text-[#8A8A8A]">{project.type} · {project.location}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="admin-record-actions flex flex-wrap items-center gap-3">
                   <span className={`text-xs font-inter px-2 py-0.5 ${
                     project.status === 'published' ? 'bg-[#050505] text-white' : 'bg-[#ECECEA] text-[#666666]'
                   }`}>

@@ -1,3 +1,4 @@
+from services.media_rules import validate_image
 from services.enquiry_questions import validate_questions
 from pydantic import BaseModel, Field
 from services.login_otp import issue_code, consume_code
@@ -7,7 +8,7 @@ Septa Group API Server
 Full CMS with Admin Panel, Email Notifications, and Media Storage
 """
 from config import SECRET_KEY, PRODUCTION, SITE_URL, INDEXABLE, CORS_ORIGINS, UPLOADS_DIR
-from fastapi import FastAPI, BackgroundTasks, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query
+from fastapi import FastAPI, BackgroundTasks, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query, Form
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -692,6 +693,7 @@ async def admin_auth_legacy(request: Request, response: Response, auth: dict):
 @api_router.post("/upload")
 async def upload_media(
     file: UploadFile = File(...),
+    media_role: str = Form('page_image'),
     admin: dict = Depends(get_current_admin)
 ):
     """Upload media file"""
@@ -702,6 +704,11 @@ async def upload_media(
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
     
+    if Path(file.filename or '').suffix.lower() in {'.jpg','.jpeg','.png','.webp','.gif'} or (file.content_type or '').startswith('image/'):
+        issue = validate_image(content, media_role)
+        if issue:
+            raise HTTPException(status_code=422, detail=issue)
+
     # Upload
     result = await upload_file(content, file.filename, file.content_type)
     if not result:

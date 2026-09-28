@@ -1,3 +1,4 @@
+import {validateRecordImages} from '../../lib/mediaRules';
 import EnquiryQuestions from './EnquiryQuestions';
 import { errorMessage } from '../../lib/cms';
 import NavigationSettings from './NavigationSettings';
@@ -10,6 +11,7 @@ const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api
 
 export default function SettingsTab({ token }) {
   const [settings, setSettings] = useState(null);
+  const [original,setOriginal]=useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -17,14 +19,15 @@ export default function SettingsTab({ token }) {
   const [activeSection, setActiveSection] = useState('contact');
 
   useEffect(() => {
-    axios.get(`${API}/settings`).then(r => setSettings(r.data)).finally(() => setLoading(false));
+    axios.get(`${API}/settings`).then(r => {setSettings(r.data);setOriginal(r.data);}).finally(() => setLoading(false));
   }, []);
 
   const save = async () => {
     setSaving(true); setMsg('');
     try {
+      await validateRecordImages(settings,original,'settings');
       await axios.put(`${API}/settings`, settings, { headers: { Authorization: `Bearer ${token}` } });
-      setMsg('Settings saved');
+      setOriginal(settings);setMsg('Settings saved');
     } catch (error) { setMsg(errorMessage(error)); }
     setSaving(false);
   };
@@ -162,7 +165,7 @@ export default function SettingsTab({ token }) {
       )}
 
       {/* NAVIGATION */}
-      {activeSection === 'navigation' && <NavigationSettings settings={settings} setSettings={setSettings}/>}
+      {activeSection === 'navigation' && <NavigationSettings token={token} onBusy={setSaving} settings={settings} setSettings={setSettings}/>}
 
       {/* LANGUAGE MODE */}
       {activeSection === 'language' && (        <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4">

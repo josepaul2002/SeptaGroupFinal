@@ -13,3 +13,5 @@ slowapi==0.1.9
 boto3==1.36.26
 resend==2.22.0
 httpx==0.28.1
+
+Pillow==12.3.0
