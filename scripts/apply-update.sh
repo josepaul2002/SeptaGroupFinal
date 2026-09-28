@@ -6,25 +6,49 @@ if [[ ! -d "$SEPTA_PACKAGE/site" ]]; then
   exit 1
 fi
 SEPTA_TARGET="${1:-}"
-if [[ -z "$SEPTA_TARGET" ]]; then
-  SEPTA_MATCHES=()
-  for candidate in "$HOME/Downloads/septa-original-style-with-admin-recovery" "$HOME/Downloads/septa-layout-original-style"; do
-    if [[ -f "$candidate/backend/server.py" ]]; then SEPTA_MATCHES+=("$candidate"); fi
-  done
+SEPTA_TARGET="$(python3 -c 'import os,sys; print(os.path.expanduser(sys.argv[1].strip().strip("\"\x27")))' "$SEPTA_TARGET")"
+SEPTA_MATCHES=()
+find_installs() {
+  while IFS= read -r candidate; do
+    [[ "$candidate" == "$SEPTA_PACKAGE"/* ]] && continue
+    [[ -f "$candidate/.env" || -f "$candidate/backend/.env" ]] && SEPTA_MATCHES+=("$candidate")
+  done < <(find "$HOME/Downloads" -maxdepth 5 -type f -path '*/backend/server.py' -print 2>/dev/null | sed 's#/backend/server.py$##')
+}
+choose_install() {
+  find_installs
   if [[ ${#SEPTA_MATCHES[@]} -eq 1 ]]; then
     SEPTA_TARGET="${SEPTA_MATCHES[0]}"
+    echo "Found your Septa installation: $SEPTA_TARGET"
+  elif [[ ${#SEPTA_MATCHES[@]} -gt 1 ]]; then
+    echo 'These Septa folders have local settings:'
+    for i in "${!SEPTA_MATCHES[@]}"; do echo "$((i+1))) ${SEPTA_MATCHES[$i]}"; done
+    echo 'Enter the number for the folder you normally run:'
+    IFS= read -r choice
+    if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#SEPTA_MATCHES[@]} )); then
+      SEPTA_TARGET="${SEPTA_MATCHES[$((choice-1))]}"
+    else
+      echo 'Invalid selection. No files were changed.'; exit 1
+    fi
   else
-    echo 'Enter the full path of the Septa folder you currently run (you can drag it from Finder):'
+    echo 'Could not find an existing Septa folder with its .env settings in Downloads.'
+    echo 'Enter the full path of your existing Septa application folder (it must contain backend/server.py):'
     IFS= read -r SEPTA_TARGET
-    SEPTA_TARGET="${SEPTA_TARGET#\'}"; SEPTA_TARGET="${SEPTA_TARGET%\'}"
-    SEPTA_TARGET="${SEPTA_TARGET#\"}"; SEPTA_TARGET="${SEPTA_TARGET%\"}"
-    SEPTA_TARGET="${SEPTA_TARGET//\\ / }"
-    SEPTA_TARGET="${SEPTA_TARGET/#\~/$HOME}"
+    SEPTA_TARGET="$(python3 -c 'import os,sys; print(os.path.expanduser(sys.argv[1].strip().strip("\"\x27")))' "$SEPTA_TARGET")"
   fi
+}
+if [[ -z "$SEPTA_TARGET" ]]; then
+  choose_install
 fi
 if [[ ! -f "$SEPTA_TARGET/backend/server.py" ]]; then
-  echo 'That folder does not contain backend/server.py. No files were changed.'
-  exit 1
+  if [[ "$SEPTA_TARGET" == "$SEPTA_PACKAGE" || "$SEPTA_TARGET" == "$SEPTA_PACKAGE/site" ]]; then
+    echo 'That is the update package folder, not the installed website. Searching Downloads for the installed Septa copy.'
+    SEPTA_MATCHES=()
+    choose_install
+  fi
+  if [[ ! -f "$SEPTA_TARGET/backend/server.py" ]]; then
+    echo 'That folder does not contain backend/server.py. No files were changed.'
+    exit 1
+  fi
 fi
 SEPTA_PYTHON=""
 for candidate in python3.13 python3.12 python3; do
