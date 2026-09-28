@@ -1,6 +1,6 @@
 # Septa Group deployment
 
-For the September redesign and existing-installation upgrade steps, start with [REDESIGN.md](REDESIGN.md). The downloadable redesign bundle includes the frontend build. From the extracted folder, `node preview.cjs` starts a visual preview; `bash start-local.sh` runs the complete site with your existing environment and MongoDB configuration.
+For the latest contact, upload, 3D and account-recovery update, start with [UPDATE-NOTES.md](UPDATE-NOTES.md). For the earlier layout changes, see [REDESIGN.md](REDESIGN.md). The downloadable redesign bundle includes the frontend build. From the extracted folder, `node preview.cjs` starts a visual preview; `bash start-local.sh` runs the complete site with your existing environment and MongoDB configuration.
 
 The repository ships as one FastAPI image. The image builds the React bundle and FastAPI serves the API, approved HTML metadata, sitemap, uploads and the SPA from the same origin. This avoids a crawler receiving an empty client-only shell.
 

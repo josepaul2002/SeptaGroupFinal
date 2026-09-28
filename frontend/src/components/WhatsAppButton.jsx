@@ -1,3 +1,4 @@
+import { contactLinks } from '../lib/contactLinks';
 import { MessageCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useSiteSettings } from '../hooks/useApi';
@@ -6,13 +7,8 @@ export default function WhatsAppButton() {
   const [hovered, setHovered] = useState(false);
   const { settings } = useSiteSettings();
 
-  const whatsappLink = settings?.contact?.whatsapp_link;
-  const whatsappNumber = settings?.contact?.whatsapp_number;
-
-  if (!whatsappNumber && !whatsappLink) return null;
-
-  const message = encodeURIComponent('Hello, I would like to enquire about construction services from Septa Group.');
-  const href = whatsappLink || `https://wa.me/${whatsappNumber}?text=${message}`;
+  const href = contactLinks(settings?.contact, 'Hello Septa, I would like to discuss a project.').whatsapp;
+  if (!href) return null;
 
   return (
     <div

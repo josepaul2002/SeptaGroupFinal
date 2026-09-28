@@ -1,3 +1,4 @@
+import { errorMessage } from '../../lib/cms';
 import NavigationSettings from './NavigationSettings';
 import { useState, useEffect } from 'react';
 import { Download, Loader2, Save } from 'lucide-react';
@@ -23,7 +24,7 @@ export default function SettingsTab({ token }) {
     try {
       await axios.put(`${API}/settings`, settings, { headers: { Authorization: `Bearer ${token}` } });
       setMsg('Settings saved');
-    } catch { setMsg('Save failed'); }
+    } catch (error) { setMsg(errorMessage(error)); }
     setSaving(false);
   };
 
@@ -116,6 +117,8 @@ export default function SettingsTab({ token }) {
             <Field label="WhatsApp Number" val={settings.contact.whatsapp_number} set={v => updateContact('whatsapp_number', v)} tid="whatsapp-num" />
             <Field label="WhatsApp Link" val={settings.contact.whatsapp_link} set={v => updateContact('whatsapp_link', v)} tid="whatsapp-link" />
             <Field label="Email" val={settings.contact.email} set={v => updateContact('email', v)} tid="email" />
+            <Field label="Facebook Page URL" val={settings.contact.facebook_url || ''} set={v => updateContact('facebook_url', v)} tid="facebook-link" />
+            <Field label="Instagram URL" val={settings.contact.instagram_url || ''} set={v => updateContact('instagram_url', v)} tid="instagram-link" />
             <Field label="Map Link" val={settings.contact.map_link} set={v => updateContact('map_link', v)} tid="map-link" />
           </div>
           <Field label="Office Address (Full)" val={settings.contact.office_address} set={v => updateContact('office_address', v)} tid="address" />

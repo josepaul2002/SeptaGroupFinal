@@ -5,6 +5,13 @@ axios.defaults.withCredentials = true;
 localStorage.removeItem('septa-admin-token');
 const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
+// A static-only host may return index.html for API calls; never treat that as a save.
+axios.interceptors.response.use(response => {
+  if (String(response.config.url).includes('/api/') && typeof response.data === 'string')
+    throw new Error('The API returned a web page instead of data. Run Septa with start-local.sh and open http://localhost:8000.');
+  return response;
+});
+
 // Helper to get text from bilingual object
 export function getText(bilingual, lang = 'en') {
   if (!bilingual) return '';
@@ -339,15 +346,19 @@ export async function exportContent(token) {
 
 // Upload file
 export async function uploadFile(token, file) {
+  if (!file || !file.size) throw new Error('Choose a non-empty file to upload.');
+  if (file.size > 50 * 1024 * 1024) throw new Error('Use a file under 50 MB.');
+  if (!/\.(jpe?g|png|webp|gif|pdf|mp4|webm|mov|glb|gltf)$/i.test(file.name))
+    throw new Error('Use JPG, PNG, WebP or GIF for images. Export HEIC photos as JPG first. PDF, MP4, WebM, MOV, GLB and GLTF files are also supported.');
   const formData = new FormData();
   formData.append('file', file);
   
   const res = await axios.post(`${API}/upload`, formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data'
-    }
+      Authorization: `Bearer ${sessionStorage.getItem('septa-admin-token') || token}`
+    }, timeout: 120000
   });
   
+  if (!res.data?.url) throw new Error('Upload returned no image address. Check that the API server is running.');
   return res.data;
 }

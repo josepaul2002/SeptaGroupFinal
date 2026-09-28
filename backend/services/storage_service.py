@@ -98,7 +98,7 @@ def get_s3_client():
 def validate_file(filename: str, content_type: str, file_size: int) -> Tuple[bool, str]:
     """Validate uploaded file"""
     # Check extension
-    ext = os.path.splitext(filename.lower())[1]
+    ext = os.path.splitext((filename or '').lower())[1]
     if ext not in ALLOWED_EXTENSIONS:
         return False, f"File type {ext} not allowed. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
     
@@ -116,7 +116,7 @@ def validate_file(filename: str, content_type: str, file_size: int) -> Tuple[boo
 
 def get_file_category(filename: str) -> str:
     """Determine file category from extension"""
-    ext = os.path.splitext(filename.lower())[1]
+    ext = os.path.splitext((filename or '').lower())[1]
     if ext in {'.jpg', '.jpeg', '.png', '.webp', '.gif'}:
         return 'images'
     elif ext in {'.mp4', '.webm', '.mov'}:
@@ -130,7 +130,7 @@ def get_file_category(filename: str) -> str:
 
 def generate_storage_key(filename: str, category: str = None) -> str:
     """Generate unique storage key with organized path"""
-    ext = os.path.splitext(filename.lower())[1]
+    ext = os.path.splitext((filename or '').lower())[1]
     if not category:
         category = get_file_category(filename)
     
@@ -140,7 +140,7 @@ def generate_storage_key(filename: str, category: str = None) -> str:
     
     # Clean filename
     clean_name = "".join(c for c in filename if c.isalnum() or c in '._-').lower()
-    clean_name = clean_name[:50]  # Limit length
+    clean_name = (os.path.splitext(clean_name)[0][:50] or 'media') + ext
     
     return f"{category}/{date_prefix}/{unique_id}_{clean_name}"
 
@@ -155,9 +155,8 @@ async def upload_file_local(
     file_path = LOCAL_UPLOAD_DIR / storage_key
     
     # Create directories
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    
     try:
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(file_path, 'wb') as f:
             f.write(file_content)
         

@@ -1,220 +1,71 @@
-import { newId } from '../lib/pageContent';
-import { ManagedIntro } from '../components/PageSections';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Phone, Mail, MapPin, MessageCircle, ArrowRight, CheckCircle2, Loader2, Send } from 'lucide-react';
-import { useScrollReveal } from '../hooks/useScrollReveal';
-import { useSiteSettings } from '../hooks/useApi';
+import { Phone, Mail, MessageCircle, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import axios from 'axios';
-import {enquiryContext,errorMessage} from '../lib/cms';
-import {useApiData,getText} from '../hooks/useApi';
-
-const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
+import { ManagedIntro } from '../components/PageSections';
+import { useSiteSettings, useApiData, getText } from '../hooks/useApi';
+import { enquiryContext, errorMessage, API } from '../lib/cms';
+import { newId } from '../lib/pageContent';
+import { contactLinks } from '../lib/contactLinks';
 
 export default function ContactPage() {
-  useScrollReveal();
-  const { settings, loading: settingsLoading } = useSiteSettings();
-  const [searchParams] = useSearchParams();
-  const partnerRef = searchParams.get('partner') || '';
-  const serviceRef = searchParams.get('ref') || '';
-  const leaderRef = searchParams.get('leader') || '';
-  const projectRef = searchParams.get('project') || '';
-  const {data:referredEntity} = useApiData(partnerRef ? `/partners/${partnerRef}` : leaderRef ? `/leaders/${leaderRef}` : '/settings',null);
-  const [submissionId] = useState(() => newId());
-
-  const [form, setForm] = useState({
-    name: '', phone: '', email: '', project_type: '', project_location: '',
-    budget_range: '', timeline: '', message: '', honeypot: '',
-    partner_ref: partnerRef, leader_ref: leaderRef, project_ref: projectRef, service_ref: serviceRef, page_source: 'contact', enquiry_type: ['introduction','collaboration'].includes(searchParams.get('enquiry_type')) ? searchParams.get('enquiry_type') : 'project'
-  });
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => { window.scrollTo(0, 0); document.title = 'Contact — Septa Group'; }, []);
-
+  const { settings } = useSiteSettings();
+  const [params] = useSearchParams();
+  const partnerRef = params.get('partner') || '', leaderRef = params.get('leader') || '';
+  const {data: person} = useApiData(partnerRef ? `/partners/${encodeURIComponent(partnerRef)}` : leaderRef ? `/leaders/${encodeURIComponent(leaderRef)}` : '/settings', null);
+  const [form, setForm] = useState({name:'',phone:'',email:'',message:'',project_location:'',project_type:'',honeypot:''});
+  const [submissionId] = useState(newId);
+  const [sending,setSending] = useState(false), [sent,setSent] = useState(false), [error,setError] = useState('');
+  useEffect(() => { window.scrollTo(0,0); }, []);
   const contact = settings?.contact || {};
-  const enquiry = settings?.enquiry || {};
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (form.honeypot) return; // spam trap
+  const introduction = !!(partnerRef || leaderRef || params.get('enquiry_type') === 'introduction');
+  const personName = getText(person?.name);
+  const message = introduction ? `Hello Septa, I'd like an introduction${personName ? ` to ${personName}` : ''}.${partnerRef ? ` Profile: ${window.location.origin}/ecosystem/${encodeURIComponent(partnerRef)}` : ''}` : `Hello Septa, I'd like to discuss ${params.get('project') ? `the ${params.get('project')} project` : 'a project'}.`;
+  const links = contactLinks(contact, message);
+  const submit = async e => {
+    e.preventDefault(); if (form.honeypot) return;
     setSending(true); setError('');
     try {
-      await axios.post(`${API}/leads`, {...form,...enquiryContext(),submission_id:submissionId});
+      await axios.post(`${API}/leads`, {...form, name:form.name.trim(), phone:form.phone.trim(), ...enquiryContext(), submission_id:submissionId,
+        enquiry_type:introduction?'introduction':params.get('enquiry_type')==='collaboration'?'collaboration':'project',
+        partner_ref:partnerRef, leader_ref:leaderRef, project_ref:params.get('project')||'', service_ref:params.get('ref')||'', page_source:'contact', preferred_contact:'phone'});
       setSent(true);
-    } catch (err) {
-      setError(err.response?.status === 429 ? 'Too many requests. Please wait a moment.' : errorMessage(err));
-    }
-    setSending(false);
+    } catch (e) { setError(errorMessage(e)); } finally { setSending(false); }
   };
-
-  if (sent) {
-    return (
-      <div className="pt-16 min-h-screen bg-[#F6F6F3] flex items-center justify-center" data-testid="contact-success">
-        <div className="text-center max-w-md px-6">
-          <div className="w-14 h-14 bg-[#ECECEA] flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 size={28} className="text-[#606060]" strokeWidth={1.5} />
+  return <div className="pt-16 lg:pt-[76px]" data-testid="contact-page">
+    <ManagedIntro pageId="contact"/>
+    <section className="py-12 md:py-20 bg-white"><div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-24">
+        <div><p className="tech-label mb-4">Let’s talk</p><h2 className="text-3xl md:text-4xl font-sora mb-5">{introduction ? 'One introduction away.' : 'Start with a conversation.'}</h2>
+          {introduction && personName && <p className="text-lg mb-5">Connect with {personName} through Septa.</p>}
+          <p className="text-sm text-[#606060] mb-7">{links.call||links.whatsapp||links.email ? 'Choose what works for you. No form needed.' : 'Leave your name and number. Our team will call you back.'}</p>
+          <div className="flex flex-col gap-3" data-testid="direct-contact-actions">
+            {links.call && <a className="design-button primary justify-between" href={links.call} data-testid="contact-call"><span className="flex gap-3"><Phone size={18}/>Call Septa</span><ArrowRight size={16}/></a>}
+            {links.whatsapp && <a className="design-button justify-between" href={links.whatsapp} target="_blank" rel="noopener noreferrer" data-testid="contact-whatsapp"><span className="flex gap-3"><MessageCircle size={18}/>WhatsApp us</span><ArrowRight size={16}/></a>}
+            {links.email && <a className="design-button justify-between" href={links.email} data-testid="contact-email"><span className="flex gap-3"><Mail size={18}/>Email us</span><ArrowRight size={16}/></a>}
           </div>
-          <h1 className="text-2xl font-sora font-light text-[#050505] mb-3">Enquiry Received</h1>
-          <p className="text-sm font-inter font-light text-[#050505]/55 leading-relaxed mb-6">
-            Thank you, {form.name}. Our team will review your enquiry and contact you about the next steps.
-          </p>
-          <a href="/" className="text-sm font-inter text-[#606060] hover:underline">Back to Home</a>
+          {(links.whatsapp||links.email) && <p className="text-xs text-[#606060] mt-4">Your message opens ready to send. You can edit it first.</p>}
+          {contact.office_address && <p className="mt-10 text-sm text-[#606060]">{contact.office_address}</p>}
+        </div>
+        <div className="border border-[#8A8A8A]/20 p-6 md:p-8">
+          {sent ? <div role="status" data-testid="contact-success"><CheckCircle2 className="mb-5"/><h2 className="text-2xl mb-3">Callback requested.</h2><p>Thank you, {form.name}. Our team will contact you on {form.phone}.</p></div> : <>
+            <h2 className="text-2xl font-sora mb-2">Prefer us to call?</h2><p className="text-sm text-[#606060] mb-7">Just your name and phone number.</p>
+            <form className="space-y-5" onSubmit={submit} data-testid="enquiry-form">
+              <div className="absolute -left-[9999px]" aria-hidden="true"><input name="website" tabIndex={-1} autoComplete="off" value={form.honeypot} onChange={e=>setForm({...form,honeypot:e.target.value})}/></div>
+              <label className="block text-sm">Your name<input className="form-input mt-2" required minLength={2} maxLength={120} autoComplete="name" data-testid="input-name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
+              <label className="block text-sm">Phone number<input className="form-input mt-2" type="tel" required minLength={8} maxLength={32} autoComplete="tel" data-testid="input-phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>
+              <details className="border-y py-4"><summary className="text-sm cursor-pointer">Add details (optional)</summary><div className="space-y-4 mt-5">
+                <label className="block text-sm">Email<input type="email" className="form-input mt-2" autoComplete="email" maxLength={254} value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
+                <label className="block text-sm">Project location<input className="form-input mt-2" value={form.project_location} onChange={e=>setForm({...form,project_location:e.target.value})}/></label>
+                <label className="block text-sm">Project type<select className="form-input mt-2" value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value})}><option value="">Choose if relevant</option>{(settings?.enquiry?.project_types||[]).map(t=><option key={t}>{t}</option>)}</select></label>
+                <label className="block text-sm">Anything we should know?<textarea className="form-input mt-2" rows={3} maxLength={5000} value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
+              </div></details>
+              {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+              <button type="submit" className="design-button primary w-full justify-center" disabled={sending}>{sending?<><Loader2 size={16} className="animate-spin"/>Sending…</>:'Request a callback'}</button>
+              <p className="text-xs text-[#606060]">We’ll use these details to respond to your request. <a className="underline" href="/privacy">Privacy</a></p>
+            </form></>}
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="pt-16 lg:pt-[76px]" data-testid="contact-page">
-      <ManagedIntro pageId="contact"/>
-
-      {/* Contact Info + Form */}
-      <section className="py-12 md:py-20 bg-white">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            {/* Sidebar */}
-            <div className="lg:col-span-4 flex flex-col gap-10 reveal">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-5">Get in Touch</p>
-                <div className="flex flex-col gap-5">
-                  <ContactItem icon={<Phone size={16} strokeWidth={1.5} />} label="Phone"
-                    value={contact.phone_display || ''}
-                    href={contact.phone_link} tid="contact-phone" />
-                  <ContactItem icon={<Mail size={16} strokeWidth={1.5} />} label="Email"
-                    value={contact.email || ''}
-                    href={`mailto:${contact.email || ''}`} tid="contact-email" />
-                  <ContactItem icon={<MapPin size={16} strokeWidth={1.5} />} label="Office"
-                    value={contact.office_address || ''} tid="contact-address" />
-                  {contact.whatsapp_link && (
-                    <ContactItem icon={<MessageCircle size={16} strokeWidth={1.5} />} label="WhatsApp"
-                      value="Chat with us"
-                      href={contact.whatsapp_link} tid="contact-whatsapp" external />
-                  )}
-                </div>
-              </div>
-
-              {contact.operating_districts?.length > 0 && (
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-3">Operating Districts</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {contact.operating_districts.map(d => (
-                      <span key={d} className="text-xs font-inter px-2 py-0.5 bg-[#F6F6F3] text-[#050505]/60 border border-[#8A8A8A]/15">
-                        {d}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Form */}
-            <div className="lg:col-span-8 reveal reveal-delay-1">
-              <form onSubmit={handleSubmit} className="space-y-5" data-testid="enquiry-form">
-                <label className="block text-xs uppercase tracking-wider">Enquiry type<select className="form-input mt-2" value={form.enquiry_type} onChange={e=>setForm({...form,enquiry_type:e.target.value})}><option value="project">Discuss a project</option><option value="introduction">Request an introduction</option><option value="collaboration">Collaborate with Septa</option></select></label>
-                {/* Honeypot */}
-                <div className="absolute -left-[9999px]" aria-hidden="true">
-                  <input type="text" name="website" tabIndex={-1} autoComplete="off"
-                    value={form.honeypot} onChange={e => setForm({ ...form, honeypot: e.target.value })} />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label htmlFor="contact-name" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Full Name *</label>
-                    <input type="text" required className="form-input" minLength={2} maxLength={120} autoComplete="name" value={form.name}
-                      onChange={e => setForm({ ...form, name: e.target.value })} id="contact-name" data-testid="input-name" />
-                  </div>
-                  <div>
-                    <label htmlFor="contact-phone" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Phone *</label>
-                    <input type="tel" required className="form-input" minLength={8} maxLength={32} autoComplete="tel" value={form.phone}
-                      onChange={e => setForm({ ...form, phone: e.target.value })} id="contact-phone" data-testid="input-phone" />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="contact-email" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Email</label>
-                  <input type="email" className="form-input" maxLength={254} autoComplete="email" value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })} id="contact-email" data-testid="input-email" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label htmlFor="contact-project-type" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Type</label>
-                    <select className="form-input" value={form.project_type}
-                      onChange={e => setForm({ ...form, project_type: e.target.value })} id="contact-project-type" data-testid="input-project-type">
-                      <option value="">Select...</option>
-                      {(enquiry.project_types || []).map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="contact-location" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Project Location</label>
-                    <input type="text" className="form-input" placeholder="City / District"
-                      value={form.project_location}
-                      onChange={e => setForm({ ...form, project_location: e.target.value })} id="contact-location" data-testid="input-location" />
-                  </div>
-                </div>
-
-                <details className="border-y py-4"><summary className="cursor-pointer text-sm">Add a few more details (optional)</summary><div className="mt-5 space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label htmlFor="contact-budget" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Budget Range</label>
-                    <select className="form-input" value={form.budget_range}
-                      onChange={e => setForm({ ...form, budget_range: e.target.value })} id="contact-budget" data-testid="input-budget">
-                      <option value="">Select...</option>
-                      {(enquiry.budget_ranges || []).map(b => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="contact-timeline" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Expected Timeline</label>
-                    <select className="form-input" value={form.timeline}
-                      onChange={e => setForm({ ...form, timeline: e.target.value })} id="contact-timeline" data-testid="input-timeline">
-                      <option value="">Select...</option>
-                      {(enquiry.timeline_ranges || []).map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="contact-message" className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Message</label>
-                  <textarea rows={4} className="form-input resize-none" placeholder="Tell us about your project..."
-                    maxLength={5000} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} id="contact-message" data-testid="input-message" />
-                </div>
-
-                </div></details>
-                {(partnerRef || leaderRef) && referredEntity?.name && (
-                  <p className="text-xs font-inter text-[#606060] bg-[#ECECEA] px-3 py-2">
-                    Enquiry about: <strong>{getText(referredEntity.name)}</strong>
-                  </p>
-                )}
-
-                {error && <p className="text-sm text-red-500 font-inter" role="alert" data-testid="form-error">{error}</p>}
-
-                <p className="text-xs text-neutral-600">By submitting, you ask Septa to contact you about this enquiry. <a href="/privacy" className="underline">How we use your details</a></p>
-                <button type="submit" disabled={sending} data-testid="submit-enquiry-btn"
-                  className="h-12 px-8 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors flex items-center gap-2 disabled:opacity-60">
-                  {sending ? <Loader2 className="animate-spin" size={16} /> : <><Send size={14} /> Submit Enquiry</>}
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ContactItem({ icon, label, value, href, tid, external }) {
-  if (!value) return null;
-  const Tag = href ? 'a' : 'div';
-  const linkProps = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
-  return (
-    <Tag {...linkProps} className="flex items-center gap-4 group" data-testid={tid}>
-      <div className="w-9 h-9 bg-[#ECECEA] flex items-center justify-center flex-shrink-0 text-[#606060]">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-[10px] leading-none font-inter text-[#8A8A8A] uppercase tracking-wider mb-1.5">{label}</p>
-        <p className={`text-sm leading-snug font-inter text-[#050505] ${href ? 'group-hover:text-[#606060] transition-colors' : ''}`}>{value}</p>
-      </div>
-    </Tag>
-  );
+    </div></section>
+  </div>;
 }

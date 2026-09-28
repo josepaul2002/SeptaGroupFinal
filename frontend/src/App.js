@@ -12,6 +12,7 @@ import ServicesPage from './pages/ServicesPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectCaseStudyPage from './pages/ProjectCaseStudyPage';
 import ContactPage from './pages/ContactPage';
+import AdminRecoveryPage from './pages/AdminRecoveryPage';
 import AdminPage from './pages/AdminPage';
 import ContentChecklist from './pages/ContentChecklist';
 import EcosystemPage from './pages/EcosystemPage';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/project-leaders/:slug" element={<LeadersPage />} />
               <Route path="/privacy" element={<div className="max-w-3xl mx-auto px-6 pt-32 pb-24"><h1 className="text-4xl mb-8">Enquiry privacy</h1><p>We use the contact and project details you submit to respond to your enquiry and coordinate requested introductions. Please avoid submitting sensitive personal information. You can request correction or deletion by replying to our response.</p><p className="mt-6">Do not upload confidential drawings or documents through this website.</p></div>} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/admin/recover" element={<AdminRecoveryPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/content-checklist" element={<ContentChecklist />} />
               <Route path="*" element={<div className="pt-32 px-6 pb-24"><h1 className="text-4xl">Page not found</h1><a href="/">Return to Septa</a></div>} />

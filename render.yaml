@@ -1,0 +1,45 @@
+# Deploy as one Docker web service. Set secrets in Render, never commit them.
+services:
+  - type: web
+    name: septa-group
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: ALLOW_INDEXING
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SITE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: septa
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: STORAGE_PROVIDER
+        value: R2
+      - key: BUCKET_NAME
+        value: septa-media
+      - key: PUBLIC_CDN_BASE_URL
+        sync: false
+      - key: R2_ACCESS_KEY
+        sync: false
+      - key: R2_SECRET_KEY
+        sync: false
+      - key: R2_ENDPOINT_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
+      - key: ADMIN_NOTIFY_EMAIL
+        sync: false

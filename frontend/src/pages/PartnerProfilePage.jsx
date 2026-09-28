@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Globe, Instagram, Mail, Phone, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Facebook, Instagram, Mail, Phone, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { getText } from '../hooks/useApi';
 import { useLanguage } from '../components/LanguageToggle';
@@ -210,6 +210,7 @@ export default function PartnerProfilePage() {
                     <Globe size={14} strokeWidth={1.5} /> Website
                   </a>
                 )}
+                {partner.facebook_url && <a href={partner.facebook_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm hover:underline"><Facebook size={16} />Facebook</a>}
                 {(partner.instagram_url || partner.instagram) && (
                   <a href={partner.instagram_url || partner.instagram} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 text-sm font-inter text-[#606060] hover:text-[#8A8A8A] transition-colors">

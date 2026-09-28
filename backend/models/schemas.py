@@ -135,6 +135,7 @@ class ProjectTabVisibility(BaseModel):
 # --- Lead Model ---
 
 class LeadCreate(BaseModel):
+    preferred_contact: Literal["phone", "email", "whatsapp"] = "phone"
     name: str = Field(min_length=2, max_length=120)
     phone: str = Field(min_length=8, max_length=32)
     email: str = Field(default="", max_length=254)
@@ -214,6 +215,7 @@ class PartnerBase(BaseModel):
     relationship_type: str = "Project Partner"
     website_url: Optional[str] = None
     instagram_url: Optional[str] = None
+    facebook_url: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
     sort_order: int = 0
@@ -239,6 +241,7 @@ class PartnerUpdate(BaseModel):
     relationship_type: Optional[str] = None
     website_url: Optional[str] = None
     instagram_url: Optional[str] = None
+    facebook_url: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
     sort_order: Optional[int] = None
@@ -405,6 +408,8 @@ class ContentExport(BaseModel):
 # --- Site Settings Model ---
 
 class SiteContactSettings(BaseModel):
+    facebook_url: str = ""
+    instagram_url: str = ""
     phone_display: str = ""
     phone_link: str = ""
     whatsapp_number: str = ""

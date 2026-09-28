@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 import os
 import asyncio
 from contextlib import suppress
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, PyMongoError
 import logging
 import json
 import httpx
@@ -66,6 +66,12 @@ api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+@app.exception_handler(PyMongoError)
+async def database_error(request: Request, error: PyMongoError):
+    logger.error('Database operation failed (%s) on %s', type(error).__name__, request.url.path)
+    return JSONResponse(status_code=503, content={'detail': 'The database could not complete this request. Check that MongoDB is running and MONGO_URL / DB_NAME are correct. Your edits remain in the editor; retry after reconnecting.'})
+
 
 
 # ============================================================================
@@ -318,7 +324,7 @@ async def update_project(
         raise HTTPException(status_code=404, detail="Project not found")
     
     project = await db.projects.find_one({"slug": slug}, {"_id": 0, "id": 1})
-    await log_audit(admin["admin_id"], admin["email"], "update", "project", project["id"], update_data)
+    await log_audit(admin["admin_id"], admin["email"], "update", "project", project.get("id", slug), update_data)
     
     return {"message": "Project updated"}
 
@@ -553,7 +559,7 @@ async def delete_testimonial(
 @limiter.limit("5/minute")
 async def admin_login(request: Request, response: Response, auth: AdminLoginRequest):
     """Admin login with JWT"""
-    admin = await db.admins.find_one({"email": auth.email}, {"_id": 0})
+    admin = await db.admins.find_one({"email": auth.email.strip().lower()}, {"_id": 0})
     if not admin or admin.get("disabled") or not verify_password(auth.password, admin["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
@@ -590,7 +596,7 @@ async def admin_logout(response: Response, admin: dict = Depends(get_current_adm
 @api_router.get("/admin/me")
 async def get_current_admin_info(admin: dict = Depends(get_current_admin)):
     """Get current admin info"""
-    admin_doc = await db.admins.find_one({"id": admin["admin_id"]}, {"_id": 0, "password_hash": 0})
+    admin_doc = await db.admins.find_one({"id": admin["admin_id"]}, {"_id": 0, "password_hash": 0, "reset_hash": 0, "reset_expires": 0, "reset_auth_version": 0, "reset_requested_at": 0})
     if not admin_doc:
         raise HTTPException(status_code=404, detail="Admin not found")
     return admin_doc
@@ -655,7 +661,7 @@ async def upload_media(
     # Upload
     result = await upload_file(content, file.filename, file.content_type)
     if not result:
-        raise HTTPException(status_code=500, detail="Upload failed")
+        raise HTTPException(status_code=500, detail="Upload failed. Locally, check that backend/uploads is writable. In production, configure R2 or S3 credentials and PUBLIC_CDN_BASE_URL.")
     
     await log_audit(admin["admin_id"], admin["email"], "upload", "media", result["key"])
     
@@ -1389,19 +1395,21 @@ from release_api import attach_release_routes
 from services.pages import attach_page_routes
 attach_page_routes(api_router, db, log_audit)
 attach_release_routes(api_router, db, log_audit)
+from recovery_api import attach_recovery_routes
+attach_recovery_routes(api_router, db, limiter)
 app.include_router(api_router)
 
 @app.middleware("http")
 async def response_headers(request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Referrer-Policy"] = "no-referrer" if request.url.path.startswith("/admin") else "strict-origin-when-cross-origin"
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     if PRODUCTION:
         response.headers["Strict-Transport-Security"] = "max-age=31536000"
     if not INDEXABLE or request.url.path.startswith(("/api", "/admin", "/content-checklist")) or "preview" in request.query_params:
         response.headers["X-Robots-Tag"] = "noindex, nofollow"
-    if request.url.path.startswith("/api"):
+    if request.url.path.startswith(("/api", "/admin")):
         response.headers["Cache-Control"] = "no-store"
     return response
 

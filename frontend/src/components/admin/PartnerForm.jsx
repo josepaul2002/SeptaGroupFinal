@@ -25,6 +25,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
     specialties: partner?.specialties || [],
     districts: partner?.districts || [],
     website_url: partner?.website_url || partner?.website || '',
+    facebook_url: partner?.facebook_url || '',
     instagram_url: partner?.instagram_url || partner?.instagram || '',
     contact_email: partner?.contact_email || '',
     contact_phone: partner?.contact_phone || '',
@@ -61,7 +62,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
       } else {
         setForm({ ...form, media: { ...form.media, [field]: result.url } });
       }
-    } catch { alert('Upload failed. Check storage configuration and file size.'); }
+    } catch (error) { alert(errorMessage(error)); }
     setUploading(false);
   };
 
@@ -153,6 +154,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
               </F>
               <div className="grid grid-cols-2 gap-4">
                 <F label="Website URL"><input type="url" className="form-input" value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} /></F>
+                <F label="Facebook URL"><input type="url" className="form-input" value={form.facebook_url} onChange={e => setForm({ ...form, facebook_url: e.target.value })} /></F>
                 <F label="Instagram URL"><input type="url" className="form-input" value={form.instagram_url} onChange={e => setForm({ ...form, instagram_url: e.target.value })} /></F>
                 <F label="Contact Email"><input type="email" className="form-input" value={form.contact_email} onChange={e => setForm({ ...form, contact_email: e.target.value })} /></F>
                 <F label="Contact Phone"><input type="text" className="form-input" value={form.contact_phone} onChange={e => setForm({ ...form, contact_phone: e.target.value })} /></F>
@@ -219,7 +221,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                 {(form.media.gallery_images || []).length < 10 && (
                   <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
                     <Plus size={14} /> Add Image
-                    <input type="file" accept="image/*" className="hidden" onChange={e => handleUpload(e, 'gallery_images')} />
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => handleUpload(e, 'gallery_images')} />
                   </label>
                 )}
               </F>
@@ -256,11 +258,11 @@ function MediaField({ label, hint, url, onUpload, onClear, onUrlChange }) {
       <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-1">{label}</label>
       {hint && <p className="text-[10px] text-[#8A8A8A] mb-2">{hint}</p>}
       <div className="flex gap-3 items-end">
-        <input type="url" className="form-input flex-1" placeholder="Image URL" value={url || ''}
+        <input type="text" className="form-input flex-1" placeholder="Upload a file or paste an image address" value={url || ''}
           onChange={e => onUrlChange(e.target.value || null)} />
         <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F3] text-[#050505] text-xs font-inter cursor-pointer hover:bg-[#ECECEA] transition-colors border border-[#8A8A8A]/30">
           <Upload size={14} /> Upload
-          <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={onUpload} />
         </label>
         {url && <button type="button" onClick={onClear} className="text-red-400 hover:text-red-600 p-2 text-xs">Clear</button>}
       </div>

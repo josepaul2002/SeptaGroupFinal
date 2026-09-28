@@ -1,3 +1,5 @@
+import { errorMessage } from '../lib/cms';
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { LogOut, Lock, AlertCircle, Loader2, MessageSquare, Folder, Users, FileText, Settings, History, LayoutDashboard, KeyRound } from 'lucide-react';
 import { useAdminAuth } from '../hooks/useApi';
@@ -40,8 +42,8 @@ export default function AdminPage() {
     setLoginError('');
     try {
       await login(loginForm.email, loginForm.password);
-    } catch {
-      setLoginError('Invalid credentials');
+    } catch (error) {
+      setLoginError(error.response?.status === 401 ? 'Invalid email or password.' : errorMessage(error));
     }
     setLoginLoading(false);
   };
@@ -82,7 +84,7 @@ export default function AdminPage() {
               className="w-full h-11 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
               {loginLoading ? <Loader2 className="animate-spin" size={16} /> : 'Login'}
             </button>
-          </form>
+          </form><Link to="/admin/recover" className="block mt-6 text-sm underline">Forgot your password?</Link>
         </div>
       </div>
     );

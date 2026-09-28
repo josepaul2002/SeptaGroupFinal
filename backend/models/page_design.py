@@ -29,6 +29,8 @@ class PageItem(BaseModel):
     link_url: str = ''
     link_label: BilingualText = Field(default_factory=BilingualText)
     tag: str = ''
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
     _links = field_validator('image_url', 'link_url')(safe_link)
 
 class PageHero(BaseModel):

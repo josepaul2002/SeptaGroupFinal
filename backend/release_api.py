@@ -141,7 +141,7 @@ def attach_release_routes(router, db, audit):
 
     @router.get('/admin/users')
     async def users(admin=Depends(get_current_admin)):
-        return await db.admins.find({}, {'_id': 0, 'password_hash': 0, 'auth_version': 0}).to_list(100)
+        return await db.admins.find({}, {'_id': 0, 'password_hash': 0, 'auth_version': 0, 'reset_hash': 0, 'reset_expires': 0, 'reset_auth_version': 0, 'reset_requested_at': 0}).to_list(100)
 
     @router.post('/admin/users', status_code=201)
     async def add_user(body: NewUser, admin=Depends(get_current_admin)):

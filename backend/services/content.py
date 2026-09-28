@@ -44,7 +44,7 @@ async def publication_check(db, doc, kind, admin):
             linked = await collection.find_one({'slug': credit['entity_slug'], **PUBLIC_QUERY})
             if not credit.get('verified') or not linked:
                 problems.append(f"Verify and publish the credit for {credit['entity_slug']}.")
-    for field in ['website_url', 'instagram_url']:
+    for field in ['website_url', 'instagram_url', 'facebook_url']:
         url = doc.get(field)
         if url and (not url.startswith('https://') or 'placeholder' in url):
             problems.append(f'{field} must be a real HTTPS address or empty.')

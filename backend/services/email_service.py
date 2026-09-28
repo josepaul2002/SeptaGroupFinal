@@ -432,3 +432,37 @@ async def send_user_confirmation(email: str, name: str, lead_id: str = "", max_r
         success=False, error=f"Max retries exceeded: {last_error}", lead_id=lead_id
     )
     return {"success": False, "error": "Max retries exceeded"}
+
+
+async def send_password_reset(recipient: str, reset_url: str) -> bool:
+    """Account recovery mail; reset URLs are never written to application logs."""
+    if not _configure_resend():
+        return False
+    try:
+        await asyncio.to_thread(resend.Emails.send, {
+            'from': os.environ['FROM_EMAIL'], 'to': [recipient],
+            'subject': 'Reset your Septa admin password',
+            'html': '<p>A password reset was requested for your Septa admin account.</p>'
+                    f'<p><a href="{escape(reset_url, quote=True)}">Set a new password</a></p>'
+                    '<p>This link expires in 20 minutes and can be used once. If you did not request this, you can ignore this email. Your password has not changed.</p>',
+            'text': f'Reset your Septa admin password: {reset_url}\nThis link expires in 20 minutes and can be used once. If you did not request this, ignore this email.'
+        })
+        return True
+    except Exception as error:
+        logger.error('Recovery email failed: %s', type(error).__name__)
+        return False
+
+
+async def send_password_changed(recipient: str) -> bool:
+    if not _configure_resend():
+        return False
+    try:
+        await asyncio.to_thread(resend.Emails.send, {
+            'from': os.environ['FROM_EMAIL'], 'to': [recipient],
+            'subject': 'Your Septa admin password was changed',
+            'text': 'Your Septa admin password has been changed and previous sessions have been signed out. If you did not make this change, contact your site owner immediately and recover your account using the admin login page.'
+        })
+        return True
+    except Exception as error:
+        logger.error('Password-change notice failed: %s', type(error).__name__)
+        return False
