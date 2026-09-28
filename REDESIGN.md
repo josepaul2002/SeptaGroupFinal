@@ -1,6 +1,6 @@
-# Septa Website Studio — September 2026
+# Septa layout update + Website Studio — September 2026
 
-This update replaces the fixed Home, About and Services layouts with editable page sections. It includes a prebuilt frontend in the download, so you do not need to rebuild to see the redesign.
+This corrected update keeps Septa’s established visual style and adds editable page sections to Home, About and Services. The original black/ivory/grey palette, Space Grotesk and Inter typography, white buttons, two-tone wordmark and large footer wordmark are retained. The homepage uses an admin-selected image or published project media, rather than a new decorative illustration. The concise content structure, visual operating areas and admin controls remain. It includes a prebuilt frontend in the download, so you do not need to rebuild to see the redesign.
 
 ## View the design immediately
 

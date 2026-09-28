@@ -6,7 +6,7 @@
         "ml": ""
       },
       "title": {
-        "en": "From idea to\ninfrastructure.",
+        "en": "From idea\nto infrastructure.",
         "ml": ""
       },
       "body": {
@@ -139,7 +139,7 @@
         "ml": ""
       },
       "title": {
-        "en": "People. Purpose.\nConsidered construction.",
+        "en": "Built with Clarity.\nDelivered with Discipline.",
         "ml": ""
       },
       "body": {
@@ -271,7 +271,7 @@
         "ml": ""
       },
       "title": {
-        "en": "The right team.\nThe right scope.",
+        "en": "Construction Delivery,\nNot Just Contracting.",
         "ml": ""
       },
       "body": {
@@ -291,7 +291,8 @@
         "en": "Explore our work",
         "ml": ""
       },
-      "secondary_url": "/projects"
+      "secondary_url": "/projects",
+      "layout": "text"
     },
     "sections": [
       {

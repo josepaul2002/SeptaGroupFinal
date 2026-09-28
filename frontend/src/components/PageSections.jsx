@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowUpRight, ArrowRight, Plus, MapPin } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, Plus, MapPin, Building2, Home, Layers } from 'lucide-react';
 import { useApiData, useProjects, useSiteSettings, useTestimonials, getText } from '../hooks/useApi';
 import { useLanguage } from './LanguageToggle';
 import { safeHref, useSitePage } from '../lib/pageContent';
@@ -12,26 +12,29 @@ export function ContentLink({to,children,className='',...props}) {
   return href.startsWith('/')?<Link to={href} className={className} {...props}>{children}</Link>:<a href={href} className={className} {...props}>{children}</a>;
 }
 
-export function StructureGraphic(){
-  return <div className="structure-graphic" aria-hidden="true"><svg viewBox="0 0 480 480" fill="none"><defs><linearGradient id="structure-light" x1="0" y1="0" x2="480" y2="480" gradientUnits="userSpaceOnUse"><stop stopColor="#C6A15B"/><stop offset="1" stopColor="#C6A15B" stopOpacity=".12"/></linearGradient></defs><g stroke="url(#structure-light)" strokeWidth="1.2">{[0,1,2,3,4,5].map(n=><path key={n} d={`M${75+n*23} ${180-n*15} L${260+n*23} ${75+n*13} V${310+n*13} L${75+n*23} ${420-n*15} Z`}/>)}<path d="M75 180 210 265 398 152M210 265V420M75 420 210 470 398 388V152"/></g><path d="M25 450H450M40 40V460" stroke="currentColor" opacity=".1"/><circle cx="260" cy="75" r="5" fill="#C6A15B"/></svg></div>;
+export function ProjectMediaPlaceholder(){
+  return <div className="project-media-placeholder"><span className="tech-label">Approved project media will appear here</span></div>;
 }
 
-export function PageHero({hero,compact=false}) {
+export function PageHero({hero,compact=false,pageId}) {
   const {t}=useLanguage();
+  const {data:projects}=useProjects();
   if(!hero)return null;
-  const hasImage=!!safeHref(hero.image_url);
+  const featured=pageId==='home'?projects.find(project=>safeHref(project.image)):null;
+  const imageUrl=safeHref(hero.image_url)||safeHref(featured?.image);
+  const hasImage=!!imageUrl;
   const showArt=hero.layout!=='text'&&(hasImage||!compact);
-  return <section className={`page-hero tone-${hero.theme||'light'} ${compact?'page-hero-compact':''}`}>
+  return <section className={`page-hero tone-${hero.theme||'light'} ${compact?'page-hero-compact':''} ${pageId==='home'?'page-hero-home':''}`}>
     <div className={`design-container hero-layout ${!showArt?'hero-text-only':''}`}>
       <div className="hero-copy"><p className="design-eyebrow">{t(hero.eyebrow)}</p><h1>{t(hero.title)}</h1>{t(hero.body)&&<p className="hero-description">{t(hero.body)}</p>}<div className="design-actions"><ContentLink className="design-button" to={hero.primary_url}>{t(hero.primary_label)}<ArrowUpRight size={17}/></ContentLink><ContentLink className="design-text-link" to={hero.secondary_url}>{t(hero.secondary_label)}<ArrowRight size={16}/></ContentLink></div></div>
-      {showArt&&<div className="hero-art">{hasImage?<img src={safeHref(hero.image_url)} alt={hero.image_alt||''} style={{objectPosition:hero.image_position||'center'}} fetchPriority="high"/>:<StructureGraphic/>}</div>}
+      {showArt&&<div className="hero-art">{hasImage?<img src={imageUrl} alt={hero.image_alt||t(featured?.title)||''} style={{objectPosition:hero.image_position||'center'}} fetchPriority="high"/>:pageId==='home'?<ProjectMediaPlaceholder/>:<div className="brand-media-placeholder" aria-hidden="true"><img src="/septa-logo.png" alt=""/></div>}</div>}
     </div>
   </section>;
 }
 
 export function ManagedIntro({pageId}) {
   const {page}=useSitePage(pageId);
-  return <><PageHero hero={page.hero} compact/><PageSections sections={page.sections}/></>;
+  return <><PageHero hero={page.hero} compact pageId={pageId}/><PageSections sections={page.sections}/></>;
 }
 
 function SectionHeading({section}) {
@@ -47,7 +50,7 @@ function CapabilityCards({section}) {
   const {t}=useLanguage();
   const items=section.source==='services'?services.sections.filter(s=>s.enabled!==false&&s.type==='cards'&&s.source!=='services').flatMap(s=>s.items||[]):section.items||[];
   if(!items.length)return null;
-  return <SectionShell section={section}><div className="capability-grid">{items.map((item,i)=><article className="capability-card" key={item.id}><div className="card-topline"><span className="design-eyebrow">{String(i+1).padStart(2,'0')}</span>{item.image_url?<img loading="lazy" src={safeHref(item.image_url)} alt={item.image_alt||''}/>:<div className={`capability-symbol symbol-${i%3}`} aria-hidden="true"><i/><i/><i/></div>}</div><h3>{t(item.title)}</h3>{t(item.subtitle)&&<p className="design-eyebrow">{t(item.subtitle)}</p>}<p>{t(item.body)}</p><ContentLink className="design-text-link" to={item.link_url||(item.tag?`/projects?type=${encodeURIComponent(item.tag)}`:'/contact')}>{t(item.link_label)||'Explore'}<ArrowUpRight size={16}/></ContentLink></article>)}</div></SectionShell>;
+  return <SectionShell section={section}><div className="capability-grid">{items.map((item,i)=><article className="capability-card" key={item.id}><div className="card-topline"><span className="design-eyebrow">{String(i+1).padStart(2,'0')}</span>{item.image_url?<img loading="lazy" src={safeHref(item.image_url)} alt={item.image_alt||''}/>:<div className="capability-symbol" aria-hidden="true">{i%3===0?<Building2 size={20} strokeWidth={1.5}/>:i%3===1?<Home size={20} strokeWidth={1.5}/>:<Layers size={20} strokeWidth={1.5}/>}</div>}</div><h3>{t(item.title)}</h3>{t(item.subtitle)&&<p className="design-eyebrow">{t(item.subtitle)}</p>}<p>{t(item.body)}</p><ContentLink className="design-text-link" to={item.link_url||(item.tag?`/projects?type=${encodeURIComponent(item.tag)}`:'/contact')}>{t(item.link_label)||'Explore'}<ArrowUpRight size={16}/></ContentLink></article>)}</div></SectionShell>;
 }
 
 function ProjectSelection({section}) {
@@ -57,7 +60,7 @@ function ProjectSelection({section}) {
   if(section.project_type)selected=selected.filter(p=>p.type===section.project_type);
   selected=selected.slice(0,section.limit||3);
   if(!selected.length)return null;
-  return <SectionShell section={section}><div className="selected-projects">{selected.map(p=><Link key={p.slug} to={`/projects/${p.slug}`} className="selected-project"><div className="project-image">{p.image?<img src={safeHref(p.image)} alt={t(p.title)} loading="lazy"/>:<StructureGraphic/>}<span className="project-open"><ArrowUpRight size={20}/></span></div><div className="project-caption"><div><p className="design-eyebrow">{p.type}{p.location&&` / ${p.location}`}</p><h3>{t(p.title)}</h3></div></div></Link>)}</div><ContentLink to={section.link_url||'/projects'} className="design-text-link section-end-link">{t(section.link_label)||'Explore all projects'}<ArrowRight size={16}/></ContentLink></SectionShell>;
+  return <SectionShell section={section}><div className="selected-projects">{selected.map(p=><Link key={p.slug} to={`/projects/${p.slug}`} className="selected-project"><div className="project-image">{p.image?<img src={safeHref(p.image)} alt={t(p.title)} loading="lazy"/>:<ProjectMediaPlaceholder/>}<span className="project-open"><ArrowUpRight size={20}/></span></div><div className="project-caption"><div><p className="design-eyebrow">{p.type}{p.location&&` / ${p.location}`}</p><h3>{t(p.title)}</h3></div></div></Link>)}</div><ContentLink to={section.link_url||'/projects'} className="design-text-link section-end-link">{t(section.link_label)||'Explore all projects'}<ArrowRight size={16}/></ContentLink></SectionShell>;
 }
 
 function Coverage({section}) {
@@ -104,5 +107,5 @@ export function DesignedPage({pageId}) {
   const {page,preview,error}=useSitePage(pageId);
   const {pathname}=useLocation();
   useEffect(()=>{window.scrollTo(0,0);},[pathname]);
-  return <div className="designed-page" data-testid={`${pageId}-page`}>{preview&&<div className="design-preview-banner">Saved draft preview · Only visible to signed-in editors. <Link to="/admin">Back to admin</Link>{error&&<p role="alert">Draft could not load. Showing the default layout.</p>}</div>}<PageHero hero={page.hero}/><PageSections sections={page.sections}/></div>;
+  return <div className="designed-page" data-testid={`${pageId}-page`}>{preview&&<div className="design-preview-banner">Saved draft preview · Only visible to signed-in editors. <Link to="/admin">Back to admin</Link>{error&&<p role="alert">Draft could not load. Showing the default layout.</p>}</div>}<PageHero hero={page.hero} pageId={pageId}/><PageSections sections={page.sections}/></div>;
 }
