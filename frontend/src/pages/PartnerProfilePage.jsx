@@ -62,7 +62,7 @@ export default function PartnerProfilePage() {
   const backToEcosystem=typeof location.state?.from==='string'&&/^\/ecosystem(?:\?|$)/.test(location.state.from)?location.state.from:'/ecosystem';
 
   return (
-    <div className={showPreview ? 'pt-28' : 'pt-16'} data-testid="partner-profile-page">
+    <div className={`partner-profile-page ${showPreview ? 'pt-28' : 'pt-16'}`} data-testid="partner-profile-page">
       {showPreview && <PreviewBanner type="partner" slug={slug} />}
 
       {/* Back nav */}

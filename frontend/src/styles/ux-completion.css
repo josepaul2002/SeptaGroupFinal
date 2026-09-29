@@ -83,3 +83,15 @@ dialog.partner-media-modal:not([open]){display:none}
  .media-dialog{padding:12px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* A swipeable media row must not set the min-content width of the whole profile. */
+.partner-profile-page{max-width:100%;overflow-x:clip}
+.partner-profile-content,.partner-profile-content>div,
+.partner-profile-sidebar,.partner-highlight-grid,
+.partner-media-showcase,.partner-media-showcase>div{min-width:0;max-width:100%}
+.partner-media-strip{min-width:0;max-width:100%;overscroll-behavior-x:contain}
+.partner-highlight-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.partner-highlight{min-width:0}
+.partner-highlight strong{font-family:'Space Grotesk',sans-serif;font-size:clamp(16px,1.4vw,22px);font-weight:500;line-height:1.2;letter-spacing:-.025em;overflow-wrap:break-word;word-break:normal}
+.partner-highlight span{font-size:11px;line-height:1.4;letter-spacing:.04em}
+@media(max-width:380px){.partner-highlight-grid{grid-template-columns:1fr 1fr;gap:8px}.partner-highlight{padding:11px}.partner-highlight strong{font-size:16px}}

@@ -2,6 +2,13 @@
 
 ## This release: 29 September 2026
 
+## Mobile profile correction
+
+- Collaborator galleries stay horizontally swipeable inside their own strip without widening the phone page. The profile's grid children can shrink within the viewport, and the page clips any remaining visual overflow.
+- Collaborator highlight figures use a smaller, consistent Space Grotesk scale across phone and desktop. In the admin, enter just `15+` as the figure and `campuses masterplanned` as the description; existing stored values remain editable.
+- The development visual-edit plugin no longer loads during frontend tests.
+- Missing image URLs in existing local records still require restoring the original uploads or replacing them in admin; CSS cannot recover missing files.
+
 - **Home:** Website Studio now includes a rolling highlights strip above Selected projects. In **Admin → Website studio → Home → Septa in numbers**, enter each verified figure as the item title (for example `25+`) and the short label as subtitle, then publish. It stays hidden until at least one complete highlight is entered. Reduce motion keeps the figures stationary, and the figures appear in search-readable HTML.
 - **Collaborators:** Fixed a browser-only crash for existing profiles with linked projects: the page referenced an unimported text helper. Also accepts missing legacy media and malformed legacy lists. The listing now keeps category/search in its URL, and the profile's Ecosystem link returns to those filters.
 - **Email:** New-site defaults point at `paul@septa.one` and name Paul Joseph. Existing database contact settings are preserved; update them in **Admin → Contact & settings → Contact Info** if they still point elsewhere. Configure outgoing email and owner identity directly in Render. Create any Workspace aliases before advertising them.
