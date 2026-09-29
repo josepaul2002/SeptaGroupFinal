@@ -7,7 +7,8 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError as JWTError
 from passlib.context import CryptContext
 from fastapi import HTTPException, Request, Response, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -15,9 +16,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 logger = logging.getLogger(__name__)
 
 # Configuration
-from config import SECRET_KEY, PRODUCTION, CORS_ORIGINS
+from config import SECRET_KEY, PRODUCTION, CORS_ORIGINS, ADMIN_AUTH_MODE
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8 if ADMIN_AUTH_MODE == 'google' else 60 * 24
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 # Password hashing
@@ -114,6 +115,8 @@ async def get_current_admin(
     
     if payload.get("type") != "access":
         raise HTTPException(status_code=401, detail="Invalid token type")
+    if ADMIN_AUTH_MODE == 'google' and payload.get('auth_method') != 'google':
+        raise HTTPException(status_code=401, detail='Sign in with Google Workspace.')
     
     admin_id = payload.get("sub")
     email = payload.get("email")
@@ -125,6 +128,8 @@ async def get_current_admin(
     account = await db.admins.find_one({"id": admin_id, "disabled": {"$ne": True}})
     if not account or payload.get("auth_version", 0) != account.get("auth_version", 0):
         raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
+    if ADMIN_AUTH_MODE == 'google' and payload.get('google_sub') != account.get('google_sub'):
+        raise HTTPException(status_code=401, detail='Workspace identity changed. Please sign in again.')
     if not credentials and request.method not in {"GET", "HEAD", "OPTIONS"}:
         origin = request.headers.get("origin")
         if not origin or origin.rstrip("/") not in CORS_ORIGINS:

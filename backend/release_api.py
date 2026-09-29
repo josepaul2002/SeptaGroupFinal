@@ -1,5 +1,6 @@
 """CMS release workflows: people, credits, recovery, permissions and readiness."""
 import os
+import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, Literal
@@ -8,14 +9,14 @@ from pydantic import BaseModel, Field, EmailStr
 from pymongo.errors import DuplicateKeyError
 from models.schemas import LeaderCreate, ProjectMedia
 from utils.auth import get_current_admin, get_optional_admin, get_password_hash
-from services.content import PUBLIC_QUERY, public_document, publication_check
+from services.content import PUBLIC_QUERY, PARTNER_PUBLIC_QUERY, public_document, publication_check, text
 from services.storage_service import is_cloud_storage_configured
 from services.notifications import deliver
-from config import PRODUCTION, SITE_URL, INDEXABLE, BUILD_DIR
+from config import PRODUCTION, SITE_URL, INDEXABLE, BUILD_DIR, ADMIN_AUTH_MODE, GOOGLE_WORKSPACE_DOMAIN
 
 class NewUser(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=12, max_length=72)
+    password: Optional[str] = Field(default=None, min_length=12, max_length=72)
     role: Literal['owner', 'publisher', 'editor'] = 'editor'
 
 class UserAccess(BaseModel):
@@ -66,7 +67,8 @@ def attach_release_routes(router, db, audit):
     @router.get('/credits/{entity_type}/{slug}/projects')
     async def credited_projects(entity_type: Literal['leader', 'partner'], slug: str):
         collection = db.leaders if entity_type == 'leader' else db.partners
-        if not await collection.find_one({'slug': slug, **PUBLIC_QUERY}):
+        visibility = PARTNER_PUBLIC_QUERY if entity_type == 'partner' else PUBLIC_QUERY
+        if not await collection.find_one({'slug': slug, **visibility}):
             raise HTTPException(404, 'Profile not found')
         docs = await db.projects.find({**PUBLIC_QUERY, 'credits': {'$elemMatch': {'entity_type': entity_type, 'entity_slug': slug, 'verified': True}}}, {'_id': 0}).to_list(500)
         return [public_document(doc) for doc in docs]
@@ -82,7 +84,8 @@ def attach_release_routes(router, db, audit):
             if (not preview and not c.get('verified')) or c.get('entity_type') not in ('leader', 'partner') or not c.get('entity_slug'):
                 continue
             collection = db.leaders if c['entity_type'] == 'leader' else db.partners
-            entity = await collection.find_one({'slug': c['entity_slug'], **({} if preview else PUBLIC_QUERY)})
+            visibility = PARTNER_PUBLIC_QUERY if c['entity_type'] == 'partner' else PUBLIC_QUERY
+            entity = await collection.find_one({'slug': c['entity_slug'], **({} if preview else visibility)})
             if entity:
                 result.append({**c, 'photo': entity.get('photo') or ((entity.get('media') or {}).get('portrait_image') if entity.get('profile_type') == 'person' else (entity.get('media') or {}).get('logo_image')) or (entity.get('media') or {}).get('card_image') or '', 'profile_type': entity.get('profile_type', 'person' if c['entity_type']=='leader' else 'company'), 'firm': entity.get('firm',''), 'name': entity['name'], 'url': ('/project-leaders/' if c['entity_type'] == 'leader' else '/ecosystem/') + c['entity_slug']})
         return result
@@ -127,26 +130,62 @@ def attach_release_routes(router, db, audit):
     async def readiness(admin=Depends(get_current_admin)):
         counts = {}
         for collection in ['projects', 'partners', 'leaders', 'testimonials']:
-            counts[collection] = {'published': await db[collection].count_documents(PUBLIC_QUERY), 'needs_review': await db[collection].count_documents({'publication_reviewed': {'$ne': True}, 'status': {'$ne': 'archived'}})}
+            visibility = PARTNER_PUBLIC_QUERY if collection == 'partners' else PUBLIC_QUERY
+            counts[collection] = {'published': await db[collection].count_documents(visibility), 'needs_review': await db[collection].count_documents({'publication_reviewed': {'$ne': True}, 'status': {'$ne': 'archived'}})}
         counts['pages'] = {
             'published': await db.page_content.count_documents({'$or':[PUBLIC_QUERY,{'published_snapshot.status':'published','published_snapshot.publication_reviewed':True}]}),
             'needs_review': await db.page_content.count_documents({'status':{'$in':['draft','review']}})
         }
+        search_actions = []
+        for kind, collection, prefix in [('project', db.projects, '/projects/'), ('collaborator', db.partners, '/ecosystem/')]:
+            visibility = PARTNER_PUBLIC_QUERY if kind == 'collaborator' else PUBLIC_QUERY
+            for record in await collection.find(visibility, {'_id': 0}).to_list(500):
+                issues = []
+                seo = record.get('seo') or {}
+                if not seo.get('title') or not seo.get('description'):
+                    issues.append('Write a unique search title and description.')
+                if kind == 'project':
+                    if not text(record.get('short_description')):
+                        issues.append('Explain the project in a short description.')
+                    if not any(text(item) for item in (record.get('story') or {}).get('paragraphs', [])):
+                        issues.append('Add factual project story paragraphs.')
+                    if not record.get('credits'):
+                        issues.append('Add verified team credits if public attribution is approved.')
+                    if not record.get('image'):
+                        issues.append('Add an approved project cover image.')
+                else:
+                    if not text(record.get('bio_long')):
+                        issues.append('Add a factual full biography or company profile.')
+                    if record.get('profile_type') == 'person' and not text(record.get('professional_role')):
+                        issues.append('Confirm the professional role.')
+                    if not (record.get('media') or {}).get('card_image'):
+                        issues.append('Add an approved collaborator card image.')
+                if issues:
+                    search_actions.append({'kind': kind, 'name': text(record.get('title') or record.get('name')),
+                                           'url': prefix + record['slug'], 'issues': issues})
         return {'environment': 'production' if PRODUCTION else 'development', 'site_url': SITE_URL,
             'indexing_enabled': INDEXABLE, 'persistent_storage_configured': is_cloud_storage_configured(),
             'email_configured': bool(os.getenv('RESEND_API_KEY') and os.getenv('ADMIN_NOTIFY_EMAIL') and os.getenv('FROM_EMAIL') and 'resend.dev' not in os.getenv('FROM_EMAIL', '')),
             'frontend_build_present': (BUILD_DIR / 'index.html').exists(), 'content': counts,
+            'search_content_actions': search_actions,
             'new_leads': await db.leads.count_documents({'status': 'new'}),
             'failed_notifications': await db.leads.count_documents({'notification_status': 'failed'}),
             'overdue_followups': await db.leads.count_documents({'follow_up_at': {'$gt': '', '$lt': datetime.now(timezone.utc).isoformat()}, 'status': {'$nin': ['closed', 'archived']}})}
 
     @router.get('/admin/users')
     async def users(admin=Depends(get_current_admin)):
-        return await db.admins.find({}, {'_id': 0, 'password_hash': 0, 'auth_version': 0, 'reset_hash': 0, 'reset_expires': 0, 'reset_auth_version': 0, 'reset_requested_at': 0, 'otp_hash': 0, 'otp_challenge': 0, 'otp_expires': 0, 'otp_version': 0, 'otp_attempts': 0}).to_list(100)
+        return await db.admins.find({}, {'_id': 0, 'password_hash': 0, 'google_sub': 0, 'auth_version': 0, 'reset_hash': 0, 'reset_expires': 0, 'reset_auth_version': 0, 'reset_requested_at': 0, 'otp_hash': 0, 'otp_challenge': 0, 'otp_expires': 0, 'otp_version': 0, 'otp_attempts': 0}).to_list(100)
 
     @router.post('/admin/users', status_code=201)
     async def add_user(body: NewUser, admin=Depends(get_current_admin)):
-        doc = {'id': str(uuid.uuid4()), 'email': str(body.email).lower(), 'password_hash': get_password_hash(body.password), 'role': body.role, 'auth_version': 0, 'created_at': datetime.now(timezone.utc).isoformat()}
+        email = str(body.email).lower()
+        if ADMIN_AUTH_MODE == 'google' and not email.endswith('@' + GOOGLE_WORKSPACE_DOMAIN):
+            raise HTTPException(422, 'Use an account in the configured Google Workspace domain.')
+        if ADMIN_AUTH_MODE != 'google' and not body.password:
+            raise HTTPException(422, 'Temporary password is required.')
+        doc = {'id': str(uuid.uuid4()), 'email': email,
+               'password_hash': get_password_hash(secrets.token_urlsafe(48) if ADMIN_AUTH_MODE == 'google' else body.password),
+               'role': body.role, 'auth_version': 0, 'created_at': datetime.now(timezone.utc).isoformat()}
         try:
             await db.admins.insert_one(doc)
         except DuplicateKeyError:

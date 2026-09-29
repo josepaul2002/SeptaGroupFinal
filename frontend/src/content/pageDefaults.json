@@ -131,7 +131,7 @@
         },
         "theme": "white",
         "items": [],
-        "limit": 1
+        "limit": 3
       },
       {
         "id": "conversation",
@@ -174,15 +174,15 @@
   "about": {
     "hero": {
       "eyebrow": {
-        "en": "About Septa",
+        "en": "A family foundation, built forward.",
         "ml": ""
       },
       "title": {
-        "en": "Built with Clarity.\nDelivered with Discipline.",
+        "en": "Built through experience. Moving with intent.",
         "ml": ""
       },
       "body": {
-        "en": "We work with clients, architects and specialists to bring construction projects to life in Kerala.",
+        "en": "Septa Group grew from a family commitment to building in Kerala. Today, that experience guides how we lead projects, work with clients and build with trusted partners.",
         "ml": ""
       },
       "image_url": "",
@@ -190,37 +190,109 @@
       "image_position": "center",
       "theme": "light",
       "primary_label": {
-        "en": "Discuss your project",
+        "en": "",
         "ml": ""
       },
       "primary_url": "/contact",
       "secondary_label": {
-        "en": "Explore our work",
+        "en": "",
         "ml": ""
       },
-      "secondary_url": "/projects"
+      "secondary_url": "/projects",
+      "video_url": ""
     },
     "sections": [
       {
-        "id": "capabilities",
-        "type": "cards",
+        "id": "about-story",
+        "type": "text",
         "enabled": true,
         "eyebrow": {
-          "en": "Our focus",
+          "en": "Our story",
           "ml": ""
         },
         "title": {
-          "en": "What we build.",
+          "en": "A family foundation. A long view.",
           "ml": ""
         },
         "body": {
-          "en": "",
+          "en": "Septa Group carries forward a family foundation in Kerala construction. Over more than two decades, the work has been shaped by the people who lead it, the clients who trust it and the collaborators who bring each project together.",
           "ml": ""
         },
-        "theme": "white",
+        "theme": "dark",
         "items": [],
+        "image_url": "",
+        "image_alt": "",
+        "link_url": "",
+        "link_label": {
+          "en": "",
+          "ml": ""
+        }
+      },
+      {
+        "id": "about-journey",
+        "type": "process",
+        "enabled": true,
+        "eyebrow": {
+          "en": "How the work has grown",
+          "ml": ""
+        },
+        "title": {
+          "en": "Experience, carried forward.",
+          "ml": ""
+        },
+        "body": {
+          "en": "A clear line from our roots to the work we take on today.",
+          "ml": ""
+        },
+        "theme": "light",
         "limit": 3,
-        "source": "services"
+        "items": [
+          {
+            "id": "about-roots",
+            "title": {
+              "en": "A family foundation",
+              "ml": ""
+            },
+            "subtitle": {
+              "en": "Roots in Kerala",
+              "ml": ""
+            },
+            "body": {
+              "en": "A commitment to building that began with a family, and grew through work on the ground.",
+              "ml": ""
+            }
+          },
+          {
+            "id": "about-practice",
+            "title": {
+              "en": "Two decades of practice",
+              "ml": ""
+            },
+            "subtitle": {
+              "en": "Experience earned on site",
+              "ml": ""
+            },
+            "body": {
+              "en": "More than twenty years of construction experience across homes, commercial spaces and institutions.",
+              "ml": ""
+            }
+          },
+          {
+            "id": "about-next",
+            "title": {
+              "en": "The next generation",
+              "ml": ""
+            },
+            "subtitle": {
+              "en": "A sharper way to deliver",
+              "ml": ""
+            },
+            "body": {
+              "en": "Building on that foundation with clearer project leadership, stronger partnerships and more considered delivery.",
+              "ml": ""
+            }
+          }
+        ]
       },
       {
         "id": "people",
@@ -236,6 +308,51 @@
         },
         "body": {
           "en": "Meet the people responsible for our projects.",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [],
+        "limit": 3
+      },
+      {
+        "id": "home-collaborators",
+        "type": "collaborators",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "Good work is shared.",
+          "ml": ""
+        },
+        "body": {
+          "en": "The architects, specialists and partners who help bring each project together.",
+          "ml": ""
+        },
+        "theme": "white",
+        "items": [],
+        "limit": 4,
+        "link_url": "/ecosystem",
+        "link_label": {
+          "en": "Meet our collaborators",
+          "ml": ""
+        }
+      },
+      {
+        "id": "home-testimonials",
+        "type": "testimonials",
+        "enabled": true,
+        "eyebrow": {
+          "en": "",
+          "ml": ""
+        },
+        "title": {
+          "en": "Through our clients’ eyes.",
+          "ml": ""
+        },
+        "body": {
+          "en": "",
           "ml": ""
         },
         "theme": "white",
@@ -278,7 +395,7 @@
       "image": "",
       "noindex": false
     },
-    "layout_revision": 3
+    "layout_revision": 4
   },
   "services": {
     "hero": {

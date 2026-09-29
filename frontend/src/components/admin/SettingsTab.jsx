@@ -1,3 +1,5 @@
+import {contactLinks, contactSettingsError} from '../../lib/contactLinks';
+import {useUnsavedChanges} from '../../hooks/useUnsavedChanges';
 import {validateRecordImages} from '../../lib/mediaRules';
 import EnquiryQuestions from './EnquiryQuestions';
 import { errorMessage } from '../../lib/cms';
@@ -17,17 +19,21 @@ export default function SettingsTab({ token }) {
   const [exporting, setExporting] = useState(false);
   const [msg, setMsg] = useState('');
   const [activeSection, setActiveSection] = useState('contact');
+  useUnsavedChanges(!!original&&JSON.stringify(settings)!==JSON.stringify(original));
 
   useEffect(() => {
-    axios.get(`${API}/settings`).then(r => {setSettings(r.data);setOriginal(r.data);}).finally(() => setLoading(false));
+    axios.get(`${API}/settings`).then(r => {const value={...r.data,contact:r.data.contact||{},enquiry:r.data.enquiry||{}};setSettings(value);setOriginal(value);}).catch(error=>setMsg(errorMessage(error))).finally(() => setLoading(false));
   }, []);
 
   const save = async () => {
     setSaving(true); setMsg('');
     try {
+      const contactError=contactSettingsError(settings.contact);
+      if(contactError)throw new Error(contactError);
       await validateRecordImages(settings,original,'settings');
       await axios.put(`${API}/settings`, settings, { headers: { Authorization: `Bearer ${token}` } });
-      setOriginal(settings);setMsg('Settings saved');
+      setOriginal(settings);setMsg('Settings saved. Contact destinations are live.');
+      window.dispatchEvent(new CustomEvent('septa-settings-updated',{detail:settings}));
     } catch (error) { setMsg(errorMessage(error)); }
     setSaving(false);
   };
@@ -71,7 +77,12 @@ export default function SettingsTab({ token }) {
     else updateEnquiry(key, items);
   };
 
+  if (!loading && !settings) return <p role="alert">{msg||'Unable to load settings. Refresh to try again.'}</p>;
   if (loading || !settings) return <div className="p-12 flex justify-center"><Loader2 className="animate-spin text-[#606060]" size={24} /></div>;
+
+  const links=contactLinks(settings.contact,'Hello Septa, I would like to discuss a project.');
+  const whatsappMode=settings.contact.whatsapp_mode||(settings.contact.whatsapp_link?'link':'number');
+  const setWhatsAppMode=mode=>setSettings(s=>({...s,contact:{...s.contact,whatsapp_mode:mode,...(mode==='number'?{whatsapp_link:''}:{whatsapp_number:''})}}));
 
   const sections = [
     { id: 'contact', label: 'Contact Info' },
@@ -114,17 +125,19 @@ export default function SettingsTab({ token }) {
       {activeSection === 'contact' && (
         <div className="bg-white border border-[#8A8A8A]/20 p-6 space-y-4">
           <h3 className="text-sm font-sora font-medium text-[#050505] mb-2">Contact Details</h3>
-          <p className="text-xs text-[#8A8A8A] mb-4">These appear in the footer and contact page.</p>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Phone (Display)" val={settings.contact.phone_display} set={v => updateContact('phone_display', v)} tid="phone-display" />
-            <Field label="Phone (tel: link)" val={settings.contact.phone_link} set={v => updateContact('phone_link', v)} tid="phone-link" />
-            <Field label="WhatsApp Number" val={settings.contact.whatsapp_number} set={v => updateContact('whatsapp_number', v)} tid="whatsapp-num" />
-            <Field label="WhatsApp Link" val={settings.contact.whatsapp_link} set={v => updateContact('whatsapp_link', v)} tid="whatsapp-link" />
-            <Field label="Email" val={settings.contact.email} set={v => updateContact('email', v)} tid="email" />
+          <p className="text-xs text-[#8A8A8A] mb-4">These control Call Septa, WhatsApp, Email us, the footer and mobile contact button. Save changes to make them live.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Phone label shown on the website (optional)" val={settings.contact.phone_display} set={v => updateContact('phone_display', v)} tid="phone-display" />
+            <Field label="Call destination — include country code, e.g. +91…" val={settings.contact.phone_link} set={v => updateContact('phone_link', v)} tid="phone-link" />
+            <div className="md:col-span-2 border p-4 space-y-3"><h4 className="font-semibold text-sm">WhatsApp destination</h4><p className="text-xs text-[#606060]">Choose one source. Switching clears the other destination so an old link cannot override your number.</p><div className="flex flex-wrap gap-5 text-sm">{[['number','Use a phone number'],['link','Paste a WhatsApp chat link']].map(([mode,label])=><label key={mode}><input type="radio" name="whatsapp-source" value={mode} checked={whatsappMode===mode} onChange={()=>setWhatsAppMode(mode)}/> {label}</label>)}</div>{whatsappMode==='number'?<Field label="WhatsApp number with country code, e.g. +91…" val={settings.contact.whatsapp_number} set={v=>updateContact('whatsapp_number',v)} tid="whatsapp-num"/>:<Field label="Official chat link, e.g. https://wa.me/…" val={settings.contact.whatsapp_link} set={v=>updateContact('whatsapp_link',v)} tid="whatsapp-link"/>}</div>
+            <Field label="Contact person's name (e.g. Paul Jose)" val={settings.contact.contact_person} set={v=>updateContact('contact_person',v)} tid="contact-person"/>
+            <Field label="Role / team (optional)" val={settings.contact.contact_person_role} set={v=>updateContact('contact_person_role',v)} tid="contact-person-role"/>
+            <Field label="Public enquiry email address" val={settings.contact.email} set={v => updateContact('email', v)} tid="email" />
             <Field label="Facebook Page URL" val={settings.contact.facebook_url || ''} set={v => updateContact('facebook_url', v)} tid="facebook-link" />
             <Field label="Instagram URL" val={settings.contact.instagram_url || ''} set={v => updateContact('instagram_url', v)} tid="instagram-link" />
             <Field label="Map Link" val={settings.contact.map_link} set={v => updateContact('map_link', v)} tid="map-link" />
           </div>
+          <div className="border border-[#C6A15B] p-4 space-y-3"><h4 className="font-semibold text-sm">Check where each button leads</h4><p className="text-xs text-[#606060]">These previews use the fields above. Open WhatsApp and verify the recipient before saving; the website cannot verify who owns that account.</p>{[['call','Call Septa'],['whatsapp','WhatsApp'],['email','Email us']].map(([key,label])=><div key={key} className="text-sm break-all"><strong>{label}: </strong>{links[key]?<a className="underline" href={links[key]} target="_blank" rel="noopener noreferrer">{links[key]}</a>:<span>Hidden until a valid destination is entered</span>}</div>)}</div>
           <Field label="Office Address (Full)" val={settings.contact.office_address} set={v => updateContact('office_address', v)} tid="address" />
           <Field label="Office Address (Short)" val={settings.contact.office_address_short} set={v => updateContact('office_address_short', v)} tid="address-short" />
           <div>
@@ -214,7 +227,7 @@ export default function SettingsTab({ token }) {
 
       {/* Save Bar */}
       {activeSection !== 'export' && (
-        <div className="flex items-center justify-between">
+        <div className="sticky bottom-0 z-20 bg-white border-t p-4 flex flex-wrap gap-3 items-center justify-between">
           {msg && <p className={`text-sm font-inter ${msg.includes('saved') ? 'text-[#050505]' : 'text-red-500'}`}>{msg}</p>}
           <button onClick={save} disabled={saving} data-testid="save-settings-btn"
             className="flex items-center gap-2 px-6 py-2.5 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] transition-colors disabled:opacity-60 ml-auto">
@@ -229,8 +242,8 @@ export default function SettingsTab({ token }) {
 function Field({ label, val, set, tid }) {
   return (
     <div>
-      <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">{label}</label>
-      <input type="text" className="form-input" value={val || ''} onChange={e => set(e.target.value)} data-testid={tid} />
+      <label htmlFor={`setting-${tid}`} className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">{label}</label>
+      <input id={`setting-${tid}`} type="text" className="form-input" value={val || ''} onChange={e => set(e.target.value)} data-testid={tid} />
     </div>
   );
 }

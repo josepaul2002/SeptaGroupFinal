@@ -2,7 +2,7 @@
 Enhanced Pydantic models for Septa Group CMS
 Includes bilingual support, partner media, site settings, page content
 """
-from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict
+from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict, constr
 from typing import List, Optional, Dict, Any, Literal
 from enum import Enum
 
@@ -225,15 +225,17 @@ class LeadResponse(BaseModel):
 # --- Partner Model (upgraded) ---
 
 class PartnerMedia(BaseModel):
-    videos: List[str] = Field(default_factory=list)
-    video_posters: List[str] = Field(default_factory=list)
+    videos: List[str] = Field(default_factory=list, max_length=10)
+    video_titles: List[constr(max_length=24)] = Field(default_factory=list, max_length=10)
+    video_posters: List[str] = Field(default_factory=list, max_length=10)
     portrait_image: Optional[str] = None
     card_image: Optional[str] = None
     card_images: List[str] = Field(default_factory=list, max_length=6)
     logo_image: Optional[str] = None
     show_logo: bool = False
     hero_image: Optional[str] = None
-    gallery_images: List[str] = []
+    gallery_images: List[str] = Field(default_factory=list, max_length=10)
+    gallery_captions: List[constr(max_length=24)] = Field(default_factory=list, max_length=10)
 
 
 class PartnerBase(BaseModel):
@@ -461,6 +463,7 @@ class ContentExport(BaseModel):
 # --- Site Settings Model ---
 
 class SiteContactSettings(BaseModel):
+    whatsapp_mode: Literal['', 'number', 'link'] = ''
     facebook_url: str = ""
     instagram_url: str = ""
     phone_display: str = ""

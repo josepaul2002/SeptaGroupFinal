@@ -1,10 +1,11 @@
+import {useUnsavedRecord,confirmLeave} from '../../hooks/useUnsavedChanges';
 import {validateRecordImages} from '../../lib/mediaRules';
 import { PublicationFields, SEOFields } from './Fields';
 import { errorMessage } from '../../lib/cms';
 import { useState } from 'react';
 import { X, Save, Loader2, Upload, Plus, AlertTriangle } from 'lucide-react';
 import { uploadFile } from '../../hooks/useApi';
-import MediaGuide,{validateMediaRatio} from './MediaGuide';
+import MediaGuide from './MediaGuide';
 import HighlightEditor from './HighlightEditor';
 
 const PARTNER_CATEGORIES = [
@@ -43,6 +44,8 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
     septa_collaboration: partner?.septa_collaboration || { en: '', ml: null },
     status: partner?.status || 'draft',
   });
+  useUnsavedRecord(form);
+  const closeEditor=()=>{if(confirmLeave())onClose();};
   const [saving, setSaving] = useState(false);
   const [mediaMessage,setMediaMessage]=useState(''),[formError,setFormError]=useState('');
   const [uploading, setUploading] = useState(false);
@@ -64,7 +67,6 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
   const handleUpload = async (e, field) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try {const issue=await validateMediaRatio(file,field==='videos'?'partner_video':field==='video_posters'?'video_poster':field);if(issue){setFormError(issue);e.target.value='';return;}}catch{setFormError('Could not read this image. Please try a JPG, PNG or WebP.');return;}
     setUploading(true);setFormError('');setMediaMessage('');
     try {
       const result = await uploadFile(token, file,field==='videos'?'partner_video':field==='video_posters'?'video_poster':field);
@@ -73,7 +75,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
       } else if (field === 'card_image') {
         setForm(f => ({...f,media:{...f.media,card_image:f.media.card_image||result.url,card_images:[...new Set([...(f.media.card_images?.length?f.media.card_images:[f.media.card_image].filter(Boolean)),result.url])].slice(0,6)}}));
       } else if (field === 'gallery_images' || field === 'videos') {
-        setForm(f => ({ ...f, media: { ...f.media, [field]: [...(f.media[field] || []), result.url] } }));
+        setForm(f => ({ ...f, media: { ...f.media, [field]: [...(f.media[field] || []), result.url],...(field==='videos'?{video_titles:[...(f.media.video_titles||[]),'']}:{}) } }));
       } else {
         setForm(f => ({ ...f, media: { ...f.media, [field]: result.url } }));
       }
@@ -83,7 +85,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
   };
 
   const removeGalleryImage = (idx) => {
-    setForm({ ...form, media: { ...form.media, gallery_images: form.media.gallery_images.filter((_, i) => i !== idx) } });
+    setForm({ ...form, media: { ...form.media, gallery_images: form.media.gallery_images.filter((_, i) => i !== idx), gallery_captions:(form.media.gallery_captions||[]).filter((_,i)=>i!==idx) } });
   };
 
   const addSpecialty = () => {
@@ -107,13 +109,19 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
       <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-[#8A8A8A]/20 flex items-center justify-between">
           <h2 className="text-lg font-sora font-medium text-[#050505]">{partner ? 'Edit Partner' : 'New Partner'}</h2>
-          <button onClick={onClose} className="text-[#8A8A8A] hover:text-[#050505]" data-testid="close-partner-form"><X size={20} /></button>
+          <button onClick={closeEditor} className="text-[#8A8A8A] hover:text-[#050505]" data-testid="close-partner-form"><X size={20} /></button>
         </div>
 
         {needsCardImage && (
           <div className="mx-6 mt-4 p-3 bg-amber-50 border border-amber-200 flex items-center gap-2 text-amber-700 text-xs font-inter" data-testid="card-image-warning">
             <AlertTriangle size={14} /> Card image required for published partners. Add one in the Media tab.
           </div>
+        )}
+        {form.status === 'published' && !form.publication_reviewed && (
+          <label className="mx-6 mt-4 p-3 bg-amber-50 border border-amber-200 flex items-start gap-3 text-sm text-amber-900">
+            <input type="checkbox" className="mt-1" checked={false} onChange={e=>setForm(current=>({...current,publication_reviewed:e.target.checked}))}/>
+            <span>This older public profile needs a one-time confirmation before you can save changes. I have checked its facts, credits and permission to publish its media.</span>
+          </label>
         )}
 
         <div className="border-b border-[#8A8A8A]/20 flex flex-wrap">
@@ -221,7 +229,7 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                 url={form.media.card_image} onUpload={e => handleUpload(e, 'card_image')}
                 onClear={() => setForm({ ...form, media: { ...form.media, card_image: null } })}
                 onUrlChange={v => setForm({ ...form, media: { ...form.media, card_image: v } })} />
-              <div className="border p-4 space-y-3"><h3 className="font-semibold">Additional collaborator card images (up to 6 total)</h3><p className="text-sm">Wide images will fade between on the collaborator card. The first image above is the fallback for older browsers.</p><MediaGuide field="card_image"/>{(form.media.card_images||[]).map((url,i)=><div key={i} className="flex gap-2 items-center"><img src={url} alt="" className="w-24 aspect-video object-cover"/><span className="text-xs">Slide {i+1}</span><button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,card_images:f.media.card_images.filter((_,n)=>n!==i),card_image:i===0?f.media.card_images[1]||null:f.media.card_image}}))}>Remove</button></div>)}{(form.media.card_images||[]).length<6&&<label className="block text-xs">Upload another 16:9 image<input className="block" type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={e=>handleUpload(e,'card_image')}/></label>}</div>
+              <div className="border p-4 space-y-3"><h3 className="font-semibold">Additional collaborator card images (up to 6 total)</h3><p className="text-sm">Wide images will fade between on the collaborator card. The first image above is the fallback for older browsers.</p><MediaGuide field="card_image"/>{(form.media.card_images||[]).map((url,i)=><div key={i} className="flex gap-2 items-center border p-2"><img src={url} alt="" className="w-24 aspect-video object-cover"/><span className="text-xs">Slide {i+1}</span><button type="button" aria-label={`Remove collaborator card image ${i+1}`} className="media-remove-button" onClick={()=>setForm(f=>({...f,media:{...f.media,card_images:(f.media.card_images||[]).filter((_,n)=>n!==i),card_image:i===0?(f.media.card_images||[]).find((_,n)=>n!==i)||null:f.media.card_image}}))}><X size={15}/>Remove image</button></div>)}{(form.media.card_images||[]).length<6&&<label className="block text-xs">Upload another 16:9 image<input className="block" type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={e=>handleUpload(e,'card_image')}/></label>}</div>
               <MediaField field="logo_image" label="Logo Image" hint="Optional original logo, displayed on company profile. Do not generate an invented logo."
                 url={form.media.logo_image} onUpload={e => handleUpload(e, 'logo_image')}
                 onClear={() => setForm({ ...form, media: { ...form.media, logo_image: null } })}
@@ -235,11 +243,11 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                 <MediaGuide field="gallery_images" />
                 <div className="flex flex-wrap gap-2 mb-3">
                   {(form.media.gallery_images || []).map((img, i) => (
-                    <div key={i} className="relative group">
+                    <div key={i} className="partner-gallery-editor-item">
                       <img src={img} alt="" className="h-20 w-28 object-cover border" />
-                      <MediaGuide field="gallery_images" index={i}/>
-                      <button type="button" onClick={() => removeGalleryImage(i)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                      <input className="form-input" aria-label={`Gallery image ${i+1} caption`} maxLength={24} placeholder={`Short image title (${24-(form.media.gallery_captions?.[i]||'').length} characters left)`} value={form.media.gallery_captions?.[i]||''} onChange={e=>setForm(f=>({...f,media:{...f.media,gallery_captions:(f.media.gallery_images||[]).map((_,n)=>n===i?e.target.value:f.media.gallery_captions?.[n]||'')}}))}/>
+                      <span className="text-xs text-neutral-500">{(form.media.gallery_captions?.[i]||'').length}/24</span>
+                      <button type="button" onClick={() => removeGalleryImage(i)} aria-label={`Remove gallery image ${i+1}`} className="media-remove-button"><X size={15}/>Remove image</button>
                     </div>
                   ))}
                 </div>
@@ -250,13 +258,13 @@ export default function PartnerForm({ partner, token, onSave, onClose }) {
                   </label>
                 )}
               </F>
-              <section className="space-y-3"><h3>Profile videos</h3><p className="text-sm">Each video can have a custom 16:9 cover image. Visitors select a cover first; the video opens only after they press Play.</p><MediaGuide field="partner_video"/><MediaGuide field="video_poster"/><p className="text-sm">Upload approved MP4 or WebM videos up to 50 MB. Save the profile after uploading.</p><input type="file" accept="video/mp4,video/webm" disabled={uploading} onChange={e=>handleUpload(e,'videos')}/>{(form.media.videos||[]).map((url,i)=><div key={i} className="grid gap-3"><input className="form-input" value={url} onChange={e=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.map((v,n)=>n===i?e.target.value:v)}}))}/><input className="form-input" placeholder="Video cover image URL (16:9)" value={form.media.video_posters?.[i]||''} onChange={e=>setForm(f=>({...f,media:{...f.media,video_posters:(f.media.videos||[]).map((_,n)=>n===i?e.target.value:f.media.video_posters?.[n]||'')}}))}/><label className="text-xs">Upload cover<input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const file=e.target.files?.[0];if(!file)return;const issue=await validateMediaRatio(file,'video_poster');if(issue){setFormError(issue);return;}setUploading(true);try{const result=await uploadFile(token,file,'video_poster');setForm(f=>({...f,media:{...f.media,video_posters:f.media.videos.map((_,n)=>n===i?result.url:f.media.video_posters?.[n]||'')}}));}catch(err){setFormError(errorMessage(err));}finally{setUploading(false);}}}/></label><button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.filter((_,n)=>n!==i),video_posters:(f.media.video_posters||[]).filter((_,n)=>n!==i)}}))}>Remove</button></div>)}<button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:[...(f.media.videos||[]),'']}}))}>Add video URL</button></section>{mediaMessage&&<p role="status">{mediaMessage}</p>}{uploading && <div className="flex items-center gap-2 text-sm text-[#606060]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
+              <section className="space-y-3"><h3>Profile videos</h3><p className="text-sm">Each video can have a custom 16:9 cover image. Visitors select a cover first; the video opens only after they press Play.</p><MediaGuide field="partner_video"/><MediaGuide field="video_poster"/><p className="text-sm">Upload approved MP4 or WebM videos up to 50 MB. Save the profile after uploading.</p><input type="file" accept="video/mp4,video/webm" disabled={uploading} onChange={e=>handleUpload(e,'videos')}/>{(form.media.videos||[]).map((url,i)=><div key={i} className="partner-video-editor-item"><label className="text-xs">Short film title · max 24 characters<input className="form-input mt-1" maxLength={24} placeholder={`Film ${String(i+1).padStart(2,'0')}`} value={form.media.video_titles?.[i]||''} onChange={e=>setForm(f=>({...f,media:{...f.media,video_titles:(f.media.videos||[]).map((_,n)=>n===i?e.target.value:f.media.video_titles?.[n]||'')}}))}/><span>{(form.media.video_titles?.[i]||'').length}/24</span></label><input className="form-input" value={url} onChange={e=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.map((v,n)=>n===i?e.target.value:v)}}))}/><input className="form-input" placeholder="Video cover image URL (16:9)" value={form.media.video_posters?.[i]||''} onChange={e=>setForm(f=>({...f,media:{...f.media,video_posters:(f.media.videos||[]).map((_,n)=>n===i?e.target.value:f.media.video_posters?.[n]||'')}}))}/><label className="text-xs">Upload cover<input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const file=e.target.files?.[0];if(!file)return;const issue=await validateMediaRatio(file,'video_poster');if(issue){setFormError(issue);return;}setUploading(true);try{const result=await uploadFile(token,file,'video_poster');setForm(f=>({...f,media:{...f.media,video_posters:f.media.videos.map((_,n)=>n===i?result.url:f.media.video_posters?.[n]||'')}}));}catch(err){setFormError(errorMessage(err));}finally{setUploading(false);}}}/></label><button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:f.media.videos.filter((_,n)=>n!==i),video_titles:(f.media.video_titles||[]).filter((_,n)=>n!==i),video_posters:(f.media.video_posters||[]).filter((_,n)=>n!==i)}}))}>Remove</button></div>)}<button type="button" onClick={()=>setForm(f=>({...f,media:{...f.media,videos:[...(f.media.videos||[]),''],video_titles:[...(f.media.video_titles||[]),'']}}))}>Add video URL</button></section>{mediaMessage&&<p role="status">{mediaMessage}</p>}{uploading && <div className="flex items-center gap-2 text-sm text-[#606060]"><Loader2 className="animate-spin" size={14} /> Uploading...</div>}
             </>
           )}
 
           <PublicationFields form={form} setForm={setForm} /><SEOFields token={token} onBusy={setUploading} value={form.seo} onChange={seo=>setForm({...form,seo})} />
           <div className="flex justify-end gap-3 pt-4 border-t border-[#8A8A8A]/20">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">Cancel</button>
+            <button type="button" onClick={closeEditor} className="px-4 py-2 text-sm font-inter text-[#050505]/60 hover:text-[#050505]">Cancel</button>
             <div>{formError&&<p role="alert" className="text-red-700">{formError}</p>}</div><button type="submit" disabled={saving||uploading} data-testid="save-partner-btn"
               className="flex items-center gap-2 px-4 py-2 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-wider hover:bg-[#262626] disabled:opacity-60">
               {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />} Save

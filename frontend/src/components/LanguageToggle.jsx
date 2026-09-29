@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Globe } from 'lucide-react';
-import axios from 'axios';
+import {useSiteSettings} from '../hooks/useApi';
 
-const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
 
 const LanguageContext = createContext({
   lang: 'en',
@@ -19,14 +18,8 @@ export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => localStorage.getItem('septa-lang') || 'en');
   const [langMode, setLangMode] = useState('english_only');
 
-  useEffect(() => {
-    axios.get(`${API}/settings`).then(r => {
-      const mode = r.data?.content_language_mode || 'english_only';
-      setLangMode(mode);
-      if (mode === 'english_only') setLang('en');
-      else if (mode === 'malayalam_primary') setLang('ml');
-    }).catch(() => {});
-  }, []);
+  const {settings}=useSiteSettings();
+  useEffect(()=>{if(!settings)return;const mode=settings.content_language_mode||'english_only';setLangMode(mode);if(mode==='english_only')setLang('en');else if(mode==='malayalam_primary')setLang('ml');},[settings?.content_language_mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     localStorage.setItem('septa-lang', lang);

@@ -4,6 +4,10 @@ from fastapi import HTTPException
 from models.schemas import ProjectMedia
 
 PUBLIC_QUERY = {"status": "published", "publication_reviewed": True}
+# Existing collaborators were already public with status=published, including
+# records without a review flag. Keep that status authoritative for reads;
+# publication_check still requires review for every new published write.
+PARTNER_PUBLIC_QUERY = {"status": "published"}
 
 def text(value):
     return (value.get('en') or '') if isinstance(value, dict) else str(value or '')
@@ -41,7 +45,8 @@ async def publication_check(db, doc, kind, admin):
             problems.append('Add the project location and Septa delivery scope.')
         for credit in doc.get('credits', []):
             collection = db.leaders if credit['entity_type'] == 'leader' else db.partners
-            linked = await collection.find_one({'slug': credit['entity_slug'], **PUBLIC_QUERY})
+            linked_query = PARTNER_PUBLIC_QUERY if credit['entity_type'] == 'partner' else PUBLIC_QUERY
+            linked = await collection.find_one({'slug': credit['entity_slug'], **linked_query})
             if not linked:
                 problems.append(f"Profile {credit['entity_slug']} is not reviewed and published. Publish it in {'Project leaders' if credit['entity_type']=='leader' else 'Partners'}, or remove this credit. You can still save this project as a draft.")
             if not credit.get('verified'):

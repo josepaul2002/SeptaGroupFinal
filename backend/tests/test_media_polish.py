@@ -38,8 +38,13 @@ def test_coverage_removed_from_new_and_existing_pages():
         assert all(s['type'] != 'locations' for s in design(page)['sections'])
         old = {'version':2,'layout_revision':2,'sections':[{'id':'coverage','type':'locations'},{'id':'keep','type':'text'}]}
         updated = design(page, old)
-        assert [s['id'] for s in updated['sections']] == ['keep']
+        assert [s['id'] for s in updated['sections']] == (['keep', 'about-story', 'about-journey'] if page == 'about' else ['keep'])
         assert old['sections'][0]['id'] == 'coverage'
+    legacy_about = {'version':2,'hero':{'title':design('services')['hero']['title']},'sections':[{'id':'services','type':'cards','title':{'en':'Construction, shaped to fit.'}}]}
+    editorial = design('about', legacy_about)
+    assert editorial['hero']['title'] == design('about')['hero']['title']
+    assert all(section['id'] != 'services' for section in editorial['sections'])
+    assert {'about-story','about-journey'} <= {section['id'] for section in editorial['sections']}
 
 if __name__ == "__main__":
     suite = unittest.TestSuite(unittest.FunctionTestCase(fn) for name,fn in list(globals().items()) if name.startswith("test_"))

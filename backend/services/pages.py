@@ -30,7 +30,25 @@ def design(page_id, doc=None):
             sections[insertion:insertion] = added
             result.update(sections=sections, layout_revision=2)
         result['sections'] = [s for s in result['sections'] if s.get('type') != 'locations']
-        result['layout_revision'] = 3
+        if page_id == 'about' and doc.get('layout_revision', 1) < 5:
+            # The earlier About layout copied the Services card block. Drop that
+            # duplicate on read so old saved pages adopt the editorial About flow.
+            result['sections'] = [section for section in result['sections'] if not (
+                section.get('id') == 'services' or
+                (section.get('type') == 'cards' and text(section.get('title')).strip().lower() in
+                 ('what we build', 'construction, shaped to fit', 'construction shaped to fit'))
+            )]
+            editorial = [section for section in base['sections'] if section.get('id') in ('about-story','about-journey')]
+            present = {section.get('id') for section in result['sections']}
+            insert_at = next((i for i, section in enumerate(result['sections']) if section.get('type') in ('people','collaborators','testimonials','cta')), len(result['sections']))
+            result['sections'][insert_at:insert_at] = [deepcopy(section) for section in editorial if section.get('id') not in present]
+            result['hero'] = {**base['hero'], **result.get('hero', {})}
+            # Older About layouts reused the Services hero verbatim. Replace only
+            # that known duplicate copy; preserve editor-managed media and links.
+            if text(result['hero'].get('title')) == text(DEFAULTS['services']['hero'].get('title')):
+                for field in ('eyebrow', 'title', 'body', 'primary_label', 'secondary_label'):
+                    result['hero'][field] = deepcopy(base['hero'][field])
+        result['layout_revision'] = 5
         return result
     types = {'metrics': 'stats', 'timeline_step': 'process', 'team_member': 'cards', 'proof_callout': 'cards', 'comparison_row': 'cards'}
     for kind, target in types.items():
@@ -57,7 +75,7 @@ async def public_page(db, page_id):
     result['sections'] = [s for s in result['sections'] if s.get('enabled', True)]
     return result
 
-async def design_html(db, page, settings):
+async def design_html(db, page, settings, before_cta=''):
     """Readable initial HTML follows the same enabled sections as React."""
     def paragraph(value):
         return '<p>' + escape(text(value)) + '</p>' if text(value) else ''
@@ -77,10 +95,14 @@ async def design_html(db, page, settings):
     body = paragraph(hero.get('body')) + picture(hero.get('image_url'), hero.get('image_alt'))
     for prefix in ['primary','secondary']:
         body += link(hero.get(prefix+'_url'),hero.get(prefix+'_label'))
+    inserted = False
     for section in page.get('sections', []):
         if not section.get('enabled',True):
             continue
         kind, items = section['type'], section.get('items') or []
+        if kind == 'cta' and before_cta and not inserted:
+            body += before_cta
+            inserted = True
         if kind == 'cards' and section.get('source') == 'services':
             service_page = await public_page(db,'services')
             items = [i for s in service_page['sections'] if s['type']=='cards' and s.get('source')!='services' for i in s.get('items',[])][:section.get('limit',3)]
@@ -94,7 +116,8 @@ async def design_html(db, page, settings):
             items = [{'title':{'en':name}} for name in (settings.get('contact') or {}).get('operating_districts',[])]
         if kind in ['projects','people','testimonials','collaborators']:
             coll = {'projects':'projects','people':'leaders','testimonials':'testimonials','collaborators':'partners'}[kind]
-            query = dict(PUBLIC_QUERY)
+            from services.content import PARTNER_PUBLIC_QUERY
+            query = dict(PARTNER_PUBLIC_QUERY if kind == 'collaborators' else PUBLIC_QUERY)
             if kind == 'projects' and section.get('project_type'):
                 query['type'] = section['project_type']
             records = await db[coll].find(query,{'_id':0}).to_list(500)
@@ -125,12 +148,12 @@ async def design_html(db, page, settings):
                 href = '/contact'
             body += link(href,item.get('link_label') or {'en':'Explore'})+'</article>'
         body += link(section.get('link_url'),section.get('link_label'))+'</section>'
-    return body
+    return body + (before_cta if not inserted else '')
 
 def next_document(page_id, body, old, now):
     doc = {**body.model_dump(), 'page_id':page_id, 'updated_at':now}
     doc['sections'] = [s for s in doc['sections'] if s.get('type') != 'locations']
-    doc['layout_revision'] = 3
+    doc['layout_revision'] = 5
     live = design(page_id, old) if approved(old) else (old or {}).get('published_snapshot')
     if body.status not in ('published','archived') and approved(live):
         doc['published_snapshot'] = deepcopy(live)

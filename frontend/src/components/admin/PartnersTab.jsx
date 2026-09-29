@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Eye, Trash2, Plus, Settings, Loader2 } from 'lucide-react';
 import { useAdminPartners, getText } from '../../hooks/useApi';
 import PartnerForm from './PartnerForm';
+import PartnerReviews from './PartnerReviews';
 
-export default function PartnersTab({ token }) {
+export default function PartnersTab({ token, role }) {
   const { partners, loading, createPartner, updatePartner, deletePartner } = useAdminPartners(token);
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -79,6 +80,8 @@ export default function PartnersTab({ token }) {
           </div>
         )}
       </div>
+
+      {role !== 'editor' && <PartnerReviews token={token} partners={partners}/>}
 
       {editing && (
         <PartnerForm

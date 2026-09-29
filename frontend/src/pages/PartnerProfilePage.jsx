@@ -1,15 +1,16 @@
+import ResponsiveImage from '../components/ResponsiveImage';
 import PartnerMediaShowcase from '../components/PartnerMediaShowcase';
 import {profileIdentity} from '../lib/profiles';
-import { useEffect, useState } from 'react';
+import ContentError from '../components/ContentError';
+import { useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Globe, Facebook, Instagram, Mail, Phone, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import { getText } from '../hooks/useApi';
+import { usePartner,useApiData } from '../hooks/useApi';
 import { useLanguage } from '../components/LanguageToggle';
 import PreviewBanner from '../components/PreviewBanner';
-import axios from 'axios';
 
-const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api`;
+
 
 const relationshipLabels = {
   'Group Company': { color: 'bg-[#050505] text-white', desc: 'Part of the Septa Group family' },
@@ -23,26 +24,11 @@ export default function PartnerProfilePage() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
-  const [partner, setPartner] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [partnerProjects, setPartnerProjects] = useState([]);
-  const { t } = useLanguage();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    setLoading(true);
-    axios.get(`${API}/partners/${slug}${isPreview ? '?preview=true' : ''}`, isPreview ? {headers:{Authorization:`Bearer ${sessionStorage.getItem('septa-admin-token')}`}} : {})
-      .then(res => {
-        if (!res.data || typeof res.data !== 'object' || Array.isArray(res.data)) throw new Error('Partner API unavailable');
-        setPartner(res.data);
-        document.title = `${getText(res.data.name)} — Septa Ecosystem`;
-        return axios.get(`${API}/credits/partner/${slug}/projects`).catch(()=>({data:[]}));
-      })
-      .then(res => setPartnerProjects(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setPartner(null))
-      .finally(() => setLoading(false));
-  }, [slug, isPreview]);
-
+  const {partner,loading,error,statusCode,retry}=usePartner(slug,isPreview);
+  const {data:partnerProjects,error:projectsError,retry:retryProjects}=useApiData(`/credits/partner/${slug}/projects`,[]);
+  const {t}=useLanguage();
+  useEffect(()=>window.scrollTo(0,0),[slug]);
+  if(error&&!partner)return <ContentError label="Partner" notFound={statusCode===404} retry={retry} back="/ecosystem"/>;
   if (loading) {
     return (
       <div className="pt-16 min-h-screen bg-[#F6F6F3] flex items-center justify-center">
@@ -87,7 +73,7 @@ export default function PartnerProfilePage() {
       {/* Hero */}
       <div className="partner-profile-hero relative h-[35vh] md:h-[50vh] overflow-hidden bg-[#050505]">
         {heroImage ? (
-          <img src={heroImage} alt={t(partner.name)} className="w-full h-full object-cover opacity-60" />
+          <ResponsiveImage src={heroImage} alt={t(partner.name)} className="w-full h-full object-cover opacity-60" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-[#606060]/30 to-[#050505]" />
         )}
@@ -96,7 +82,7 @@ export default function PartnerProfilePage() {
           <div className="partner-identity-row max-w-[1400px] mx-auto flex items-center gap-6">
             {logoImage && (
               <div className="partner-identity-image w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
-                <img src={logoImage} alt="" className={`w-full h-full ${partner.profile_type==='person'?'object-cover':'object-contain'}`} />
+                <ResponsiveImage src={logoImage} alt="" className={`w-full h-full ${partner.profile_type==='person'?'object-cover':'object-contain'}`} />
               </div>
             )}
             <div>
@@ -108,7 +94,7 @@ export default function PartnerProfilePage() {
               </h1>
               <p className="text-sm font-inter text-[#8A8A8A] mt-1">{t(partner.professional_role)||partner.category}{partner.firm&&` · ${partner.firm}`}</p>
             </div>
-            {media.show_logo && media.logo_image && logoImage !== media.logo_image && <img className="partner-company-mark" src={media.logo_image} alt={`${partner.firm || t(partner.name)} logo`}/>}
+            {media.show_logo && media.logo_image && logoImage !== media.logo_image && <ResponsiveImage className="partner-company-mark" src={media.logo_image} alt={`${partner.firm || t(partner.name)} logo`}/>}
           </div>
         </div>
       </div>
@@ -116,7 +102,7 @@ export default function PartnerProfilePage() {
       {/* Content */}
       <section className="py-12 md:py-20 bg-[#F6F6F3]">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div className="partner-profile-content grid grid-cols-1 lg:grid-cols-12 gap-12">
             {/* Main content */}
             <div className="lg:col-span-8 space-y-12">
               {/* Bio */}
@@ -137,7 +123,7 @@ export default function PartnerProfilePage() {
 
               <PartnerMediaShowcase media={media} name={t(partner.name)}/>
 
-              {/* Septa collaboration */}
+              {projectsError&&<p role="alert" className="text-sm">Related projects could not load. <button onClick={retryProjects} className="underline">Try again</button></p>}{/* Septa collaboration */}
               {t(partner.septa_collaboration) && (
                 <div className="reveal p-6 bg-white border border-[#8A8A8A]/20" data-testid="partner-collaboration">
                   <p className="text-xs uppercase tracking-widest text-[#606060] font-inter mb-3">Collaboration with Septa</p>
@@ -149,7 +135,7 @@ export default function PartnerProfilePage() {
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-4 space-y-6">
+            <div className="partner-profile-sidebar lg:col-span-4 space-y-6">
               {/* Relationship */}
               <div className="p-5 bg-white border border-[#8A8A8A]/20 reveal" data-testid="partner-info-card">
                 <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-3">Relationship</p>
@@ -229,7 +215,7 @@ export default function PartnerProfilePage() {
                   className="group block" data-testid={`partner-project-${proj.slug}`}>
                   <div className="aspect-[4/3] overflow-hidden bg-[#ECECEA] mb-3">
                     {proj.image && (
-                      <img src={proj.image} alt={getText(proj.title)} loading="lazy"
+                      <ResponsiveImage src={proj.image} alt={getText(proj.title)} loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     )}
                   </div>

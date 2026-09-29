@@ -19,10 +19,9 @@ export function newSection(type) {
 export function useSitePage(pageId) {
   const {search}=useLocation();
   const preview=new URLSearchParams(search).get('preview')==='true';
-  const token=sessionStorage.getItem('septa-admin-token');
-  const endpoint=preview&&token?`/admin/pages/${pageId}?preview=true`:`/site-pages/${pageId}`;
+  const endpoint=preview?`/admin/pages/${pageId}?preview=true`:`/site-pages/${pageId}`;
   const result=useApiData(endpoint,defaults[pageId]);
   const page=result.data?.version===2?result.data:defaults[pageId];
-  return {...result,page:{...page,sections:page.sections.filter(s=>s.type!=='locations')},preview:preview&&!!token};
+  return {...result,page:{...page,sections:page.sections.filter(s=>s.type!=='locations')},preview};
 }
 export {defaultNavigation,navigationFor} from './navigation';

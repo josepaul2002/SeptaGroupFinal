@@ -1,4 +1,4 @@
-import {contactLinks} from './contactLinks';
+import {contactLinks,mapAddressHref} from './contactLinks';
 const safe = value => typeof value==='string' && !/[\\\u0000-\u0020]/.test(value) && (/^\/(?!\/)/.test(value)||/^(https:\/\/|mailto:|tel:|#)/.test(value)) ? value : '';
 export const defaultFooterGroups=[{id:'explore',label:'Explore Septa'},{id:'people',label:'People & partnerships'},{id:'contact',label:'Start a conversation'},{id:'follow',label:'Find & follow us',show_address:true}];
 export const defaultNavigation=[
@@ -24,7 +24,7 @@ export function editableNavigation(settings){
 }
 export function navigationFor(settings,placement){
  const contact=settings?.contact||{},actions=contactLinks(contact,'Hello Septa, I would like to discuss a project.');
- const sources={...actions,map:contact.map_link,facebook:contact.facebook_url,instagram:contact.instagram_url};
+ const sources={...actions,map:mapAddressHref(contact.office_address,contact.map_link),facebook:contact.facebook_url,instagram:contact.instagram_url};
  return editableNavigation(settings).map(item=>({...item,url:safe(item.source?sources[item.source]:item.url)})).filter(item=>item[placement]&&item.url);
 }
 export const footerGroupsFor=settings=>Array.isArray(settings?.footer_groups)?settings.footer_groups:defaultFooterGroups;

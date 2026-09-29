@@ -1,4 +1,6 @@
 import {profileImage} from '../lib/profiles';
+import ContentError from '../components/ContentError';
+import ResponsiveImage from '../components/ResponsiveImage';
 import { ManagedIntro } from '../components/PageSections';
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -16,14 +18,13 @@ const relationshipColors = {
 
 export default function EcosystemPage() {
   useScrollReveal();
-  const { data: partners, loading } = usePartners();
+  const { data: partners, loading, error, retry } = usePartners();
   const { t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = 'Ecosystem — Septa Group';
   }, []);
 
   const categories = useMemo(() => {
@@ -39,12 +40,13 @@ export default function EcosystemPage() {
       list = list.filter(p =>
         getText(p.name).toLowerCase().includes(q) ||
         (p.specialties || []).some(s => s.toLowerCase().includes(q)) ||
-        p.category.toLowerCase().includes(q)
+        (p.category||'').toLowerCase().includes(q)
       );
     }
     return list;
   }, [partners, activeCategory, searchQuery]);
 
+  if(error)return <ContentError label="Collaborators" retry={retry} back="/contact"/>;
   if (loading) {
     return (
       <div className="pt-16 min-h-screen bg-[#F6F6F3] flex items-center justify-center">
@@ -65,7 +67,7 @@ export default function EcosystemPage() {
               {categories.map(cat => (
                 <button
                   key={cat}
-                  onClick={() => setActiveCategory(cat)}
+                  aria-pressed={activeCategory===cat} onClick={() => setActiveCategory(cat)}
                   data-testid={`category-${cat.replace(/\s+/g, '-').toLowerCase()}`}
                   className={`px-3 py-1.5 text-xs font-inter uppercase tracking-wider transition-colors border ${
                     activeCategory === cat
@@ -81,7 +83,7 @@ export default function EcosystemPage() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8A8A]" />
               <input
                 type="text"
-                placeholder="Search partners..."
+                aria-label="Search collaborators" placeholder="Search partners..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-9 pl-9 pr-3 text-sm font-inter border border-[#8A8A8A]/30 bg-transparent outline-none focus:border-[#606060] transition-colors"
@@ -116,12 +118,12 @@ export default function EcosystemPage() {
                     {/* Card Image (16:9) */}
                     <div className="aspect-[16/9] overflow-hidden bg-[#ECECEA] relative">
                       {cardImage ? (
-                        <img src={cardImage} alt={getText(partner.name)} loading="lazy"
+                        <ResponsiveImage src={cardImage} alt={getText(partner.name)} loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-[#050505]/5">
                           {partner.media?.logo_image || partner.logo_url ? (
-                            <img src={partner.media?.logo_image || partner.logo_url} alt=""
+                            <ResponsiveImage src={partner.media?.logo_image || partner.logo_url} alt=""
                               className="max-w-[50%] max-h-[50%] object-contain opacity-40" />
                           ) : (
                             <span className="text-3xl font-sora font-light text-[#050505]/10">

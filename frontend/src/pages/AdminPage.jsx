@@ -15,6 +15,9 @@ import LeadersTab from '../components/admin/LeadersTab';
 import ReadinessTab from '../components/admin/ReadinessTab';
 import UsersTab from '../components/admin/UsersTab';
 import AccountTab from '../components/admin/AccountTab';
+import SearchPagesTab from '../components/admin/SearchPagesTab';
+import MaintenanceTab from '../components/admin/MaintenanceTab';
+import {confirmLeave} from '../hooks/useUnsavedChanges';
 
 const TABS = [
   {id:'readiness',label:'Launch readiness',icon:LayoutDashboard},
@@ -23,15 +26,17 @@ const TABS = [
   { id: 'projects', label: 'Projects', icon: Folder },
   { id: 'partners', label: 'Partners', icon: Users },
   { id: 'pages', label: 'Website studio', icon: LayoutDashboard },
+  { id: 'search_pages', label: 'Search pages', icon: FileText },
+  { id: 'maintenance', label: 'Page maintenance', icon: Settings },
   { id: 'testimonials', label: 'Testimonials', icon: FileText },
   { id: 'audit', label: 'Audit Log', icon: History },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'settings', label: 'Contact & settings', icon: Settings },
   { id: 'users', label: 'Admin accounts', icon: Users },
   { id: 'account', label: 'Account', icon: KeyRound },
 ];
 
 export default function AdminPage() {
-  const { token, admin, loading: authLoading, login, logout, isAuthenticated } = useAdminAuth();
+  const { token, admin, authMode, loading: authLoading, login, logout, isAuthenticated } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('pages');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [challenge,setChallenge]=useState(''),[code,setCode]=useState('');
@@ -67,7 +72,7 @@ export default function AdminPage() {
             <Lock size={18} className="text-[#606060]" />
             <h1 className="text-xl font-sora font-medium text-[#050505]">Admin Login</h1>
           </div>
-          <form onSubmit={handleLogin} className="space-y-5">
+          {authMode === 'google' ? <div className="space-y-4"><p className="text-sm text-[#606060]">Use your approved Septa Google Workspace account. Your Workspace sign-in and two-step verification protect this admin area.</p><a href="/api/admin/google/start" className="flex items-center justify-center w-full h-11 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest">Sign in with Google Workspace</a></div> : <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2">Email</label>
               <input type="email" required className="w-full h-10 px-3 text-sm font-inter border border-[#8A8A8A]/30 bg-transparent text-[#050505] outline-none focus:border-[#606060] transition-colors"
@@ -87,7 +92,7 @@ export default function AdminPage() {
               className="w-full h-11 bg-[#050505] text-white text-xs font-inter font-medium uppercase tracking-widest hover:bg-[#262626] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
               {loginLoading ? <Loader2 className="animate-spin" size={16} /> : challenge?'Verify code':'Login'}
             </button>
-          </form><Link to="/admin/recover" className="block mt-6 text-sm underline">Forgot your password?</Link>
+          </form>}{authMode !== 'google' && <Link to="/admin/recover" className="block mt-6 text-sm underline">Forgot your password?</Link>}
         </div>
       </div>
     );
@@ -97,10 +102,10 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#F6F6F3]" data-testid="admin-dashboard">
       <div className="bg-white border-b border-[#8A8A8A]/20">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div><h1 className="text-lg font-sora font-medium text-[#050505]">Septa / Admin</h1><p className="admin-build-label">Media & mobile update · 29 September 2026</p><a href="/" target="_blank" rel="noreferrer" className="text-xs underline">View website ↗</a></div>
+          <div><h1 className="text-lg font-sora font-medium text-[#050505]">Septa / Admin</h1><p className="admin-build-label">UX improvements & page maintenance · 29 September 2026</p><a href="/" target="_blank" rel="noreferrer" className="text-xs underline">View website ↗</a></div>
           <div className="flex items-center gap-4">
             <span className="text-xs font-inter text-[#8A8A8A]">{admin?.email}</span>
-            <button onClick={logout} className="flex items-center gap-2 text-xs font-inter text-red-500 hover:text-red-600 transition-colors" data-testid="admin-logout-btn">
+            <button onClick={()=>{if(confirmLeave())logout();}} className="flex items-center gap-2 text-xs font-inter text-red-500 hover:text-red-600 transition-colors" data-testid="admin-logout-btn">
               <LogOut size={14} /> Logout
             </button>
           </div>
@@ -111,8 +116,8 @@ export default function AdminPage() {
         <div className="flex flex-col md:flex-row gap-8">
           <aside className="w-full md:w-48 flex-shrink-0">
             <nav className="space-y-1">
-              {TABS.filter(tab => tab.id !== 'users' || admin?.role === 'owner').filter(tab => admin?.role !== 'editor' || ['pages','projects','partners','leaders','testimonials','account'].includes(tab.id)).map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-testid={`tab-${tab.id}`}
+              {TABS.filter(tab => tab.id !== 'users' || admin?.role === 'owner').filter(tab => admin?.role !== 'editor' || ['pages','search_pages','projects','partners','leaders','testimonials','account'].includes(tab.id)).map(tab => (
+                <button key={tab.id} onClick={() => {if(activeTab===tab.id||confirmLeave())setActiveTab(tab.id);}} data-testid={`tab-${tab.id}`}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-inter rounded transition-colors ${
                     activeTab === tab.id ? 'bg-[#050505] text-white' : 'text-[#050505]/70 hover:bg-[#050505]/10'
                   }`}>
@@ -127,13 +132,15 @@ export default function AdminPage() {
             {activeTab === 'readiness' && <ReadinessTab token={token} />}
             {activeTab === 'leads' && <LeadsTab token={token} />}
             {activeTab === 'projects' && <ProjectsTab token={token} />}
-            {activeTab === 'partners' && <PartnersTab token={token} />}
-            <div hidden={activeTab !== 'pages'}><PageContentTab token={token} admin={admin} /></div>
+            {activeTab === 'search_pages' && <SearchPagesTab token={token} admin={admin} />}
+            {activeTab === 'maintenance' && <MaintenanceTab token={token} />}
+            {activeTab === 'partners' && <PartnersTab token={token} role={admin?.role} />}
+            <div hidden={activeTab !== 'pages'}><PageContentTab token={token} admin={admin} onOpenContactSettings={admin?.role!=='editor'?()=>setActiveTab('settings'):undefined} /></div>
             {activeTab === 'testimonials' && <TestimonialsTab token={token} />}
             {activeTab === 'audit' && <AuditLogTab token={token} />}
             {activeTab === 'settings' && <SettingsTab token={token} />}
-            {activeTab === 'users' && <UsersTab token={token} admin={admin} />}
-            {activeTab === 'account' && <AccountTab token={token} email={admin?.email} />}
+            {activeTab === 'users' && <UsersTab token={token} admin={admin} authMode={authMode} />}
+            {activeTab === 'account' && <AccountTab token={token} email={admin?.email} authMode={authMode} />}
           </main>
         </div>
       </div>

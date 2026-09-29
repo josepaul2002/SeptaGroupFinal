@@ -13,14 +13,11 @@ jest.mock('../hooks/useApi',()=>({
 let root,container;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;window.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});container=document.createElement('div');document.body.append(container);root=createRoot(container);});
 afterEach(()=>{act(()=>root.unmount());container.remove();});
-test('next and previous change both hero media and project destination',()=>{
+test('home hero presents the featured project without playback controls',()=>{
  act(()=>root.render(<PageHero pageId="home" hero={{layout:'split',title:'Septa'}}/>));
  expect(container.querySelector('.hero-feature-caption').getAttribute('href')).toBe('/projects/first');
- act(()=>container.querySelector('[aria-label="Next featured project"]').click());
- expect(container.querySelector('.hero-feature-caption').getAttribute('href')).toBe('/projects/second');
- expect(container.querySelector('img.active').getAttribute('src')).toBe('/second.jpg');
- act(()=>container.querySelector('[aria-label="Previous featured project"]').click());
- expect(container.querySelector('img.active').getAttribute('src')).toBe('/first.jpg');
+ expect(container.querySelector('.hero-feature-caption').textContent).toContain('Explore project');
+ expect(container.querySelector('.hero-carousel-controls')).toBeNull();
 });
 test('mobile contact expands and Escape closes the links',()=>{
  act(()=>root.render(<MobileContactBar/>));

@@ -7,7 +7,7 @@ from services.email_service import send_login_code
 Septa Group API Server
 Full CMS with Admin Panel, Email Notifications, and Media Storage
 """
-from config import SECRET_KEY, PRODUCTION, SITE_URL, INDEXABLE, CORS_ORIGINS, UPLOADS_DIR
+from config import SECRET_KEY, PRODUCTION, SITE_URL, INDEXABLE, CORS_ORIGINS, UPLOADS_DIR, ADMIN_AUTH_MODE
 from fastapi import FastAPI, BackgroundTasks, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File, Query, Form
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +18,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import os
+import secrets
 import asyncio
 from contextlib import suppress
 from pymongo.errors import DuplicateKeyError, PyMongoError
@@ -40,7 +41,8 @@ from models.schemas import (
     SiteSettings, SiteContactSettings, EnquiryFormSettings,
     PageContent, ContentBlock
 )
-from services.content import PUBLIC_QUERY, public_document, publication_check
+from services.content import PUBLIC_QUERY, PARTNER_PUBLIC_QUERY, public_document, publication_check
+from collaborator_review import profile_snapshot
 from services.notifications import deliver, worker
 from services.email_service import send_admin_notification, send_user_confirmation, set_email_logs_collection
 from services.storage_service import upload_file, delete_file, get_presigned_upload_url, validate_file, get_storage_status, MAX_FILE_SIZE
@@ -59,7 +61,10 @@ db = client[os.environ['DB_NAME']]
 # Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 
-app = FastAPI(title="Septa Group API", version="2.0")
+app = FastAPI(title="Septa Group API", version="2.0",
+              docs_url=None if PRODUCTION else '/docs',
+              redoc_url=None if PRODUCTION else '/redoc',
+              openapi_url=None if PRODUCTION else '/openapi.json')
 app.state.limiter = limiter
 app.state.db = db
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -411,7 +416,7 @@ async def get_partners(
         query["is_featured"] = featured
     
     if published_only or not admin:
-        query.update(PUBLIC_QUERY)
+        query.update(PARTNER_PUBLIC_QUERY)
     
     partners = await db.partners.find(query, {"_id": 0}).sort("sort_order", 1).to_list(200)
     return partners if admin and not published_only else [public_document(p) for p in partners]
@@ -430,7 +435,7 @@ async def get_partner(
     is_preview = preview and admin
     
     if not is_preview:
-        query.update(PUBLIC_QUERY)
+        query.update(PARTNER_PUBLIC_QUERY)
     
     partner = await db.partners.find_one(query, {"_id": 0})
     if not partner:
@@ -478,6 +483,13 @@ async def update_partner(
     existing = await db.partners.find_one({"slug": slug}, {"_id": 0})
     if not existing:
         raise HTTPException(404, "Record not found")
+    if existing.get('status') != 'published' and update_data.get('status') == 'published':
+        latest_review = await db.partner_reviews.find_one({'slug': slug}, sort=[('created_at', -1)])
+        if latest_review:
+            if latest_review['status'] != 'approved' or latest_review['partner_updated_at'] != existing.get('updated_at', ''):
+                raise HTTPException(422, 'The latest collaborator review must approve this exact draft before publication.')
+            if profile_snapshot(existing) != profile_snapshot({**existing, **update_data}):
+                raise HTTPException(422, 'Save these changes as a draft and request a new collaborator review before publication.')
     await publication_check(db, {**existing, **update_data}, "partner", admin)
     await db.revisions.insert_one({"id": str(uuid.uuid4()), "collection": "partners", "slug": slug, "snapshot": existing, "created_at": datetime.now(timezone.utc).isoformat()})
     result = await db.partners.update_one({"slug": slug}, {"$set": update_data})
@@ -579,6 +591,8 @@ async def delete_testimonial(
 @limiter.limit("5/minute")
 async def admin_login(request: Request, response: Response, auth: AdminLoginRequest):
     """Admin login with JWT"""
+    if ADMIN_AUTH_MODE == 'google':
+        raise HTTPException(403, 'Use Google Workspace to sign in.')
     admin = await db.admins.find_one({"email": auth.email.strip().lower()}, {"_id": 0})
     if not admin or admin.get("disabled") or not verify_password(auth.password, admin["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -621,6 +635,8 @@ class LoginCodeRequest(BaseModel):
 @api_router.post('/admin/login/verify')
 @limiter.limit('10/minute')
 async def verify_login_code(request: Request, response: Response, data: LoginCodeRequest):
+    if ADMIN_AUTH_MODE == 'google':
+        raise HTTPException(403, 'Use Google Workspace to sign in.')
     admin = await consume_code(db.admins, data.challenge, data.code, SECRET_KEY)
     if not admin:
         raise HTTPException(401, 'Invalid or expired code. After five attempts, sign in again for a new code.')
@@ -641,7 +657,7 @@ async def admin_logout(response: Response, admin: dict = Depends(get_current_adm
 @api_router.get("/admin/me")
 async def get_current_admin_info(admin: dict = Depends(get_current_admin)):
     """Get current admin info"""
-    admin_doc = await db.admins.find_one({"id": admin["admin_id"]}, {"_id": 0, "password_hash": 0, "reset_hash": 0, "reset_expires": 0, "reset_auth_version": 0, "reset_requested_at": 0, "otp_hash": 0, "otp_challenge": 0, "otp_expires": 0, "otp_version": 0, "otp_attempts": 0})
+    admin_doc = await db.admins.find_one({"id": admin["admin_id"]}, {"_id": 0, "password_hash": 0, "google_sub": 0, "reset_hash": 0, "reset_expires": 0, "reset_auth_version": 0, "reset_requested_at": 0, "otp_hash": 0, "otp_challenge": 0, "otp_expires": 0, "otp_version": 0, "otp_attempts": 0})
     if not admin_doc:
         raise HTTPException(status_code=404, detail="Admin not found")
     return admin_doc
@@ -653,6 +669,8 @@ async def change_admin_password(
     admin: dict = Depends(get_current_admin)
 ):
     """Change admin password"""
+    if ADMIN_AUTH_MODE == 'google':
+        raise HTTPException(403, 'Manage your password and two-step verification in Google Workspace.')
     admin_doc = await db.admins.find_one({"id": admin["admin_id"]})
     if not admin_doc:
         raise HTTPException(status_code=404, detail="Admin not found")
@@ -1005,6 +1023,12 @@ async def update_site_settings(
     admin: dict = Depends(get_current_admin)
 ):
     """Update site settings"""
+    if 'contact' in updates:
+        from services.contact_settings import validate_contact_settings
+        try:
+            updates['contact'] = validate_contact_settings(updates['contact'])
+        except ValueError as error:
+            raise HTTPException(422, str(error))
     if 'enquiry' in updates:
         if not isinstance(updates['enquiry'], dict):
             raise HTTPException(422, 'Invalid enquiry settings.')
@@ -1103,7 +1127,9 @@ async def bootstrap_admin():
         password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "")
         if PRODUCTION and (not email or email.lower().strip() == "owner@example.com"):
             raise RuntimeError("Set BOOTSTRAP_ADMIN_EMAIL to the real owner account before production startup.")
-        if len(password) < 12 or password.lower().startswith("use-a-unique-password"):
+        if ADMIN_AUTH_MODE == 'google' and not email.lower().strip().endswith('@' + os.environ['GOOGLE_WORKSPACE_DOMAIN'].strip().lower().lstrip('@')):
+            raise RuntimeError('BOOTSTRAP_ADMIN_EMAIL must be an account in GOOGLE_WORKSPACE_DOMAIN.')
+        if ADMIN_AUTH_MODE != 'google' and (len(password) < 12 or password.lower().startswith("use-a-unique-password")):
             if PRODUCTION:
                 raise RuntimeError("Set BOOTSTRAP_ADMIN_PASSWORD (12+ characters) for initial owner setup.")
             logger.warning("No admin created: configure BOOTSTRAP_ADMIN_PASSWORD.")
@@ -1112,7 +1138,7 @@ async def bootstrap_admin():
         admin = {
             "id": str(uuid.uuid4()),
             "email": email.lower().strip(),
-            "password_hash": get_password_hash(password),
+            "password_hash": get_password_hash(password if ADMIN_AUTH_MODE != 'google' else secrets.token_urlsafe(48)),
             "role": "owner",
             "disabled": False,
             "auth_version": 0,
@@ -1435,7 +1461,10 @@ async def startup_event():
     await db.partners.create_index("slug", unique=True)
     await db.leaders.create_index("slug", unique=True)
     await db.page_content.create_index('page_id', unique=True)
+    await db.page_maintenance.create_index('path', unique=True)
+    await db.search_pages.create_index([('kind', 1), ('slug', 1)], unique=True)
     await db.admins.create_index("email", unique=True)
+    await db.partner_reviews.create_index('token_hash', unique=True)
     await db.leads.create_index("submission_id", unique=True, sparse=True)
     if not PRODUCTION and os.getenv("SEED_DEMO_DATA") == "true":
         await migrate_json_to_db()
@@ -1451,24 +1480,44 @@ async def startup_event():
 # ============================================================================
 
 from release_api import attach_release_routes
+from search_pages import attach_search_routes
+from maintenance import attach_maintenance_routes
+from media_delivery import attach_media_delivery
+from collaborator_review import attach_collaborator_review_routes
 from services.pages import attach_page_routes
 attach_page_routes(api_router, db, log_audit)
 attach_release_routes(api_router, db, log_audit)
+attach_search_routes(api_router, db, log_audit)
+attach_maintenance_routes(api_router, db, log_audit)
+attach_media_delivery(api_router)
+attach_collaborator_review_routes(api_router, db, limiter)
 from recovery_api import attach_recovery_routes
 attach_recovery_routes(api_router, db, limiter)
+from google_admin_auth import attach_google_routes
+attach_google_routes(api_router, db, log_audit, limiter)
 app.include_router(api_router)
 
 @app.middleware("http")
 async def response_headers(request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["Referrer-Policy"] = "no-referrer" if request.url.path.startswith("/admin") else "strict-origin-when-cross-origin"
+    response.headers["Referrer-Policy"] = "no-referrer" if request.url.path.startswith(("/admin", "/api/admin/google", "/review/", "/api/collaborator-review/")) else "strict-origin-when-cross-origin"
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     if PRODUCTION:
         response.headers["Strict-Transport-Security"] = "max-age=31536000"
-    if not INDEXABLE or request.url.path.startswith(("/api", "/admin", "/content-checklist")) or "preview" in request.query_params:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; "
+            "form-action 'self'; script-src 'self' https://ajax.googleapis.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' data: https://fonts.gstatic.com; "
+            "img-src 'self' data: blob: https:; media-src 'self' blob: https:; "
+            "connect-src 'self' https:; frame-src https://www.youtube-nocookie.com "
+            "https://player.vimeo.com https://sketchfab.com; worker-src 'self' blob:; "
+            "upgrade-insecure-requests"
+        )
+    if not INDEXABLE or request.url.path.startswith(("/api", "/admin", "/review/", "/content-checklist")) or "preview" in request.query_params:
         response.headers["X-Robots-Tag"] = "noindex, nofollow"
-    if request.url.path.startswith(("/api", "/admin")):
+    if request.url.path.startswith(("/api", "/admin", "/review/")):
         response.headers["Cache-Control"] = "no-store"
     return response
 

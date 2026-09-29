@@ -1,4 +1,5 @@
-import {validateMediaRatio,rememberImage} from '../lib/mediaRules';
+import {prepareMediaFile} from '../lib/prepareMediaFile';
+import {rememberImage} from '../lib/mediaRules';
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
@@ -10,6 +11,7 @@ const API = `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/$/, '')}/api
 axios.interceptors.response.use(response => {
   if (String(response.config.url).includes('/api/') && typeof response.data === 'string')
     throw new Error('The API returned a web page instead of data. Run Septa with start-local.sh and open http://localhost:8000.');
+  if(response.config.method && response.config.method.toLowerCase()!=='get')publicCache.clear();
   return response;
 });
 
@@ -20,38 +22,44 @@ export function getText(bilingual, lang = 'en') {
   return bilingual[lang] || bilingual.en || '';
 }
 
-// Generic fetch hook
-export function useApiData(endpoint, defaultValue = []) {
-  const fallback = useRef({endpoint, value:defaultValue});
-  if (fallback.current.endpoint !== endpoint) fallback.current = {endpoint, value:defaultValue};
-  const fallbackValue = fallback.current.value;
-  const [state, setState] = useState(() => {
-    let data = fallbackValue;
-    try { data = JSON.parse(document.getElementById('septa-bootstrap')?.textContent || '{}')[endpoint] ?? fallbackValue; } catch {}
-    return {endpoint, data, loading:true, error:null};
-  });
-  useEffect(() => {
-    let cancelled = false;
-    setState(previous => ({endpoint, data:previous.endpoint===endpoint ? previous.data : fallbackValue, loading:true, error:null}));
-    async function fetchData() {
-      try {
-        const token = sessionStorage.getItem('septa-admin-token');
-        const options = endpoint.includes('preview=true') && token ? {headers:{Authorization:`Bearer ${token}`}} : {};
-        const res = await axios.get(`${API}${endpoint}`, options);
-        const expectsArray = Array.isArray(fallbackValue);
-        const expectsObject = fallbackValue === null || (typeof fallbackValue === 'object' && !expectsArray);
-        const valid = expectsArray ? Array.isArray(res.data) : expectsObject ? Boolean(res.data && typeof res.data==='object' && !Array.isArray(res.data)) : true;
-        if (!valid) throw new Error('The content service returned an invalid response.');
-        if (!cancelled) setState({endpoint, data:res.data, loading:false, error:null});
-      } catch (err) {
-        if (!cancelled) setState(previous => ({endpoint, data:previous.endpoint===endpoint ? previous.data : fallbackValue, loading:false, error:err.message}));
-      }
-    }
-    fetchData();
-    return () => { cancelled = true; };
-  }, [endpoint, fallbackValue]);
-  const setData = value => setState(previous => ({...previous, data:typeof value==='function'?value(previous.data):value}));
-  return state.endpoint===endpoint ? {...state,setData} : {data:fallbackValue,loading:true,error:null,setData};
+// Short-lived public request cache; authenticated previews are never shared.
+const publicCache=new Map(),pendingPublic=new Map();
+async function readContent(endpoint,options){
+ const cacheable=!endpoint.includes('preview=true')&&!endpoint.startsWith('/admin')&&!endpoint.startsWith('/page-status');
+ if(!cacheable)return axios.get(API+endpoint,options);
+ const cached=publicCache.get(endpoint);
+ if(cached&&Date.now()-cached.time<10000)return cached.response;
+ if(pendingPublic.has(endpoint))return pendingPublic.get(endpoint);
+ const promise=axios.get(API+endpoint,options).then(response=>{publicCache.set(endpoint,{time:Date.now(),response});return response;}).finally(()=>pendingPublic.delete(endpoint));
+ pendingPublic.set(endpoint,promise);return promise;
+}
+export function useApiData(endpoint,defaultValue=[]){
+ const fallback=useRef({endpoint,value:defaultValue});
+ if(fallback.current.endpoint!==endpoint)fallback.current={endpoint,value:defaultValue};
+ const fallbackValue=fallback.current.value;
+ const [nonce,setNonce]=useState(0);
+ const [state,setState]=useState(()=>{
+  let data=fallbackValue;
+  try{data=JSON.parse(document.getElementById('septa-bootstrap')?.textContent||'{}')[endpoint]??publicCache.get(endpoint)?.response.data??fallbackValue;}catch{}
+  return {endpoint,data,loading:data===fallbackValue,error:null,statusCode:null};
+ });
+ useEffect(()=>{
+  let cancelled=false;
+  setState(previous=>({...previous,endpoint,data:previous.endpoint===endpoint?previous.data:fallbackValue,loading:previous.endpoint!==endpoint||previous.data===fallbackValue,error:null,statusCode:null}));
+  const token=sessionStorage.getItem('septa-admin-token');
+  const options=endpoint.includes('preview=true')&&token?{headers:{Authorization:'Bearer '+token}}:{};
+  readContent(endpoint,options).then(res=>{
+   const valid=Array.isArray(fallbackValue)?Array.isArray(res.data):fallbackValue===null||typeof fallbackValue==='object'?Boolean(res.data&&typeof res.data==='object'&&!Array.isArray(res.data)):true;
+   if(!valid)throw new Error('The content service returned an invalid response.');
+   if(!cancelled)setState({endpoint,data:res.data,loading:false,error:null,statusCode:null});
+  }).catch(err=>{publicCache.delete(endpoint);if(!cancelled)setState(previous=>({...previous,endpoint,data:previous.endpoint===endpoint?previous.data:fallbackValue,loading:false,error:err.message,statusCode:err.response?.status||null}));});
+  const changed=event=>{publicCache.delete('/settings');if(endpoint==='/settings')setState({endpoint,data:event.detail,loading:false,error:null,statusCode:null});};
+  window.addEventListener('septa-settings-updated',changed);
+  return()=>{cancelled=true;window.removeEventListener('septa-settings-updated',changed);};
+ },[endpoint,fallbackValue,nonce]);
+ const retry=()=>{publicCache.delete(endpoint);setNonce(n=>n+1);};
+ const setData=value=>setState(previous=>({...previous,data:typeof value==='function'?value(previous.data):value}));
+ return state.endpoint===endpoint?{...state,setData,retry}:{data:fallbackValue,loading:true,error:null,statusCode:null,setData,retry};
 }
 
 // Site settings hook
@@ -79,8 +87,8 @@ export function useProjects(filters = {}) {
 // Single project hook with preview support
 export function useProject(slug, preview = false) {
   const endpoint = preview ? `/projects/${slug}?preview=true` : `/projects/${slug}`;
-  const { data, loading, error } = useApiData(endpoint, null);
-  return { project: data, loading, error };
+  const { data, ...state } = useApiData(endpoint, null);
+  return { project: data, ...state };
 }
 
 // Partners hook
@@ -96,8 +104,8 @@ export function usePartners(filters = {}) {
 // Single partner hook with preview support
 export function usePartner(slug, preview = false) {
   const endpoint = preview ? `/partners/${slug}?preview=true` : `/partners/${slug}`;
-  const { data, loading, error } = useApiData(endpoint, null);
-  return { partner: data, loading, error };
+  const { data, ...state } = useApiData(endpoint, null);
+  return { partner: data, ...state };
 }
 
 // Testimonials hook
@@ -123,11 +131,26 @@ export function useProjectCategories() {
 export function useAdminAuth() {
   const [token, setToken] = useState(() => sessionStorage.getItem('septa-admin-token'));
   const [admin, setAdmin] = useState(null);
+  const [authMode, setAuthMode] = useState('password');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkAuth() {
+      let mode = 'password';
+      try {
+        const config = await axios.get(`${API}/admin/auth/config`);
+        mode = config.data.mode === 'google' ? 'google' : 'password';
+        setAuthMode(mode);
+      } catch { /* Old local installs continue with password sign-in. */ }
       if (!token) {
+        if (mode === 'google') {
+          try {
+            const session = await axios.get(`${API}/admin/session`);
+            sessionStorage.setItem('septa-admin-token', session.data.access_token);
+            setToken(session.data.access_token);
+            setAdmin({id:session.data.admin_id,email:session.data.email,role:session.data.role});
+          } catch { /* No Workspace session yet. */ }
+        }
         setLoading(false);
         return;
       }
@@ -169,7 +192,7 @@ export function useAdminAuth() {
     setAdmin(null);
   };
 
-  return { token, admin, loading, login, logout, isAuthenticated: !!admin };
+  return { token, admin, authMode, loading, login, logout, isAuthenticated: !!admin };
 }
 
 // Admin data hooks
@@ -352,17 +375,19 @@ export async function uploadFile(token, file, role = 'page_image') {
   if (file.size > 50 * 1024 * 1024) throw new Error('Use a file under 50 MB.');
   if (!/\.(jpe?g|png|webp|gif|pdf|mp4|webm|mov|glb|gltf)$/i.test(file.name))
     throw new Error('Use JPG, PNG, WebP or GIF for images. Export HEIC photos as JPG first. PDF, MP4, WebM, MOV, GLB and GLTF files are also supported.');
-  const ratioIssue=await validateMediaRatio(file,role);
-  if(ratioIssue)throw new Error(ratioIssue);
+  file=await prepareMediaFile(file,role);
   const formData = new FormData();
   formData.append('file', file);
   formData.append('media_role',role);
   
-  const res = await axios.post(`${API}/upload`, formData, {
+  const report=(percent,done=false,error=false)=>window.dispatchEvent(new CustomEvent('septa-upload-progress',{detail:{name:file.name,percent,done,error}}));
+  report(0);
+  let res;
+  try {res = await axios.post(`${API}/upload`, formData, {
     headers: {
       Authorization: `Bearer ${sessionStorage.getItem('septa-admin-token') || token}`
-    }, timeout: 120000
-  });
+    }, timeout: 120000, onUploadProgress:event=>report(event.total?Math.round(event.loaded/event.total*100):0)
+  });report(100,true);}catch(error){report(0,true,true);throw error;}
   
   if (!res.data?.url) throw new Error('Upload returned no image address. Check that the API server is running.');
   rememberImage(res.data.url,role);

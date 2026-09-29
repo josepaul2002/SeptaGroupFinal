@@ -3,7 +3,7 @@ import logging
 import os
 from fastapi import BackgroundTasks, HTTPException, Request, Response
 from pydantic import BaseModel, Field, EmailStr, field_validator
-from config import SITE_URL
+from config import SITE_URL, ADMIN_AUTH_MODE
 from services.account_recovery import GENERIC_MESSAGE, issue_reset, consume_reset, recovery_origin, validate_password, digest
 from services.email_service import send_password_reset, send_password_changed, _configure_resend
 from utils.auth import get_password_hash, clear_auth_cookie
@@ -35,6 +35,8 @@ def attach_recovery_routes(router, db, limiter):
     @router.post('/admin/forgot-password')
     @limiter.limit('5/minute')
     async def forgot_password(request: Request, data: ResetRequest, tasks: BackgroundTasks):
+        if ADMIN_AUTH_MODE == 'google':
+            raise HTTPException(403, 'Recover your account through Google Workspace.')
         origin = recovery_origin(SITE_URL)
         if not origin or not _configure_resend() or not os.getenv('FROM_EMAIL'):
             raise HTTPException(503, 'Email recovery is not configured yet. The site owner must set SITE_URL, RESEND_API_KEY and a verified FROM_EMAIL on the server. The local reset-admin.py helper is still available.')
@@ -44,6 +46,8 @@ def attach_recovery_routes(router, db, limiter):
     @router.post('/admin/reset-password')
     @limiter.limit('5/minute')
     async def reset_password(request: Request, response: Response, data: ResetPassword, tasks: BackgroundTasks):
+        if ADMIN_AUTH_MODE == 'google':
+            raise HTTPException(403, 'Recover your account through Google Workspace.')
         # bcrypt is deliberately slow; avoid blocking concurrent website requests.
         password_hash = await asyncio.to_thread(get_password_hash, data.password)
         account = await db.admins.find_one({'reset_hash': digest(data.token)}, {'_id': 0, 'email': 1})

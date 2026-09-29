@@ -30,7 +30,7 @@ if ! .venv/bin/python -c 'import sys; assert (3,10) <= sys.version_info[:2] <= (
   echo 'Then rerun bash start-local.sh with Python 3.13 installed.'
   exit 1
 fi
-if ! .venv/bin/python -c 'import uvicorn, fastapi, motor, jose, passlib, resend, slowapi, boto3, email_validator, multipart, PIL' >/dev/null 2>&1; then
+if ! .venv/bin/python -c 'import uvicorn, fastapi, motor, jwt, passlib, resend, slowapi, boto3, email_validator, multipart, PIL, google.oauth2.id_token; from importlib.metadata import version; assert all(version(name)==required for name,required in (("fastapi","0.141.1"),("starlette","1.7.0"),("PyJWT","2.15.1"),("python-multipart","0.0.32"),("python-dotenv","1.2.3"),("google-auth","2.59.0")))' >/dev/null 2>&1; then
   .venv/bin/python -m pip install -r backend/requirements.txt
 fi
 .venv/bin/python scripts/ensure-local-owner.py
