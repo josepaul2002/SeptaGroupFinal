@@ -9,7 +9,7 @@ Render deploys code from the linked GitHub branch, not the ZIP on your Mac. The 
 ## New Blueprint on Render
 
 1. In Render, select **New → Blueprint**, connect `josepaul2002/SeptaGroupFinal`, select the branch containing this release and confirm the Blueprint file `render.yaml`.
-2. It creates one Docker web service called `septa-group` on the Starter plan. Do not create a static site or a second frontend service. The health check is `/api/health`.
+2. It creates one Docker web service called `septa-group` in Singapore on the Starter plan. Do not create a static site or a second frontend service. The health check is `/api/health`. Choose an Atlas database region close to it.
 3. Supply the `sync: false` values prompted on creation. On later Blueprint updates, add or edit any new secret manually in the service's **Environment** tab.
 4. Use the first Render HTTPS address as `SITE_URL`, such as `https://<actual-service>.onrender.com`, and exactly the same address for `CORS_ORIGINS`. `GOOGLE_WORKSPACE_DOMAIN=septa.one`; `BOOTSTRAP_ADMIN_EMAIL=paul@septa.one`; `ALLOW_INDEXING=false`.
 5. Create a Google Cloud OAuth **Web application** credential. Add the exact redirect `https://<actual-service>.onrender.com/api/admin/google/callback`. Put its ID and secret in Render. Enable Workspace two-step verification or passkeys for every admin. If migrating the existing Mongo database, make `paul@septa.one` an enabled owner in the local admin first; bootstrap only runs when the database has no admins.
