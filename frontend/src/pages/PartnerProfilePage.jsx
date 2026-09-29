@@ -28,7 +28,7 @@ export default function PartnerProfilePage() {
   const {partner,loading,error,statusCode,retry}=usePartner(slug,isPreview);
   const {data:partnerProjects,error:projectsError,retry:retryProjects}=useApiData(`/credits/partner/${slug}/projects`,[]);
   const {t}=useLanguage();
-  useEffect(()=>window.scrollTo(0,0),[slug]);
+  useEffect(()=>{window.scrollTo(0,0);},[slug]);
   if(error&&!partner)return <ContentError label="Partner" notFound={statusCode===404} retry={retry} back="/ecosystem"/>;
   if (loading) {
     return (

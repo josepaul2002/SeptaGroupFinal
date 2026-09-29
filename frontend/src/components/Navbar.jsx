@@ -11,7 +11,7 @@ export default function Navbar(){
  const [scrolled,setScrolled]=useState(false),[open,setOpen]=useState(false);
  const {pathname,search,hash}=useLocation(),{settings}=useSiteSettings();
  const toggle=useRef(null),panel=useRef(null),brand=settings?.brand||{},links=navigationFor(settings,'header'),mobile=navigationFor(settings,'mobile'),contact=contactLinks(settings?.contact);
- useEffect(()=>setOpen(false),[pathname,search,hash]);
+ useEffect(()=>{setOpen(false);},[pathname,search,hash]);
  useEffect(()=>{const onScroll=()=>setScrolled(window.scrollY>20);onScroll();window.addEventListener('scroll',onScroll,{passive:true});return()=>window.removeEventListener('scroll',onScroll);},[]);
  useEffect(()=>{if(!open)return;const previous=document.body.style.overflow;document.body.style.overflow='hidden';
   const key=e=>{if(e.key==='Escape'){setOpen(false);toggle.current?.focus();}if(e.key==='Tab'){const controls=[toggle.current,...panel.current.querySelectorAll('a[href],button:not([disabled])')].filter(Boolean),first=controls[0],last=controls.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};

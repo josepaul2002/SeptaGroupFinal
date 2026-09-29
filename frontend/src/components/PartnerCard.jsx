@@ -11,7 +11,7 @@ export default function PartnerCard({partner,projects=[]}){
  const {mode}=useMotion();const [paused,setPaused]=useState(false),[manualPause,setManualPause]=useState(false);
  const photos=(Array.isArray(partner.media?.card_images)?partner.media.card_images:[]).map(safeHref).filter(Boolean);
  const [slide,setSlide]=useState(0);
- useEffect(()=>setSlide(0),[partner.slug,photos.length]);
+ useEffect(()=>{setSlide(0);},[partner.slug,photos.length]);
  useEffect(()=>{if(photos.length<2||mode==='off'||paused||manualPause)return;const timer=setInterval(()=>{if(!document.hidden)setSlide(i=>(i+1)%photos.length);},4400);return()=>clearInterval(timer);},[partner.slug,photos.length,mode,paused,manualPause]);
  const photo=safeHref(profileImage(partner));
  const related=projects.filter(p=>(p.credits||[]).some(c=>c.verified&&c.entity_type==='partner'&&c.entity_slug===partner.slug));

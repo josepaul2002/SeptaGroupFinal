@@ -1,6 +1,7 @@
 import UploadActivity from './components/admin/UploadActivity';
 import MotionProvider from './components/MotionProvider';
 import HashNavigation from './components/HashNavigation';
+import RouteScroll from './components/RouteScroll';
 import MobileContactBar from './components/MobileContactBar';
 import { BrowserRouter, Routes, Route, useLocation, useParams, Navigate } from 'react-router-dom';
 import './App.css';
@@ -47,7 +48,7 @@ function CollaboratorProfileRoute(){
 function App() {
   return (
     <LanguageProvider>
-      <BrowserRouter><MotionProvider><HashNavigation/>
+      <BrowserRouter><MotionProvider><RouteScroll/><HashNavigation/>
         <div className="min-h-screen bg-[#F6F6F3] font-inter">
           <PageMetadata />
           <PublicChrome>

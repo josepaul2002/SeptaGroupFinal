@@ -2,6 +2,14 @@
 
 ## This release: 29 September 2026
 
+## Navigation and mobile video update
+
+- Page-to-page navigation resets scroll to the top; links with a `#section` retain their section target.
+- The homepage collaborator cards place landscape media above the identity on phones, using the full card width instead of a narrow side column.
+- YouTube/Vimeo embeds request visible playback controls and fullscreen. Uploaded videos keep native controls. The direct video link remains available if a browser extension blocks the embed.
+- State reset effects for the menu, collaborator images and testimonials now return no value to React. This addresses a possible invalid-effect-cleanup crash on navigation. Verify the exact failing route on the installed build; the old `main.da0ed53f.js` must be replaced by the newly compiled bundle.
+- Frontend build and 22 DOM tests pass. Actual iPhone playback and layout still require a device check after installation.
+
 ## Mobile profile correction
 
 - Collaborator galleries stay horizontally swipeable inside their own strip without widening the phone page. The profile's grid children can shrink within the viewport, and the page clips any remaining visual overflow.

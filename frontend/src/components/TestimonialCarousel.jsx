@@ -10,7 +10,7 @@ export default function TestimonialCarousel({ items = [], projects = [] }) {
   const [paused, setPaused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const touch = useRef(null);
-  useEffect(() => setActive(0), [items.length]);
+  useEffect(() => { setActive(0); }, [items.length]);
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReduced(media.matches);

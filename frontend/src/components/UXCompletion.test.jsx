@@ -26,6 +26,7 @@ test('external videos load on demand; local videos retain native playback contro
  expect(container.querySelector('iframe')).toBeNull();
  act(()=>container.querySelector('button').click());
  expect(container.querySelector('iframe').src).toContain('youtube-nocookie.com/embed/abcdefghijk');
+ expect(container.querySelector('iframe').src).toContain('controls=1');
  act(()=>root.render(<VideoPlayer src="/uploads/film.mp4" title="Uploaded film"/>));
  expect(container.querySelector('video').controls).toBe(true);expect(container.querySelector('video').loop).toBe(false);
 });
