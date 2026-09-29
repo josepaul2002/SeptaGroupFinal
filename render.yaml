@@ -7,6 +7,9 @@ services:
     region: singapore
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
+    # Render automatically adds www.septa.one and redirects it to this root domain.
+    domains:
+      - septa.one
     envVars:
       - key: APP_ENV
         value: production
