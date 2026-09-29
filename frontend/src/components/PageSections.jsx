@@ -124,6 +124,17 @@ function Testimonials({section}) {
   return <SectionShell section={section}><TestimonialCarousel items={selected} projects={projects}/></SectionShell>;
 }
 
+function HighlightTicker({section}) {
+  const {t}=useLanguage();
+  const items=(Array.isArray(section.items)?section.items:[]).filter(item=>t(item.title).trim()&&t(item.subtitle).trim()).slice(0,10);
+  if(!items.length)return null;
+  const content=items.map((item,i)=><span className="home-highlight" key={item.id||i}><strong>{t(item.title)}</strong><span>{t(item.subtitle)}</span></span>);
+  return <section id={section.id} className={`home-highlights tone-${section.theme||'dark'}`} aria-label={t(section.title)||'Septa at a glance'}>
+    <div className="home-highlights-heading"><span>{t(section.eyebrow)||'At a glance'}</span><h2>{t(section.title)||'Septa in numbers'}</h2></div>
+    <div className="home-highlights-window"><div className={`home-highlights-track ${items.length===1?'is-static':''}`}><div className="home-highlights-set">{content}</div>{items.length>1&&<div className="home-highlights-set" aria-hidden="true">{content}</div>}</div></div>
+  </section>;
+}
+
 export function PageSection({section}) {
   const {t}=useLanguage();
   if(section.enabled===false)return null;
@@ -133,6 +144,7 @@ export function PageSection({section}) {
   if(section.type==='collaborators')return <Collaborators section={section}/>;
   if(section.type==='people')return <People section={section}/>;
   if(section.type==='testimonials')return <Testimonials section={section}/>;
+  if(section.type==='highlight_ticker')return <HighlightTicker section={section}/>;
   if(section.type==='cta')return <ContactSection section={section}/>;
   if(section.type==='text')return <SectionShell section={section} className="editorial-section">{section.image_url&&<ResponsiveImage className="editorial-image" src={safeHref(section.image_url)} alt={section.image_alt||''} loading="lazy"/>}<ContentLink to={section.link_url} className="design-text-link">{t(section.link_label)}<ArrowRight size={16}/></ContentLink></SectionShell>;
   if(!section.items?.length)return null;

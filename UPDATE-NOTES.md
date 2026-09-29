@@ -1,4 +1,11 @@
-# Septa collaborator profiles and Workspace security update
+# Septa homepage highlights, collaborator fixes and Render setup
+
+## This release: 29 September 2026
+
+- **Home:** Website Studio now includes a rolling highlights strip above Selected projects. In **Admin → Website studio → Home → Septa in numbers**, enter each verified figure as the item title (for example `25+`) and the short label as subtitle, then publish. It stays hidden until at least one complete highlight is entered. Reduce motion keeps the figures stationary, and the figures appear in search-readable HTML.
+- **Collaborators:** Fixed a browser-only crash for existing profiles with linked projects: the page referenced an unimported text helper. Also accepts missing legacy media and malformed legacy lists. The listing now keeps category/search in its URL, and the profile's Ecosystem link returns to those filters.
+- **Email:** New-site defaults point at `paul@septa.one` and name Paul Joseph. Existing database contact settings are preserved; update them in **Admin → Contact & settings → Contact Info** if they still point elsewhere. Configure outgoing email and owner identity directly in Render. Create any Workspace aliases before advertising them.
+- **Hosting:** See `site/RENDER-START.md` for the exact Blueprint, domain, email, database, storage and OAuth sequence. GitHub must contain this new release before Render can deploy it.
 
 ## New: collaborator approval links
 
@@ -19,16 +26,16 @@ The updater also searches for an installed Septa site when an explicitly supplie
 ## Install on your Mac
 
 1. Stop the existing website server with Control-C in its Terminal.
-2. Download `septa-profiles-security-update.zip` and double-click it to extract into Downloads.
+2. Download `septa-home-highlights-deploy.zip` and double-click it to extract into Downloads.
 3. Run:
 
 ```bash
-bash ~/Downloads/septa-profiles-security-update/update-and-run.sh ~/Downloads/septa-polish-update/site
+bash ~/Downloads/septa-home-highlights-deploy/update-and-run.sh ~/Downloads/septa-polish-update/site
 ```
 
 The command names the installed folder that previously held your working `.env`. If you moved the active installation, replace only the final folder path with the one containing its `.env` and `backend/uploads`. Passing the path avoids the numbered-folder prompt.
 
-Keep Terminal running, open http://localhost:8000/admin, and refresh. The admin heading should say **UX improvements & page maintenance**.
+Keep Terminal running, open http://localhost:8000/admin, and refresh. In Website Studio, choose **Home** and edit **Septa in numbers**.
 
 The updater backs up replaced source/build files first. It preserves local settings, existing uploaded files, the Python environment and MongoDB. Do not delete your existing website folder or MongoDB files. If no installed site is found, the included full website can be started, but your original data still depends on the correct local settings.
 

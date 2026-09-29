@@ -3,7 +3,7 @@ import ContentError from '../components/ContentError';
 import ResponsiveImage from '../components/ResponsiveImage';
 import { ManagedIntro } from '../components/PageSections';
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link,useLocation,useSearchParams } from 'react-router-dom';
 import { Search, ArrowRight, Loader2 } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { usePartners, getText } from '../hooks/useApi';
@@ -20,8 +20,15 @@ export default function EcosystemPage() {
   useScrollReveal();
   const { data: partners, loading, error, retry } = usePartners();
   const { t } = useLanguage();
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const location=useLocation();
+  const [searchParams,setSearchParams]=useSearchParams();
+  const activeCategory=searchParams.get('category')||'All';
+  const searchQuery=searchParams.get('q')||'';
+  const updateFilter=(key,value)=>setSearchParams(previous=>{
+    const next=new URLSearchParams(previous);
+    if(value && value!=='All')next.set(key,value);else next.delete(key);
+    return next;
+  },{replace:true});
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -39,7 +46,7 @@ export default function EcosystemPage() {
       const q = searchQuery.toLowerCase();
       list = list.filter(p =>
         getText(p.name).toLowerCase().includes(q) ||
-        (p.specialties || []).some(s => s.toLowerCase().includes(q)) ||
+        (Array.isArray(p.specialties)?p.specialties:[]).some(s => String(s).toLowerCase().includes(q)) ||
         (p.category||'').toLowerCase().includes(q)
       );
     }
@@ -67,7 +74,7 @@ export default function EcosystemPage() {
               {categories.map(cat => (
                 <button
                   key={cat}
-                  aria-pressed={activeCategory===cat} onClick={() => setActiveCategory(cat)}
+                  aria-pressed={activeCategory===cat} onClick={() => updateFilter('category',cat)}
                   data-testid={`category-${cat.replace(/\s+/g, '-').toLowerCase()}`}
                   className={`px-3 py-1.5 text-xs font-inter uppercase tracking-wider transition-colors border ${
                     activeCategory === cat
@@ -85,7 +92,7 @@ export default function EcosystemPage() {
                 type="text"
                 aria-label="Search collaborators" placeholder="Search partners..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => updateFilter('q',e.target.value)}
                 className="w-full h-9 pl-9 pr-3 text-sm font-inter border border-[#8A8A8A]/30 bg-transparent outline-none focus:border-[#606060] transition-colors"
                 data-testid="ecosystem-search"
               />
@@ -112,6 +119,7 @@ export default function EcosystemPage() {
                   <Link
                     key={partner.slug}
                     to={`/ecosystem/${partner.slug}`}
+                    state={{from:location.pathname+location.search}}
                     className={`group block bg-white border border-[#8A8A8A]/15 hover:border-[#606060]/30 hover:shadow-md transition-all duration-300 reveal reveal-delay-${(i % 3) + 1}`}
                     data-testid={`partner-card-${partner.slug}`}
                   >
@@ -149,7 +157,7 @@ export default function EcosystemPage() {
                         <ArrowRight size={14} className="text-[#8A8A8A] group-hover:text-[#606060] transition-colors flex-shrink-0 mt-0.5" />
                       </div>
                       <p className="text-xs font-inter text-[#8A8A8A] mb-2">{partner.category}</p>
-                      {partner.specialties?.length > 0 && (
+                      {Array.isArray(partner.specialties) && partner.specialties.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {partner.specialties.slice(0, 3).map(s => (
                             <span key={s} className="text-[10px] font-inter px-1.5 py-0.5 bg-[#F6F6F3] text-[#050505]/55 border border-[#8A8A8A]/10">

@@ -1,6 +1,6 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
-import {PageHero} from './PageSections';
+import {PageHero,PageSection} from './PageSections';
 import MobileContactBar from './MobileContactBar';
 import MediaGuide from './admin/MediaGuide';
 jest.mock('react-router-dom',()=>({Link:({to,children,...props})=><a href={to} {...props}>{children}</a>,useLocation:()=>({search:''})}),{virtual:true});
@@ -18,6 +18,14 @@ test('home hero presents the featured project without playback controls',()=>{
  expect(container.querySelector('.hero-feature-caption').getAttribute('href')).toBe('/projects/first');
  expect(container.querySelector('.hero-feature-caption').textContent).toContain('Explore project');
  expect(container.querySelector('.hero-carousel-controls')).toBeNull();
+});
+test('verified highlights roll in the home strip and empty figures remain hidden',()=>{
+ const section={id:'home-highlights',type:'highlight_ticker',title:'Septa in numbers',items:[{id:'a',title:'25+',subtitle:'years'},{id:'b',title:'60+',subtitle:'active projects'}]};
+ act(()=>root.render(<PageSection section={section}/>));
+ expect(container.querySelectorAll('.home-highlights-set')).toHaveLength(2);
+ expect(container.querySelector('.home-highlights').textContent).toContain('active projects');
+ act(()=>root.render(<PageSection section={{...section,items:[]}}/>));
+ expect(container.querySelector('.home-highlights')).toBeNull();
 });
 test('mobile contact expands and Escape closes the links',()=>{
  act(()=>root.render(<MobileContactBar/>));

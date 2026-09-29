@@ -3,10 +3,10 @@ import PartnerMediaShowcase from '../components/PartnerMediaShowcase';
 import {profileIdentity} from '../lib/profiles';
 import ContentError from '../components/ContentError';
 import { useEffect } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Globe, Facebook, Instagram, Mail, Phone, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
-import { usePartner,useApiData } from '../hooks/useApi';
+import { usePartner,useApiData,getText } from '../hooks/useApi';
 import { useLanguage } from '../components/LanguageToggle';
 import PreviewBanner from '../components/PreviewBanner';
 
@@ -23,6 +23,7 @@ export default function PartnerProfilePage() {
   useScrollReveal();
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
+  const location=useLocation();
   const isPreview = searchParams.get('preview') === 'true';
   const {partner,loading,error,statusCode,retry}=usePartner(slug,isPreview);
   const {data:partnerProjects,error:projectsError,retry:retryProjects}=useApiData(`/credits/partner/${slug}/projects`,[]);
@@ -50,11 +51,15 @@ export default function PartnerProfilePage() {
     );
   }
 
-  const media = partner.media || {};
+  const media = partner.media && typeof partner.media === 'object' ? partner.media : {};
+  const highlights = Array.isArray(partner.highlights) ? partner.highlights.filter(item=>item?.visible!==false&&item?.value&&item?.label) : [];
+  const specialties = Array.isArray(partner.specialties) ? partner.specialties : [];
+  const sharedProjects = Array.isArray(partnerProjects) ? partnerProjects : [];
   const heroImage = media.hero_image || media.card_image || partner.cover_image;
   const logoImage = profileIdentity(partner);
   const relInfo = relationshipLabels[partner.relationship_type] || relationshipLabels['Project Partner'];
   const showPreview = isPreview || partner._preview_mode;
+  const backToEcosystem=typeof location.state?.from==='string'&&/^\/ecosystem(?:\?|$)/.test(location.state.from)?location.state.from:'/ecosystem';
 
   return (
     <div className={showPreview ? 'pt-28' : 'pt-16'} data-testid="partner-profile-page">
@@ -63,7 +68,7 @@ export default function PartnerProfilePage() {
       {/* Back nav */}
       <div className="bg-[#F6F6F3] border-b border-[#8A8A8A]/20 py-4">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
-          <Link to={showPreview ? '/admin' : '/ecosystem'} data-testid="back-to-ecosystem-btn"
+          <Link to={showPreview ? '/admin' : backToEcosystem} data-testid="back-to-ecosystem-btn"
             className="inline-flex items-center gap-2 text-xs font-inter text-[#8A8A8A] hover:text-[#606060] transition-colors uppercase tracking-widest">
             <ArrowLeft size={13} strokeWidth={1.5} /> {showPreview ? 'Back to Admin' : 'Ecosystem'}
           </Link>
@@ -145,14 +150,14 @@ export default function PartnerProfilePage() {
                 <p className="text-xs font-inter text-[#050505]/50 mt-2">{relInfo.desc}</p>
               </div>
 
-              {(partner.highlights||[]).some(item=>item.visible!==false&&item.value&&item.label)&&<div className="partner-highlight-grid">{partner.highlights.filter(item=>item.visible!==false&&item.value&&item.label).map((item,i)=><div key={i} className="partner-highlight"><strong>{item.value}</strong><span>{item.label}</span></div>)}</div>}
+              {highlights.length>0&&<div className="partner-highlight-grid">{highlights.map((item,i)=><div key={i} className="partner-highlight"><strong>{item.value}</strong><span>{item.label}</span></div>)}</div>}
 
               {/* Specialties */}
-              {partner.specialties?.length > 0 && (
+              {specialties.length > 0 && (
                 <div className="p-5 bg-white border border-[#8A8A8A]/20 reveal" data-testid="partner-specialties">
                   <p className="text-xs uppercase tracking-widest text-[#8A8A8A] font-inter mb-3">Specialties</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {partner.specialties.map(s => (
+                    {specialties.map(s => (
                       <span key={s} className="text-xs font-inter px-2 py-0.5 bg-[#F6F6F3] text-[#050505]/60 border border-[#8A8A8A]/15">
                         {s}
                       </span>
@@ -202,7 +207,7 @@ export default function PartnerProfilePage() {
       </section>
 
       {/* Partner Projects */}
-      {partnerProjects.length > 0 && (
+      {sharedProjects.length > 0 && (
         <section className="py-12 md:py-16 bg-white" data-testid="partner-projects">
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-12">
             <p className="text-xs uppercase tracking-[0.25em] text-[#8A8A8A] font-inter mb-3">Delivered Together</p>
@@ -210,7 +215,7 @@ export default function PartnerProfilePage() {
               Projects with {t(partner.name)}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {partnerProjects.map((proj, i) => (
+              {sharedProjects.map((proj, i) => (
                 <Link key={proj.slug} to={`/projects/${proj.slug}`}
                   className="group block" data-testid={`partner-project-${proj.slug}`}>
                   <div className="aspect-[4/3] overflow-hidden bg-[#ECECEA] mb-3">

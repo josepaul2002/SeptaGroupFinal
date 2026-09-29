@@ -31,6 +31,17 @@
     },
     "sections": [
       {
+        "id": "home-highlights",
+        "type": "highlight_ticker",
+        "enabled": true,
+        "eyebrow": {"en": "At a glance", "ml": ""},
+        "title": {"en": "Septa in numbers.", "ml": ""},
+        "body": {"en": "", "ml": ""},
+        "theme": "dark",
+        "items": [],
+        "limit": 10
+      },
+      {
         "id": "selected-work",
         "type": "projects",
         "enabled": true,

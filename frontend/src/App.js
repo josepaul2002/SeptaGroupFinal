@@ -24,6 +24,7 @@ import AdminPage from './pages/AdminPage';
 import ContentChecklist from './pages/ContentChecklist';
 import EcosystemPage from './pages/EcosystemPage';
 import PartnerProfilePage from './pages/PartnerProfilePage';
+import PartnerProfileBoundary from './components/PartnerProfileBoundary';
 import CollaboratorReviewPage from './pages/CollaboratorReviewPage';
 import PagePreview from './pages/PagePreview';
 
@@ -36,6 +37,11 @@ function PublicChrome({children}) {
 function CollaboratorRedirect() {
   const {slug}=useParams();
   return <Navigate to={`/ecosystem/${encodeURIComponent(slug)}`} replace/>;
+}
+
+function CollaboratorProfileRoute(){
+  const {slug}=useParams();
+  return <PartnerProfileBoundary key={slug}><PartnerProfilePage/></PartnerProfileBoundary>;
 }
 
 function App() {
@@ -55,7 +61,7 @@ function App() {
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:slug" element={<ProjectCaseStudyPage />} />
               <Route path="/ecosystem" element={<EcosystemPage />} />
-              <Route path="/ecosystem/:slug" element={<PartnerProfilePage />} />
+              <Route path="/ecosystem/:slug" element={<CollaboratorProfileRoute />} />
               <Route path="/collaborators" element={<Navigate to="/ecosystem" replace />} />
               <Route path="/collaborators/:slug" element={<CollaboratorRedirect />} />
               <Route path="/review/collaborator/:token" element={<CollaboratorReviewPage />} />

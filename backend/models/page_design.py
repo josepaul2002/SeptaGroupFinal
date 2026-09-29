@@ -61,7 +61,7 @@ class PageHero(BaseModel):
 
 class PageSection(BaseModel):
     id: str = Field(min_length=1, max_length=100)
-    type: Literal['text', 'cards', 'projects', 'locations', 'process', 'people', 'stats', 'faq', 'cta', 'testimonials', 'collaborators']
+    type: Literal['text', 'cards', 'projects', 'locations', 'process', 'people', 'stats', 'highlight_ticker', 'faq', 'cta', 'testimonials', 'collaborators']
     enabled: bool = True
     eyebrow: BilingualText = Field(default_factory=BilingualText)
     title: BilingualText = Field(default_factory=BilingualText)

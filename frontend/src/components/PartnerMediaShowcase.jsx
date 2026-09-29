@@ -7,7 +7,7 @@ import {ChevronLeft,ChevronRight,Play,X} from 'lucide-react';
 
 function youtubePoster(url){try{const parsed=new URL(url);const id=parsed.hostname==='youtu.be'?parsed.pathname.slice(1):parsed.pathname.startsWith('/shorts/')||parsed.pathname.startsWith('/embed/')?parsed.pathname.split('/')[2]:parsed.searchParams.get('v');return /^[\w-]{11}$/.test(id||'')?`https://img.youtube.com/vi/${id}/hqdefault.jpg`:'';}catch{return '';}}
 export default function PartnerMediaShowcase({media={},name}){
- const videos=(media.videos||[]).filter(Boolean),images=(media.gallery_images||[]).filter(Boolean);
+ const videos=(Array.isArray(media?.videos)?media.videos:[]).filter(Boolean),images=(Array.isArray(media?.gallery_images)?media.gallery_images:[]).filter(Boolean);
  const [open,setOpen]=useState(null);
  useEffect(()=>{if(!open)return;const key=e=>{if(e.key==='ArrowRight')setOpen(o=>({...o,index:(o.index+1)%(o.kind==='film'?videos.length:images.length)}));if(e.key==='ArrowLeft')setOpen(o=>({...o,index:(o.index-1+(o.kind==='film'?videos.length:images.length))%(o.kind==='film'?videos.length:images.length)}));};window.addEventListener('keydown',key);return()=>{window.removeEventListener('keydown',key);};},[open,videos.length,images.length]);
  if(!videos.length&&!images.length)return null;

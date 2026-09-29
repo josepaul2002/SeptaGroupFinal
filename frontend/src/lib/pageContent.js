@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 export { defaults };
 export const PAGE_PATHS = {home:'/',about:'/about',services:'/services',projects:'/projects',ecosystem:'/ecosystem',contact:'/contact',leaders:'/project-leaders'};
 export const PAGE_NAMES = {home:'Home',about:'About',services:'What we do',projects:'Projects',ecosystem:'Collaborators',contact:'Contact',leaders:'Project leaders'};
-export const SECTION_TYPES = {text:'Text + image',cards:'Capability cards',projects:'Projects',process:'Working process',collaborators:'Architects & collaborators',people:'Project leaders',stats:'Verified figures',faq:'Questions & answers',cta:'Call to action',testimonials:'Testimonials'};
+export const SECTION_TYPES = {text:'Text + image',cards:'Capability cards',projects:'Projects',process:'Working process',collaborators:'Architects & collaborators',people:'Project leaders',stats:'Verified figures',highlight_ticker:'Rolling highlights',faq:'Questions & answers',cta:'Call to action',testimonials:'Testimonials'};
 export const bilingual = (en='') => ({en,ml:''});
 export const newId = () => window.crypto?.randomUUID?.() || `item-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
 export {safeHref} from './safeHref';

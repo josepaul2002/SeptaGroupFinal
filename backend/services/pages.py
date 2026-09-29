@@ -29,6 +29,12 @@ def design(page_id, doc=None):
             added = [deepcopy(section) for section in base['sections'] if section['id'] in ('home-septa-team','home-collaborators','home-coverage','home-testimonials') and not any(old['id']==section['id'] for old in sections)]
             sections[insertion:insertion] = added
             result.update(sections=sections, layout_revision=2)
+        if page_id == 'home' and doc.get('layout_revision', 1) < 6:
+            # Add the new editable slot to existing home pages once, preserving
+            # every editor change and allowing a later intentional deletion.
+            ticker = next(s for s in base['sections'] if s['id'] == 'home-highlights')
+            if not any(s.get('id') == ticker['id'] for s in result['sections']):
+                result['sections'] = [deepcopy(ticker), *result['sections']]
         result['sections'] = [s for s in result['sections'] if s.get('type') != 'locations']
         if page_id == 'about' and doc.get('layout_revision', 1) < 5:
             # The earlier About layout copied the Services card block. Drop that
@@ -48,7 +54,7 @@ def design(page_id, doc=None):
             if text(result['hero'].get('title')) == text(DEFAULTS['services']['hero'].get('title')):
                 for field in ('eyebrow', 'title', 'body', 'primary_label', 'secondary_label'):
                     result['hero'][field] = deepcopy(base['hero'][field])
-        result['layout_revision'] = 5
+        result['layout_revision'] = 6
         return result
     types = {'metrics': 'stats', 'timeline_step': 'process', 'team_member': 'cards', 'proof_callout': 'cards', 'comparison_row': 'cards'}
     for kind, target in types.items():
@@ -134,7 +140,7 @@ async def design_html(db, page, settings, before_cta=''):
                 r = public_document(record)
                 prefix = '/projects/' if kind=='projects' else '/ecosystem/' if kind=='collaborators' else '/project-leaders/'
                 items.append({'title':r.get('title') if kind=='projects' else r.get('name') or r.get('client_name'),'body':r.get('short_description') or r.get('bio_short') or r.get('bio') or r.get('content') or r.get('quote'),'image_url':r.get('cover_image') or r.get('image') or r.get('profile_image') or r.get('photo') or ((r.get('media') or {}).get('portrait_image') if r.get('profile_type')=='person' else (r.get('media') or {}).get('card_image')),'image_alt':text(r.get('title') or r.get('name')),'link_url':prefix+r['slug'] if kind!='testimonials' else ('/projects/'+quote(r['project_ref'])+'#client-perspectives' if r.get('project_ref') and await db.projects.find_one({'slug':r['project_ref'],**PUBLIC_QUERY}) else ''), 'link_label':{'en':'Explore'}})
-        if kind in ['cards','process','stats','faq'] and not items:
+        if kind in ['cards','process','stats','highlight_ticker','faq'] and not items:
             continue
         body += '<section id="'+escape(section.get('id',''),quote=True)+'"><h2>'+escape(text(section.get('title')))+'</h2>'+paragraph(section.get('body'))
         body += picture(section.get('image_url'),section.get('image_alt'))
@@ -153,7 +159,7 @@ async def design_html(db, page, settings, before_cta=''):
 def next_document(page_id, body, old, now):
     doc = {**body.model_dump(), 'page_id':page_id, 'updated_at':now}
     doc['sections'] = [s for s in doc['sections'] if s.get('type') != 'locations']
-    doc['layout_revision'] = 5
+    doc['layout_revision'] = 6
     live = design(page_id, old) if approved(old) else (old or {}).get('published_snapshot')
     if body.status not in ('published','archived') and approved(live):
         doc['published_snapshot'] = deepcopy(live)
