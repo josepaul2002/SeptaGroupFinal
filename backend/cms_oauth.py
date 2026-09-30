@@ -27,6 +27,36 @@ def challenge(value):
 def resource():
     return SITE_URL + '/api/mcp'
 
+def valid_redirect(value):
+    """HTTPS web callbacks, or literal loopback HTTP callbacks for native clients."""
+    try:
+        p = urlsplit(value)
+        port = p.port
+        return (isinstance(value, str) and len(value) <= 2048
+                and not any(c.isspace() for c in value)
+                and bool(p.hostname) and not p.username and not p.password
+                and not p.fragment
+                and (p.scheme == 'https' or
+                     (p.scheme == 'http' and p.hostname in ('127.0.0.1', '::1'))))
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def redirect_matches(value, registered):
+    if not valid_redirect(value):
+        return False
+    if value in registered:
+        return True
+    p = urlsplit(value)
+    if p.scheme != 'http' or p.hostname not in ('127.0.0.1', '::1'):
+        return False
+    # Native listeners use an ephemeral port; every other URI component is exact.
+    return any(valid_redirect(item) and
+               (lambda r: (r.scheme, r.hostname, r.path, r.query) ==
+                          (p.scheme, p.hostname, p.path, p.query))(urlsplit(item))
+               for item in registered)
+
+
 async def limited_body(request):
     body=bytearray()
     async for chunk in request.stream():
@@ -86,14 +116,12 @@ def attach_cms_oauth(app, router, db, audit, limiter):
             if not isinstance(redirects,list) or not 1 <= len(redirects) <= 5:
                 raise ValueError()
             for value in redirects:
-                parsed = urlsplit(value)
-                if (parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password
-                        or parsed.fragment or len(value)>2048):
+                if not valid_redirect(value):
                     raise ValueError()
             if body.get('token_endpoint_auth_method','none') != 'none':
                 raise ValueError()
         except (ValueError, KeyError, TypeError, AttributeError):
-            oauth_error('Provide exact HTTPS redirect_uris and public-client authentication (none).')
+            oauth_error('Provide HTTPS or literal loopback HTTP redirect_uris and public-client authentication (none).')
         client_id = secrets.token_urlsafe(24)
         doc = {'_id':client_id, 'redirect_uris':redirects, 'client_name':str(body.get('client_name','CMS client'))[:100]}
         await db.cms_clients.insert_one(doc)
@@ -106,7 +134,7 @@ def attach_cms_oauth(app, router, db, audit, limiter):
         q = dict(request.query_params)
         client = await db.cms_clients.find_one({'_id':q.get('client_id','')})
         scopes = set(q.get('scope','cms:read cms:draft cms:media').split())
-        if (not client or q.get('redirect_uri') not in client['redirect_uris'] or q.get('response_type')!='code'
+        if (not client or not redirect_matches(q.get('redirect_uri'), client['redirect_uris']) or q.get('response_type')!='code'
             or q.get('code_challenge_method')!='S256' or not re.fullmatch(r'[A-Za-z0-9_-]{43}',q.get('code_challenge',''))
             or q.get('resource')!=resource() or not scopes or not scopes <= SCOPES or len(q.get('state',''))>2048):
             oauth_error('Invalid authorization request')

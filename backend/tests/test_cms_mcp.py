@@ -194,3 +194,26 @@ async def test_anonymous_discovery_signals_oauth_without_exposing_data(client,db
         assert 'private-secret-project' not in json.dumps(result)
     assert await db.cms_proposals.count_documents({})==0
     assert await db.projects.count_documents({})==1
+
+
+async def test_native_callback_registration_and_exact_path(client):
+    from cms_oauth import valid_redirect, redirect_matches
+    for bad in ['http://evil.example/callback', 'http://localhost/callback',
+                'http://127.0.0.1.evil.example/callback', 'http://user@127.0.0.1/callback',
+                'http://127.0.0.1:bad/callback', 'https://client.example/callback#fragment']:
+        assert not valid_redirect(bad)
+    base = 'http://127.0.0.1/callback/septa'
+    assert redirect_matches('http://127.0.0.1:43217/callback/septa', [base])
+    assert not redirect_matches('http://127.0.0.1:43217/callback/other', [base])
+    assert not redirect_matches('http://127.0.0.1:43217/callback/septa?extra=1', [base])
+    assert not redirect_matches('https://client.example:43217/callback', ['https://client.example/callback'])
+    registered = await client.post('/api/integration/register', json={'redirect_uris':[base]})
+    assert registered.status_code == 201
+    params = {'client_id':registered.json()['client_id'], 'redirect_uri':base.replace('127.0.0.1','127.0.0.1:43217'),
+              'response_type':'code','code_challenge_method':'S256','code_challenge':challenge('a'*64),
+              'resource':resource(),'scope':'cms:read','state':'native-test'}
+    response = await client.get('/api/integration/authorize', params=params)
+    assert response.status_code == 302
+    assert response.headers['location'].startswith('/api/admin/google/start?')
+    response = await client.get('/api/integration/authorize', params={**params, 'redirect_uri':base+'/wrong'})
+    assert response.status_code == 400
