@@ -60,7 +60,9 @@ Page Studio can be managed through the `pages` collection.
 
 ## Deployment checks
 
-- Unauthenticated POST `/api/mcp` responds 401 with resource metadata.
+- Initialization and tool descriptions are publicly discoverable; they contain no CMS records.
+- Unauthenticated tool calls return an OAuth linking challenge without executing the tool.
+- Invalid or revoked bearer tokens still receive HTTP 401.
 - OAuth consent requires an existing admin session and trusted form origin.
 - PKCE and exact redirect URI/resource matching are enforced.
 - Authorisation codes and consent tickets are single-use and expire quickly.
@@ -80,3 +82,12 @@ changes, draft/live separation, stale proposals, publication validation,
 image-ratio enforcement, and an official-client initialize/list/call round trip.
 `npm run build` also completes successfully. The MCP SDK is only a test client;
 it is not a new runtime dependency.
+
+## ChatGPT linking compatibility (1.0.1)
+
+Tool descriptors declare OAuth scopes and tool calls without credentials return
+`_meta["mcp/www_authenticate"]`. This allows tool-level sign-in prompts after
+anonymous discovery. All reads and writes still require a valid scoped token.
+The 11 MCP tests pass, including proof that anonymous discovery/calls cannot
+read draft records or create proposals. End-user ChatGPT linking remains to
+be verified in the user’s client.

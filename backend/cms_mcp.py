@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from typing import Literal
 from config import SITE_URL
-from cms_oauth import integration_account
+from cms_oauth import integration_account, SCOPES
 from utils.auth import create_access_token
 from models.schemas import ProjectCreate, PartnerCreate, LeaderCreate, TestimonialCreate
 from models.page_design import PageDesign
@@ -62,6 +62,8 @@ def fingerprint(doc):
 
 def catalog(scopes):
     return [{'name':name,'description':desc,'inputSchema':model.model_json_schema(),
+             'securitySchemes':[{'type':'oauth2','scopes':[scope]}],
+             '_meta':{'securitySchemes':[{'type':'oauth2','scopes':[scope]}]},
              'annotations':{'readOnlyHint':read,'destructiveHint':name=='cms_apply','idempotentHint':read,'openWorldHint':False}}
             for name,(model,scope,desc,read) in TOOLS.items() if scope in scopes]
 
@@ -166,14 +168,15 @@ def attach_cms_mcp(router,db,audit,limiter):
     @router.api_route('/mcp',methods=['GET','DELETE'])
     async def no_stream(request: Request):
         validate_transport(request)
-        await integration_account(request,db)
         return Response(status_code=405,headers={'Allow':'POST'})
 
     @router.post('/mcp')
     @limiter.limit('60/minute')
     async def mcp(request: Request):
         validate_transport(request)
-        account,scopes=await integration_account(request,db)
+        account,scopes=None,SCOPES
+        if request.headers.get('authorization'):
+            account,scopes=await integration_account(request,db)
         raw=bytearray()
         async for chunk in request.stream():
             raw.extend(chunk)
@@ -195,7 +198,7 @@ def attach_cms_mcp(router,db,audit,limiter):
         if method=='initialize':
             version=params.get('protocolVersion')
             result={'protocolVersion':version if version in PROTOCOL_VERSIONS else '2025-06-18',
-                    'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'septa-cms','version':'1.0.0'},
+                    'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'septa-cms','version':'1.0.1'},
                     'instructions':'Read schemas and existing records first. Stage changes for review. Never invent project facts. Publish only when the user explicitly requests it. Uploaded media is publicly hosted.'}
         elif method=='ping':
             result={}
@@ -206,6 +209,13 @@ def attach_cms_mcp(router,db,audit,limiter):
             if not isinstance(name,str) or name not in TOOLS:
                 return JSONResponse({'jsonrpc':'2.0','id':rid,'error':{'code':-32602,'message':'Unknown tool'}})
             model,scope,_,_=TOOLS[name]
+            if account is None:
+                challenge=(f'Bearer resource_metadata="{SITE_URL}/.well-known/oauth-protected-resource/api/mcp", '
+                           f'error="invalid_token", error_description="Sign in with an authorized Septa admin account", scope="{scope}"')
+                return JSONResponse({'jsonrpc':'2.0','id':rid,'result':{
+                    'content':[{'type':'text','text':'Sign in to Septa CMS to continue.'}],
+                    'isError':True,'_meta':{'mcp/www_authenticate':[challenge]}}},
+                    headers={'Cache-Control':'no-store'})
             if scope not in scopes:
                 raise HTTPException(403,'Required permission: '+scope)
             try:

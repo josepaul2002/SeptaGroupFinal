@@ -42,7 +42,7 @@ def project():
     return {'title':{'en':'Test building'},'location':'Kottayam','type':'Residential','project_status':'Completed','sqft':'','duration':'','year':'','client_type':'','client_lens':'','image':'','short_description':{'en':'Verified facts pending'},'challenge':{'en':''}}
 
 async def test_oauth_scope_revocation_and_token_separation(client,db):
-    assert (await client.post('/api/mcp',json={})).status_code == 401
+    assert (await client.post('/api/mcp',json={})).status_code == 400
     token = await connect(client, 'cms:read')
     assert (await rpc(client,token,'cms_stage',{'collection':'projects','record_id':'test','content':project()})).status_code == 403
     assert (await client.get('/api/admin/me',headers={'Authorization':'Bearer '+token})).status_code == 401
@@ -176,3 +176,21 @@ async def test_official_mcp_client_handshake(client,db):
             records=await session.call_tool('cms_list',{'collection':'projects'})
             assert not records.isError
             assert json.loads(records.content[0].text)['items']==[]
+
+
+async def test_anonymous_discovery_signals_oauth_without_exposing_data(client,db):
+    await db.projects.insert_one({'slug':'private-secret-project','status':'draft'})
+    response=await client.post('/api/mcp',json={'jsonrpc':'2.0','id':1,'method':'tools/list'})
+    assert response.status_code==200
+    assert 'private-secret-project' not in response.text
+    tools=response.json()['result']['tools']
+    assert len(tools)==6
+    assert all(t['securitySchemes'][0]['type']=='oauth2' for t in tools)
+    assert all(t['_meta']['securitySchemes']==t['securitySchemes'] for t in tools)
+    for name,args in [('cms_list',{'collection':'projects'}),('cms_stage',{'collection':'projects','record_id':'unauthorized','content':project()})]:
+        result=(await client.post('/api/mcp',json={'jsonrpc':'2.0','id':2,'method':'tools/call','params':{'name':name,'arguments':args}})).json()['result']
+        assert result['isError']
+        assert 'invalid_token' in result['_meta']['mcp/www_authenticate'][0]
+        assert 'private-secret-project' not in json.dumps(result)
+    assert await db.cms_proposals.count_documents({})==0
+    assert await db.projects.count_documents({})==1
