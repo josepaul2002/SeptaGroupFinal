@@ -1470,6 +1470,8 @@ async def startup_event():
         await migrate_json_to_db()
         await seed_solution_packs()
         await seed_page_content()
+    for collection in ("cms_consents", "cms_codes", "cms_grants", "cms_proposals"):
+        await db[collection].create_index("expires_at", expireAfterSeconds=0)
     await seed_site_settings()
     app.state.notification_worker = asyncio.create_task(worker(db))
     logger.info("Septa API started successfully")
@@ -1495,13 +1497,17 @@ from recovery_api import attach_recovery_routes
 attach_recovery_routes(api_router, db, limiter)
 from google_admin_auth import attach_google_routes
 attach_google_routes(api_router, db, log_audit, limiter)
+from cms_oauth import attach_cms_oauth
+from cms_mcp import attach_cms_mcp
+attach_cms_oauth(app, api_router, db, log_audit, limiter)
+attach_cms_mcp(api_router, db, log_audit, limiter)
 app.include_router(api_router)
 
 @app.middleware("http")
 async def response_headers(request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["Referrer-Policy"] = "no-referrer" if request.url.path.startswith(("/admin", "/api/admin/google", "/review/", "/api/collaborator-review/")) else "strict-origin-when-cross-origin"
+    response.headers["Referrer-Policy"] = "no-referrer" if request.url.path.startswith(("/admin", "/api/admin/google", "/api/integration", "/review/", "/api/collaborator-review/")) else "strict-origin-when-cross-origin"
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     if PRODUCTION:
         response.headers["Strict-Transport-Security"] = "max-age=31536000"

@@ -34,11 +34,11 @@ def verify_google_identity(id_token_value):
     return id_token.verify_oauth2_token(id_token_value, GoogleRequest(), GOOGLE_CLIENT_ID)
 
 
-def make_auth_request():
+def make_auth_request(return_to="/admin"):
     state, nonce, verifier = (secrets.token_urlsafe(32) for _ in range(3))
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b'=').decode()
     cookie = jwt.encode({'type':'google_state','state':state,'nonce':nonce,'verifier':verifier,
-                         'exp':int(datetime.now(timezone.utc).timestamp())+600}, SECRET_KEY, algorithm='HS256')
+                         'return_to':return_to, 'exp':int(datetime.now(timezone.utc).timestamp())+600}, SECRET_KEY, algorithm='HS256')
     redirect_uri = SITE_URL + '/api/admin/google/callback'
     params = {'client_id':GOOGLE_CLIENT_ID,'redirect_uri':redirect_uri,'response_type':'code',
               'scope':'openid email','state':state,'nonce':nonce,'hd':GOOGLE_WORKSPACE_DOMAIN,
@@ -63,10 +63,14 @@ def attach_google_routes(router, db, audit, limiter):
 
     @router.get('/admin/google/start')
     @limiter.limit('10/minute')
-    async def google_start(request: Request):
+    async def google_start(request: Request, next: str = "/admin"):
         if ADMIN_AUTH_MODE != 'google':
             raise HTTPException(404, 'Google sign-in is not enabled.')
-        url, cookie = make_auth_request()
+        # Cookies must be created on the same origin as the configured callback.
+        return_to = next if next.startswith('/api/integration/authorize?') and len(next) <= 8192 else '/admin'
+        if str(request.base_url).rstrip('/') != SITE_URL:
+            return RedirectResponse(SITE_URL + '/api/admin/google/start?' + urlencode({'next': return_to}), 302)
+        url, cookie = make_auth_request(return_to)
         response = RedirectResponse(url, status_code=302)
         response.set_cookie(STATE_COOKIE, cookie, max_age=600, httponly=True,
                             secure=PRODUCTION, samesite='lax', path='/api/admin/google')
@@ -104,7 +108,10 @@ def attach_google_routes(router, db, audit, limiter):
         except (JWTError, KeyError, ValueError, httpx.HTTPError, GoogleAuthError, RequestException, TypeError) as exc:
             logger.warning('Google admin sign-in rejected: %s', type(exc).__name__)
             raise HTTPException(401, 'Google sign-in could not be verified or this account is not authorized.')
-        response = RedirectResponse('/admin', status_code=303)
+        return_to = saved.get('return_to', '/admin')
+        if not return_to.startswith('/api/integration/authorize?'):
+            return_to = '/admin'
+        response = RedirectResponse(return_to, status_code=303)
         response.delete_cookie(STATE_COOKIE, path='/api/admin/google')
         set_auth_cookie(response, token)
         await db.admins.update_one({'id':account['id']}, {'$set':{'last_login':datetime.now(timezone.utc).isoformat()}})

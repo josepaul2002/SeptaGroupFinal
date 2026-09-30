@@ -1,3 +1,4 @@
+import IntegrationsPanel from './IntegrationsPanel';
 import { useState } from 'react';
 import { KeyRound, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
@@ -37,7 +38,7 @@ export default function AccountTab({ token, email, authMode='password' }) {
   const inputCls = 'w-full h-10 px-3 text-sm font-inter border border-[#8A8A8A]/30 bg-white text-[#050505] outline-none focus:border-[#606060] transition-colors';
   const labelCls = 'text-xs uppercase tracking-widest text-[#050505]/50 font-inter block mb-2';
 
-  if (authMode === 'google') return <div className="max-w-md bg-white border border-[#8A8A8A]/20 p-6 space-y-4"><h2 className="text-lg font-sora font-medium">Workspace account</h2><p className="text-sm">Signed in as {email}. Manage your password, passkey, and two-step verification in Google Workspace. Ask a Septa owner to change your website role or disable your access.</p><a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="underline text-sm">Open Google account security</a></div>;
+  if (authMode === 'google') return <><div className="max-w-md bg-white border border-[#8A8A8A]/20 p-6 space-y-4"><h2 className="text-lg font-sora font-medium">Workspace account</h2><p className="text-sm">Signed in as {email}. Manage your password, passkey, and two-step verification in Google Workspace. Ask a Septa owner to change your website role or disable your access.</p><a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="underline text-sm">Open Google account security</a></div><IntegrationsPanel token={token}/></>;
 
   return (
     <div className="max-w-md" data-testid="account-tab">
@@ -85,6 +86,7 @@ export default function AccountTab({ token, email, authMode='password' }) {
           {saving ? <Loader2 className="animate-spin" size={16} /> : 'Update Password'}
         </button>
       </form>
+      <IntegrationsPanel token={token}/>
     </div>
   );
 }
